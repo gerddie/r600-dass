@@ -26,11 +26,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-        r600/value.cpp
+        r600/value.cpp \
+    r600/node.cpp \
+    r600/cf_node.cpp
 
 HEADERS += \
         mainwindow.h \
-        r600/value.h
+        r600/value.h \
+    r600/node.h \
+    r600/cf_node.h \
+    r600/defines.h
 
 FORMS += \
         mainwindow.ui

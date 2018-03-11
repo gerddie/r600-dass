@@ -12,3 +12,8 @@ MainWindow::~MainWindow()
 {
         delete ui;
 }
+
+void MainWindow::on_action_Quit_triggered()
+{
+        quick_exit(0);
+}
