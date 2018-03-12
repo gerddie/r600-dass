@@ -4,18 +4,18 @@
 
 cf_node::cf_node(unsigned bytecode_size, uint32_t *bytecode, bool alu_node):
         node(bytecode_size),
-        barrier(bytecode[1] & (1 << 31))
+        m_barrier(bytecode[1] & (1 << 31))
 {
         if (alu_node)
-                opcode = bytecode[1] >> 26 & 0xF;
+                m_opcode = bytecode[1] >> 26 & 0xF;
         else
-                opcode = bytecode[1] >> 22 & 0xFF;
+                m_opcode = bytecode[1] >> 22 & 0xFF;
 }
 
 void cf_node::print(std::ostream& os) const
 {
-        os << std::setw(23) << op_from_opcode(opcode);
-        os << (barrier ? "B" : "_");
+        os << std::setw(23) << op_from_opcode(m_opcode);
+        os << (m_barrier ? "B" : "_");
         print_detail(os);
 }
 
@@ -95,34 +95,34 @@ cf_node_with_address::cf_node_with_address(unsigned bytecode_size, uint32_t *byt
                                bool alu_node):
         cf_node(bytecode_size, bytecode, alu_node)
 {
-        addr = bytecode[0] & (alu_node ? 0x3FFFFF : 0xFFFFFF);
+        m_addr = bytecode[0] & (alu_node ? 0x3FFFFF : 0xFFFFFF);
 }
 
 cf_alu_node::cf_alu_node(uint32_t *bytecode, bool alu_ext):
         cf_node_with_address(alu_ext ? 4 : 2, bytecode, true),
-        nkcache(alu_ext ? 4 : 2),
-        count((bytecode[1] >> 10) & 0x7F),
-        alt_const(bytecode[1] & (1 << 25)),
-        whole_quad_mode(bytecode[1] & (1 << 30))
+        m_nkcache(alu_ext ? 4 : 2),
+        m_count((bytecode[1] >> 10) & 0x7F),
+        m_alt_const(bytecode[1] & (1 << 25)),
+        m_whole_quad_mode(bytecode[1] & (1 << 30))
 {
-        kcache_bank[0] = (bytecode[0] >> 22) & 0xF;
-        kcache_mode[0] = (bytecode[0] >> 30) & 0x3;
-        kcache_addr[0] = (bytecode[1] >>  2) & 0xFF;
+        m_kcache_bank[0] = (bytecode[0] >> 22) & 0xF;
+        m_kcache_mode[0] = (bytecode[0] >> 30) & 0x3;
+        m_kcache_addr[0] = (bytecode[1] >>  2) & 0xFF;
 
-        kcache_bank[1] = (bytecode[0] >> 26) & 0xF;
-        kcache_mode[1] = bytecode[1] & 0x3;
-        kcache_addr[1] = (bytecode[1] >> 10) & 0xFF;
+        m_kcache_bank[1] = (bytecode[0] >> 26) & 0xF;
+        m_kcache_mode[1] = bytecode[1] & 0x3;
+        m_kcache_addr[1] = (bytecode[1] >> 10) & 0xFF;
 
         if (alu_ext) {
                 for (int i = 0; i < 4; ++i) {
-                        kcache_bank_idx_mode[i] = (bytecode[2] >> (4 + 2*i)) & 3;
+                        m_kcache_bank_idx_mode[i] = (bytecode[2] >> (4 + 2*i)) & 3;
                 }
-                kcache_bank[2] = (bytecode[2] >> 22) & 0xF;
-                kcache_bank[3] = (bytecode[2] >> 26) & 0xF;
-                kcache_mode[2] = (bytecode[2] >> 30) & 0x3;
-                kcache_mode[3] = (bytecode[3] & 0x3);
-                kcache_addr[2] = (bytecode[3] >> 2) & 0xFF;
-                kcache_addr[3] = (bytecode[3] >> 10) & 0xFF;
+                m_kcache_bank[2] = (bytecode[2] >> 22) & 0xF;
+                m_kcache_bank[3] = (bytecode[2] >> 26) & 0xF;
+                m_kcache_mode[2] = (bytecode[2] >> 30) & 0x3;
+                m_kcache_mode[3] = (bytecode[3] & 0x3);
+                m_kcache_addr[2] = (bytecode[3] >> 2) & 0xFF;
+                m_kcache_addr[3] = (bytecode[3] >> 10) & 0xFF;
         }
 }
 
@@ -144,19 +144,19 @@ std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
 
 void cf_alu_node::print_detail(std::ostream& os) const
 {
-        for (int i = 0; i < nkcache; ++i) {
-                os << "\n    KC" << i << ": " << kcache_bank[i]
-                   << "@0x" << std::setbase(16) << kcache_addr[i]
+        for (int i = 0; i < m_nkcache; ++i) {
+                os << "\n    KC" << i << ": " << m_kcache_bank[i]
+                   << "@0x" << std::setbase(16) << m_kcache_addr[i]
                    << std::setbase(10);
 
-                switch (kcache_mode[i]) {
+                switch (m_kcache_mode[i]) {
                 case 0: os << " NOP"; break;
                 case 1: os << " L1"; break;
                 case 2: os << " L2"; break;
                 case 3: os << " LLI"; break;
                 }
-                if (nkcache == 4) {
-                        switch (kcache_bank_idx_mode[0]) {
+                if (m_nkcache == 4) {
+                        switch (m_kcache_bank_idx_mode[0]) {
                         case 0: os << " NONE"; break;
                         case 1: os << " IDX1"; break;
                         case 2: os << " IDX2"; break;
@@ -168,178 +168,178 @@ void cf_alu_node::print_detail(std::ostream& os) const
 }
 
 cf_node_cf_word1::cf_node_cf_word1(uint32_t word1):
-        pop_count(word1 & 0x3),
-        cf_const((word1 >> 2) & 0x1F),
-        cond((word1 >> 8) & 0x3),
-        count((word1 >> 10) & 0x3F),
-        valid_pixel_mode(word1 & (1 << 20)),
-        end_of_program(word1 & (1 << 21)),
-        whole_quad_mode(word1 & (1 << 30))
+        m_pop_count(word1 & 0x3),
+        m_cf_const((word1 >> 2) & 0x1F),
+        m_cond((word1 >> 8) & 0x3),
+        m_count((word1 >> 10) & 0x3F),
+        m_valid_pixel_mode(word1 & (1 << 20)),
+        m_end_of_program(word1 & (1 << 21)),
+        m_whole_quad_mode(word1 & (1 << 30))
 {
 }
 
 cf_native_node::cf_native_node(uint32_t *bytecode):
         cf_node_with_address(2, bytecode, false),
-        jumptable_se((bytecode[0] >> 24) & 0x7),
-        word1(bytecode[1])
+        m_jumptable_se((bytecode[0] >> 24) & 0x7),
+        m_word1(bytecode[1])
 {
 }
 
-const char cf_native_node::jts_names[6][3] = {
+const char cf_native_node::m_jts_names[6][3] = {
         "CA", "CB", "CC", "CD", "I0", "I1"
 };
 
 void cf_native_node::print_detail(std::ostream& os) const
 {
-        os << "JTS:" << jts_names[jumptable_se] << " ";
-        word1.print(os);
+        os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
+        m_word1.print(os);
 }
 
-const char *cf_node_cf_word1::condition = "AFBN";
+const char *cf_node_cf_word1::m_condition = "AFBN";
 
 void cf_node_cf_word1::print(std::ostream& os) const
 {
-        os << " POP:" << pop_count
-           << " CONST:" <<  cf_const
-           << " COND:" << condition[cond]
-           << " CNT: " << count;
+        os << " POP:" << m_pop_count
+           << " CONST:" <<  m_cf_const
+           << " COND:" << m_condition[m_cond]
+           << " CNT: " << m_count;
 
-        if (valid_pixel_mode)
+        if (m_valid_pixel_mode)
                 os << "VPM";
 
-        if (whole_quad_mode)
+        if (m_whole_quad_mode)
                 os << "WQM";
 
-        if (end_of_program)
+        if (m_end_of_program)
                 os << "EOP";
 }
 
 cf_gws_node::cf_gws_node(uint32_t *bytecode):
         cf_node(2, bytecode, false),
-        value(bytecode[0] & 0x3FF),
-        resource((bytecode[0] >> 16) & 0x1F),
-        val_index_mode((bytecode[0] >> 26) & 0x3),
-        rsrc_index_mode((bytecode[0] >> 28) & 0x3),
-        gws_opcode((bytecode[0] >> 30) & 0x3),
-        word1(bytecode[1])
+        m_value(bytecode[0] & 0x3FF),
+        m_resource((bytecode[0] >> 16) & 0x1F),
+        m_val_index_mode((bytecode[0] >> 26) & 0x3),
+        m_rsrc_index_mode((bytecode[0] >> 28) & 0x3),
+        m_gws_opcode((bytecode[0] >> 30) & 0x3),
+        m_word1(bytecode[1])
 {
 }
 
-const char *cf_gws_node::opcode_as_string[4] = {
+const char *cf_gws_node::m_opcode_as_string[4] = {
    "SEMA_V", "SEMA_P", "BARRIER", "INIT"
 };
 
-const char *cf_node::index_mode_string = "N01_";
+const char *cf_node::m_index_mode_string = "N01_";
 
 
 void cf_gws_node::print_detail(std::ostream& os) const
 {
-        os << opcode_as_string[gws_opcode] << " ";
-        os << "V:" << value << " ";
-        os << "SE:" << resource << " ";
-        os << "VIDX:" << index_mode_string[val_index_mode] << " ";
-        os << "RIDX:" << index_mode_string[rsrc_index_mode] << " ";
-        word1.print(os);
- }
+        os << m_opcode_as_string[m_gws_opcode] << " ";
+        os << "V:" << m_value << " ";
+        os << "SE:" << m_resource << " ";
+        os << "VIDX:" << m_index_mode_string[m_val_index_mode] << " ";
+        os << "RIDX:" << m_index_mode_string[m_rsrc_index_mode] << " ";
+        m_word1.print(os);
+}
 
 cf_mem_node::cf_mem_node(uint32_t *bytecode):
         cf_node(2, bytecode, false),
-        type((bytecode[0] >> 13) & 0x3),
-        rw_gpr((bytecode[0] >> 15) & 0x7F),
-        rw_rel(bytecode[0] & ( 1 << 22)),
-        index_gpr((bytecode[0] >> 23) & 0x7F),
-        elem_size((bytecode[0] >> 30) & 0x3),
-        burst_count((bytecode[1] >> 16) & 0xF),
-        valid_pixel_mode(bytecode[1] & (1 << 20)),
-        mark(bytecode[1] & (1 << 30))
+        m_type((bytecode[0] >> 13) & 0x3),
+        m_rw_gpr((bytecode[0] >> 15) & 0x7F),
+        m_rw_rel(bytecode[0] & ( 1 << 22)),
+        m_index_gpr((bytecode[0] >> 23) & 0x7F),
+        m_elem_size((bytecode[0] >> 30) & 0x3),
+        m_burst_count((bytecode[1] >> 16) & 0xF),
+        m_valid_pixel_mode(bytecode[1] & (1 << 20)),
+        m_mark(bytecode[1] & (1 << 30))
 {
 }
 
-const char *cf_mem_node::type_string[4] = {
+const char *cf_mem_node::m_type_string[4] = {
         "PIXEL", "POS", "PARAM", "undefined"
 };
 
 
 void cf_mem_node::print_mem_detail(std::ostream& os) const
 {
-        os << " ES:" << elem_size + 1 << " ";
-        os << "BC:"  << burst_count << " ";
+        os << " ES:" << m_elem_size + 1 << " ";
+        os << "BC:"  << m_burst_count << " ";
 
-        if (rw_rel)
+        if (m_rw_rel)
                 os << "Loop-Rel";
 
-        if (valid_pixel_mode)
+        if (m_valid_pixel_mode)
                 os << "VPM ";
 
-        if (mark)
-                os << "R-ACK ";
+        if (m_mark)
+                os << "Req-ACK ";
 
-        os << "R" << rw_gpr;
-        if (type & 1)
-                os << "[R" << index_gpr << "]";
+        os << "R" << m_rw_gpr;
+        if (m_type & 1)
+                os << "[R" << m_index_gpr << "]";
 }
 
 cf_export_node::cf_export_node(uint32_t *bytecode):
         cf_mem_node(bytecode),
-        array_size(bytecode[1] & 0xFFF),
-        comp_mask((bytecode[1] >> 12) & 0xF),
-        end_of_program(bytecode[1] & (1 << 21))
+        m_array_size(bytecode[1] & 0xFFF),
+        m_comp_mask((bytecode[1] >> 12) & 0xF),
+        m_end_of_program(bytecode[1] & (1 << 21))
 {
 }
 
 cf_rat_node::cf_rat_node(uint32_t *bytecode):
         cf_export_node(bytecode),
-        rat_id(bytecode[0] & 0xF),
-        rat_inst((bytecode[0] >> 4) & 0x3F),
-        rat_index_mode((bytecode[0] >> 11) & 0x3)
+        m_rat_id(bytecode[0] & 0xF),
+        m_rat_inst((bytecode[0] >> 4) & 0x3F),
+        m_rat_index_mode((bytecode[0] >> 11) & 0x3)
 {
 }
 
-const char *cf_rat_node::type_string[4] = {
+const char *cf_rat_node::m_type_string[4] = {
         "WRITE", "WRITE_IND", "WRITE_ACK", "WRITE_IND_ACK"
 };
 
 
 void cf_rat_node::print_detail(std::ostream& os) const
 {
-        os << std::setw(23) << rat_inst_string(rat_inst) << " ";
-        os << "ID:" << rat_id << " ";
-        os << "IDXM:" << index_mode_string[rat_index_mode] << " ";
-        os << type_string[type] << " ";
+        os << std::setw(23) << rat_inst_string(m_rat_inst) << " ";
+        os << "ID:" << m_rat_id << " ";
+        os << "IDXM:" << m_index_mode_string[m_rat_index_mode] << " ";
+        os << m_type_string[m_type] << " ";
         print_mem_detail(os);
 
         for (int i = 0; i < 4; ++i) {
-                if (comp_mask & 1 << i)
+                if (m_comp_mask & 1 << i)
                         os << component_names[i];
                 else
                         os << "_";
         }
 
-        if (end_of_program)
+        if (m_end_of_program)
                 os << "  EOP";
 }
 
 cf_export_mem_node::cf_export_mem_node(uint32_t *bytecode):
         cf_export_node(bytecode),
-        array_base(bytecode[0] & 0x1FFF)
+        m_array_base(bytecode[0] & 0x1FFF)
 {
         for (int i = 0; i < 4; ++i)
-                sel[i] = (bytecode[1] >> (3*i)) & 0x7;
+                m_sel[i] = (bytecode[1] >> (3*i)) & 0x7;
 }
 
 void cf_export_mem_node::print_detail(std::ostream& os) const
 {
         print_mem_detail(os);
         for (int i = 0; i < 4; ++i)
-                os << component_names[sel[i]];
+                os << component_names[m_sel[i]];
 
-        if (end_of_program)
+        if (m_end_of_program)
                 os << "  EOP";
 }
 
 cf_mem_stream_node::cf_mem_stream_node(uint32_t *bytecode):
         cf_mem_node(bytecode),
-        array_base(bytecode[0] & 0x1FFF)
+        m_array_base(bytecode[0] & 0x1FFF)
 {
 }
 
