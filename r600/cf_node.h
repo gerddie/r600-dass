@@ -9,10 +9,12 @@
 class cf_node : public node {
 public:
         cf_node(unsigned bytecode_size, uint32_t *bytecode, bool alu_node);
+protected:
+        static const char *index_mode_string;
 private:
         void print(std::ostream& os) const override;
 
-        virtual std::string op_from_opcode(uint32_t opcode) const = 0;
+        virtual std::string op_from_opcode(uint32_t opcode) const;
         virtual void print_detail(std::ostream& os) const = 0;
 
         uint32_t opcode;
@@ -45,7 +47,7 @@ class cf_alu_node : public cf_node_with_address {
 public:
         cf_alu_node(uint32_t *bytecode, bool alu_ext);
 private:
-        std::string op_from_opcode(uint32_t opcode) const override;
+        std::string op_from_opcode(uint32_t opcode) const override final;
         void print_detail(std::ostream& os) const override;
 
         uint16_t nkcache;
@@ -62,7 +64,6 @@ class cf_native_node : public cf_node_with_address {
 public:
         cf_native_node(uint32_t *bytecode);
 private:
-        std::string op_from_opcode(uint32_t opcode) const override;
         void print_detail(std::ostream& os) const override;
 
         uint8_t jumptable_se;
@@ -75,7 +76,8 @@ class cf_gws_node : public cf_node {
 public:
         cf_gws_node(uint32_t *bytecode);
 private:
-
+        void print_detail(std::ostream& os) const override;
+        static const char *opcode_as_string[4];
 
         uint16_t value;
         uint8_t resource;
@@ -88,8 +90,11 @@ private:
 class cf_mem_node : public cf_node {
 public:
         cf_mem_node(uint32_t *bytecode);
-private:
+protected:
+        static const char *type_string[4];
+        void print_mem_detail(std::ostream& os) const;
         uint8_t type;
+private:
         uint16_t rw_gpr;
         bool rw_rel;
         uint16_t index_gpr;
@@ -102,7 +107,7 @@ private:
 class cf_export_node : public cf_mem_node {
 public:
         cf_export_node(uint32_t *bytecode);
-private:
+protected:
         uint16_t array_size;
         uint8_t comp_mask;
         bool end_of_program;
@@ -112,6 +117,9 @@ class cf_rat_node : public cf_export_node {
 public:
         cf_rat_node(uint32_t *bytecode);
 private:
+        static const char *type_string[4];
+        void print_detail(std::ostream& os) const override;
+        const char *rat_inst_string(int opcode) const;
         uint8_t rat_id;
         uint8_t rat_inst;
         uint8_t rat_index_mode;
@@ -121,18 +129,19 @@ class cf_export_mem_node: public cf_export_node {
 public:
         cf_export_mem_node(uint32_t *bytecode);
 private:
+        void print_detail(std::ostream& os) const override;
+
         uint16_t array_base;
+        uint8_t sel[4];
 };
 
-class cf_mem_ring_node: public cf_mem_node {
+class cf_mem_stream_node: public cf_mem_node {
 public:
-        cf_mem_ring_node(uint32_t *bytecode);
+        cf_mem_stream_node(uint32_t *bytecode);
 private:
+        void print_detail(std::ostream& os) const override;
+
         uint16_t array_base;
-        uint8_t sel_x;
-        uint8_t sel_y;
-        uint8_t sel_z;
-        uint8_t sel_w;
 };
 
 #endif // CF_NODE_H

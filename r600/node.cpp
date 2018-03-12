@@ -15,3 +15,5 @@ int node::bytecode_size() const
 {
         return m_bytecode_size;
 }
+
+const char *node::component_names = "xyzw01?_";

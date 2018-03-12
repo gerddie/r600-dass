@@ -12,6 +12,9 @@ public:
         int bytecode_size() const;
 
         friend std::ostream& operator << (std::ostream&os, const node& n);
+
+protected:
+        static const char *component_names;
 private:
         int m_bytecode_size;
 

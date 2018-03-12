@@ -19,101 +19,7 @@ void cf_node::print(std::ostream& os) const
         print_detail(os);
 }
 
-cf_node_with_address::cf_node_with_address(unsigned bytecode_size, uint32_t *bytecode,
-                               bool alu_node):
-        cf_node(bytecode_size, bytecode, alu_node)
-{
-        addr = bytecode[0] & (alu_node ? 0x3FFFFF : 0xFFFFFF);
-}
-
-cf_alu_node::cf_alu_node(uint32_t *bytecode, bool alu_ext):
-        cf_node_with_address(alu_ext ? 4 : 2, bytecode, true),
-        nkcache(alu_ext ? 4 : 2),
-        count((bytecode[1] >> 10) & 0x7F),
-        alt_const(bytecode[1] & (1 << 25)),
-        whole_quad_mode(bytecode[1] & (1 << 30))
-{
-        kcache_bank[0] = (bytecode[0] >> 22) & 0xF;
-        kcache_mode[0] = (bytecode[0] >> 30) & 0x3;
-        kcache_addr[0] = (bytecode[1] >>  2) & 0xFF;
-
-        kcache_bank[1] = (bytecode[0] >> 26) & 0xF;
-        kcache_mode[1] = bytecode[1] & 0x3;
-        kcache_addr[1] = (bytecode[1] >> 10) & 0xFF;
-
-        if (alu_ext) {
-                for (int i = 0; i < 4; ++i) {
-                        kcache_bank_idx_mode[i] = (bytecode[2] >> (4 + 2*i)) & 3;
-                }
-                kcache_bank[2] = (bytecode[2] >> 22) & 0xF;
-                kcache_bank[3] = (bytecode[2] >> 26) & 0xF;
-                kcache_mode[2] = (bytecode[2] >> 30) & 0x3;
-                kcache_mode[3] = (bytecode[3] & 0x3);
-                kcache_addr[2] = (bytecode[3] >> 2) & 0xFF;
-                kcache_addr[3] = (bytecode[3] >> 10) & 0xFF;
-        }
-}
-
-std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
-{
-        switch (opcode) {
-        case  8: return "ALU";
-        case  9: return "ALU_PUSH_BEFORE";
-        case 10: return "ALU_POP_AFTER";
-        case 11: return "ALU_POP2_AFTER";
-        case 12: return "ALU_EXTENDED";
-        case 13: return "ALU_CONTINUE";
-        case 14: return "ALU_BREAK";
-        case 15: return "ALU_ELSE_AFTER";
-        default:
-                return "UNDEFINED";
-        }
-}
-
-void cf_alu_node::print_detail(std::ostream& os) const
-{
-        for (int i = 0; i < nkcache; ++i) {
-                os << "\n    KC" << i << ": " << kcache_bank[i]
-                   << "@0x" << std::setbase(16) << kcache_addr[i]
-                   << std::setbase(10);
-
-                switch (kcache_mode[i]) {
-                case 0: os << " NOP"; break;
-                case 1: os << " L1"; break;
-                case 2: os << " L2"; break;
-                case 3: os << " LLI"; break;
-                }
-                if (nkcache == 4) {
-                        switch (kcache_bank_idx_mode[0]) {
-                        case 0: os << " NONE"; break;
-                        case 1: os << " IDX1"; break;
-                        case 2: os << " IDX2"; break;
-                        case 3: os << " INVALID"; break;
-                        }
-                }
-                os << "\n";
-        }
-}
-
-cf_node_cf_word1::cf_node_cf_word1(uint32_t word1):
-        pop_count(word1 & 0x3),
-        cf_const((word1 >> 2) & 0x1F),
-        cond((word1 >> 8) & 0x3),
-        count((word1 >> 10) & 0x3F),
-        valid_pixel_mode(word1 & (1 << 20)),
-        end_of_program(word1 & (1 << 21)),
-        whole_quad_mode(word1 & (1 << 30))
-{
-}
-
-cf_native_node::cf_native_node(uint32_t *bytecode):
-        cf_node_with_address(2, bytecode, false),
-        jumptable_se((bytecode[0] >> 24) & 0x7),
-        word1(bytecode[1])
-{
-}
-
-std::string cf_native_node::cf_native_node::op_from_opcode(uint32_t opcode) const
+std::string cf_node::op_from_opcode(uint32_t opcode) const
 {
         switch (opcode) {
         case cf_nop: return "NOP";
@@ -181,8 +87,102 @@ std::string cf_native_node::cf_native_node::op_from_opcode(uint32_t opcode) cons
         case cf_mem_export_combined: return "MEM_EXPORT_COMB";
         case cf_mem_rat_combined_cacheless: return "MEM_RAT_COMB_CACHELESS";
 
-        default: return "UNSUPPORTED";
+        default: return "UNKNOWN";
         }
+}
+
+cf_node_with_address::cf_node_with_address(unsigned bytecode_size, uint32_t *bytecode,
+                               bool alu_node):
+        cf_node(bytecode_size, bytecode, alu_node)
+{
+        addr = bytecode[0] & (alu_node ? 0x3FFFFF : 0xFFFFFF);
+}
+
+cf_alu_node::cf_alu_node(uint32_t *bytecode, bool alu_ext):
+        cf_node_with_address(alu_ext ? 4 : 2, bytecode, true),
+        nkcache(alu_ext ? 4 : 2),
+        count((bytecode[1] >> 10) & 0x7F),
+        alt_const(bytecode[1] & (1 << 25)),
+        whole_quad_mode(bytecode[1] & (1 << 30))
+{
+        kcache_bank[0] = (bytecode[0] >> 22) & 0xF;
+        kcache_mode[0] = (bytecode[0] >> 30) & 0x3;
+        kcache_addr[0] = (bytecode[1] >>  2) & 0xFF;
+
+        kcache_bank[1] = (bytecode[0] >> 26) & 0xF;
+        kcache_mode[1] = bytecode[1] & 0x3;
+        kcache_addr[1] = (bytecode[1] >> 10) & 0xFF;
+
+        if (alu_ext) {
+                for (int i = 0; i < 4; ++i) {
+                        kcache_bank_idx_mode[i] = (bytecode[2] >> (4 + 2*i)) & 3;
+                }
+                kcache_bank[2] = (bytecode[2] >> 22) & 0xF;
+                kcache_bank[3] = (bytecode[2] >> 26) & 0xF;
+                kcache_mode[2] = (bytecode[2] >> 30) & 0x3;
+                kcache_mode[3] = (bytecode[3] & 0x3);
+                kcache_addr[2] = (bytecode[3] >> 2) & 0xFF;
+                kcache_addr[3] = (bytecode[3] >> 10) & 0xFF;
+        }
+}
+
+std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
+{
+        switch (opcode) {
+        case  8: return "ALU";
+        case  9: return "ALU_PUSH_BEFORE";
+        case 10: return "ALU_POP_AFTER";
+        case 11: return "ALU_POP2_AFTER";
+        case 12: return "ALU_EXTENDED";
+        case 13: return "ALU_CONTINUE";
+        case 14: return "ALU_BREAK";
+        case 15: return "ALU_ELSE_AFTER";
+        default:
+                return "ALU_UNKOWN";
+        }
+}
+
+void cf_alu_node::print_detail(std::ostream& os) const
+{
+        for (int i = 0; i < nkcache; ++i) {
+                os << "\n    KC" << i << ": " << kcache_bank[i]
+                   << "@0x" << std::setbase(16) << kcache_addr[i]
+                   << std::setbase(10);
+
+                switch (kcache_mode[i]) {
+                case 0: os << " NOP"; break;
+                case 1: os << " L1"; break;
+                case 2: os << " L2"; break;
+                case 3: os << " LLI"; break;
+                }
+                if (nkcache == 4) {
+                        switch (kcache_bank_idx_mode[0]) {
+                        case 0: os << " NONE"; break;
+                        case 1: os << " IDX1"; break;
+                        case 2: os << " IDX2"; break;
+                        case 3: os << " INVALID"; break;
+                        }
+                }
+                os << "\n";
+        }
+}
+
+cf_node_cf_word1::cf_node_cf_word1(uint32_t word1):
+        pop_count(word1 & 0x3),
+        cf_const((word1 >> 2) & 0x1F),
+        cond((word1 >> 8) & 0x3),
+        count((word1 >> 10) & 0x3F),
+        valid_pixel_mode(word1 & (1 << 20)),
+        end_of_program(word1 & (1 << 21)),
+        whole_quad_mode(word1 & (1 << 30))
+{
+}
+
+cf_native_node::cf_native_node(uint32_t *bytecode):
+        cf_node_with_address(2, bytecode, false),
+        jumptable_se((bytecode[0] >> 24) & 0x7),
+        word1(bytecode[1])
+{
 }
 
 const char cf_native_node::jts_names[6][3] = {
@@ -225,6 +225,22 @@ cf_gws_node::cf_gws_node(uint32_t *bytecode):
 {
 }
 
+const char *cf_gws_node::opcode_as_string[4] = {
+   "SEMA_V", "SEMA_P", "BARRIER", "INIT"
+};
+
+const char *cf_node::index_mode_string = "N01_";
+
+
+void cf_gws_node::print_detail(std::ostream& os) const
+{
+        os << opcode_as_string[gws_opcode] << " ";
+        os << "V:" << value << " ";
+        os << "SE:" << resource << " ";
+        os << "VIDX:" << index_mode_string[val_index_mode] << " ";
+        os << "RIDX:" << index_mode_string[rsrc_index_mode] << " ";
+        word1.print(os);
+ }
 
 cf_mem_node::cf_mem_node(uint32_t *bytecode):
         cf_node(2, bytecode, false),
@@ -237,6 +253,30 @@ cf_mem_node::cf_mem_node(uint32_t *bytecode):
         valid_pixel_mode(bytecode[1] & (1 << 20)),
         mark(bytecode[1] & (1 << 30))
 {
+}
+
+const char *cf_mem_node::type_string[4] = {
+        "PIXEL", "POS", "PARAM", "undefined"
+};
+
+
+void cf_mem_node::print_mem_detail(std::ostream& os) const
+{
+        os << " ES:" << elem_size + 1 << " ";
+        os << "BC:"  << burst_count << " ";
+
+        if (rw_rel)
+                os << "Loop-Rel";
+
+        if (valid_pixel_mode)
+                os << "VPM ";
+
+        if (mark)
+                os << "R-ACK ";
+
+        os << "R" << rw_gpr;
+        if (type & 1)
+                os << "[R" << index_gpr << "]";
 }
 
 cf_export_node::cf_export_node(uint32_t *bytecode):
@@ -255,19 +295,101 @@ cf_rat_node::cf_rat_node(uint32_t *bytecode):
 {
 }
 
+const char *cf_rat_node::type_string[4] = {
+        "WRITE", "WRITE_IND", "WRITE_ACK", "WRITE_IND_ACK"
+};
+
+
+void cf_rat_node::print_detail(std::ostream& os) const
+{
+        os << std::setw(23) << rat_inst_string(rat_inst) << " ";
+        os << "ID:" << rat_id << " ";
+        os << "IDXM:" << index_mode_string[rat_index_mode] << " ";
+        os << type_string[type] << " ";
+        print_mem_detail(os);
+
+        for (int i = 0; i < 4; ++i) {
+                if (comp_mask & 1 << i)
+                        os << component_names[i];
+                else
+                        os << "_";
+        }
+
+        if (end_of_program)
+                os << "  EOP";
+}
+
 cf_export_mem_node::cf_export_mem_node(uint32_t *bytecode):
         cf_export_node(bytecode),
         array_base(bytecode[0] & 0x1FFF)
 {
+        for (int i = 0; i < 4; ++i)
+                sel[i] = (bytecode[1] >> (3*i)) & 0x7;
 }
 
-cf_mem_ring_node::cf_mem_ring_node(uint32_t *bytecode):
+void cf_export_mem_node::print_detail(std::ostream& os) const
+{
+        print_mem_detail(os);
+        for (int i = 0; i < 4; ++i)
+                os << component_names[sel[i]];
+
+        if (end_of_program)
+                os << "  EOP";
+}
+
+cf_mem_stream_node::cf_mem_stream_node(uint32_t *bytecode):
         cf_mem_node(bytecode),
-        array_base(bytecode[0] & 0x1FFF),
-        sel_x(bytecode[1] & 0x7),
-        sel_y((bytecode[1] >> 3) & 0x7),
-        sel_z((bytecode[1] >> 6) & 0x7),
-        sel_w((bytecode[1] >> 9) & 0x7)
+        array_base(bytecode[0] & 0x1FFF)
 {
 }
 
+void cf_mem_stream_node::print_detail(std::ostream& os) const
+{
+        print_mem_detail(os);
+}
+
+const char *cf_rat_node::rat_inst_string(int opcode) const
+{
+        switch (opcode) {
+        case 0: return "NOP";
+        case 1: return "STORE_TYPED";
+        case 2: return "STORE_RAW";
+        case 3: return "STORE_RAW_FDNORM";
+        case 4: return "INT_CMPXCHG";
+        case 5: return "FLT_CMPXCHG";
+        case 6: return "FLT_CMPXCHG_DENORM";
+        case 7: return "INT_ADD";
+        case 8: return "INT_SUB";
+        case 9: return "INT_RSUB";
+        case 10: return "INT_MIN";
+        case 11: return "UINT_MIN";
+        case 12: return "INT_MAX";
+        case 13: return "UINT_MAX";
+        case 14: return "INT_AND";
+        case 15: return "INT_OR";
+        case 16: return "INT_XOR";
+        case 17: return "INT_MSKOR";
+        case 18: return "UINT_INC";
+        case 19: return "UINT_DEC";
+        case 32: return "NOP_RTN";
+        case 34: return "XCHG_RTN_DWORD";
+        case 35: return "XCHG_FDNORM_RTN_FLT";
+        case 36: return "INT_CMPXCHG_RTN";
+        case 37: return "FLT_CMPXCHG_RTN";
+        case 38: return "FLT_CMPXCHG_FDNORM_RTN";
+        case 39: return "INT_ADD_RTN";
+        case 40: return "INT_SUB_RTN";
+        case 41: return "INT_RSUB_RTN";
+        case 42: return "INT_MIN_RTN";
+        case 43: return "UINT_MIN_RTN";
+        case 44: return "INT_MAX_RTN";
+        case 45: return "UINT_MAX_RTN";
+        case 46: return "INT_AND_RTN";
+        case 47: return "INT_OR_RTN";
+        case 48: return "INT_XOR_RTN";
+        case 49: return "INT_MSKOR_RTN";
+        case 50: return "UINT_INC_RTN";
+        case 51: return "UINT_DEC_RTN";
+        default: return "UNDEF";
+        }
+}
