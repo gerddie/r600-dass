@@ -8,6 +8,12 @@
 #include <string>
 #include <vector>
 
+extern const uint64_t valid_pixel_mode_bit;
+extern const uint64_t end_of_program_bit;
+extern const uint64_t barrier_bit;
+extern const uint64_t whole_quad_mode_bit;
+extern const uint64_t mark_bit;
+
 class cf_node : public node {
 public:
    using pointer=std::shared_ptr<cf_node>;
@@ -19,6 +25,7 @@ protected:
    static uint32_t get_opcode(uint64_t bc);
    static uint32_t get_address(uint64_t bc);
 
+   uint32_t opcode() const;
 private:
    void print(std::ostream& os) const override;
 
@@ -39,10 +46,10 @@ public:
    void print(std::ostream& os) const;
 private:
    static const char *m_condition;
-   uint8_t m_pop_count;
-   uint8_t m_cf_const;
-   uint8_t m_cond;
-   uint8_t m_count;
+   uint16_t m_pop_count;
+   uint16_t m_cf_const;
+   uint16_t m_cond;
+   uint16_t m_count;
    bool m_valid_pixel_mode;
    bool m_end_of_program;
    bool m_whole_quad_mode;
@@ -88,7 +95,7 @@ public:
 private:
    void print_detail(std::ostream& os) const override;
 
-   uint8_t m_jumptable_se;
+   uint16_t m_jumptable_se;
    cf_node_cf_word1 m_word1;
 
    static const char m_jts_names[6][3];
@@ -102,10 +109,10 @@ private:
 
    static const char *m_opcode_as_string[4];
    uint16_t m_value;
-   uint8_t m_resource;
-   uint8_t m_val_index_mode;
-   uint8_t m_rsrc_index_mode;
-   uint8_t m_gws_opcode;
+   uint16_t m_resource;
+   uint16_t m_val_index_mode;
+   uint16_t m_rsrc_index_mode;
+   uint16_t m_gws_opcode;
    cf_node_cf_word1 m_word1;
 };
 
@@ -116,13 +123,13 @@ protected:
    void print_mem_detail(std::ostream& os) const;
 
    static const char *m_type_string[4];
-   uint8_t m_type;
+   uint16_t m_type;
 private:
    uint16_t m_rw_gpr;
    bool m_rw_rel;
    uint16_t m_index_gpr;
-   uint8_t m_elem_size;
-   uint8_t m_burst_count;
+   uint16_t m_elem_size;
+   uint16_t m_burst_count;
    bool m_valid_pixel_mode;
    bool m_mark;
 };
@@ -132,7 +139,7 @@ public:
    cf_export_node(uint64_t bc);
 protected:
    uint16_t m_array_size;
-   uint8_t m_comp_mask;
+   uint16_t m_comp_mask;
    bool m_end_of_program;
 };
 
@@ -143,9 +150,9 @@ private:
    static const char *m_type_string[4];
    void print_detail(std::ostream& os) const override;
    const char *rat_inst_string(int m_opcode) const;
-   uint8_t m_rat_id;
-   uint8_t m_rat_inst;
-   uint8_t m_rat_index_mode;
+   uint16_t m_rat_id;
+   uint16_t m_rat_inst;
+   uint16_t m_rat_index_mode;
 };
 
 class cf_export_mem_node: public cf_export_node {
@@ -155,7 +162,7 @@ private:
    void print_detail(std::ostream& os) const override;
 
    uint16_t m_array_base;
-   uint8_t m_sel[4];
+   uint16_t m_sel[4];
 };
 
 class cf_mem_stream_node: public cf_mem_node {

@@ -31,7 +31,7 @@ private:
    ECFNodeType get_cf_node_type(uint64_t bc);
 
 
-   std::vector<cf_node::pointer> programm;
+   std::vector<cf_node::pointer> program;
 };
 
 #endif // DISASSEMBLER_H

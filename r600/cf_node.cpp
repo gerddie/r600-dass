@@ -2,11 +2,11 @@
 #include <iostream>
 #include <iomanip>
 
-static constexpr uint64_t valid_pixel_mode_bit = 1ul << 20;
-static constexpr uint64_t end_of_program_bit = 1ul << 21;
-static constexpr uint64_t barrier_bit = 1ul << 63;
-static constexpr uint64_t whole_quad_mode_bit = 1ul << 62;
-static constexpr uint64_t mark_bit = 1ul << 62;
+const uint64_t valid_pixel_mode_bit = 1ul << 20;
+const uint64_t end_of_program_bit = 1ul << 21;
+const uint64_t barrier_bit = 1ul << 63;
+const uint64_t whole_quad_mode_bit = 1ul << 62;
+const uint64_t mark_bit = 1ul << 62;
 
 cf_node::cf_node(int bytecode_size, int opcode, bool barrier):
    node(bytecode_size),
@@ -15,10 +15,16 @@ cf_node::cf_node(int bytecode_size, int opcode, bool barrier):
 {
 }
 
+uint32_t cf_node::opcode() const
+{
+   return m_opcode;
+}
+
 void cf_node::print(std::ostream& os) const
 {
-   os << std::setw(23) << op_from_opcode(m_opcode);
-   os << (m_barrier ? "B" : "_");
+   os << std::setw(23) << std::left << op_from_opcode(m_opcode);
+   if (m_barrier)
+      os << "B";
    print_detail(os);
 }
 
@@ -201,7 +207,7 @@ cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
    m_cond((word1 >> 40) & 0x3),
    m_count((word1 >> 42) & 0x3F),
    m_valid_pixel_mode(word1 & valid_pixel_mode_bit),
-   m_end_of_program(word1 & end_of_program_bit),
+   m_end_of_program((word1 & end_of_program_bit) != 0),
    m_whole_quad_mode(word1 & whole_quad_mode_bit)
 {
 }
@@ -211,7 +217,7 @@ cf_native_node::cf_native_node(uint64_t bc):
                         bc & barrier_bit,
                         get_address(bc)),
    m_jumptable_se((bc >> 24) & 0x7),
-   m_word1(static_cast<uint32_t>(bc >> 32))
+   m_word1(bc)
 {
 }
 
@@ -231,7 +237,8 @@ const char cf_native_node::m_jts_names[6][3] = {
 
 void cf_native_node::print_detail(std::ostream& os) const
 {
-   os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
+   if (opcode() == cf_jump_table)
+      os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
    m_word1.print(os);
 }
 
@@ -239,11 +246,19 @@ const char *cf_node_cf_word1::m_condition = "AFBN";
 
 void cf_node_cf_word1::print(std::ostream& os) const
 {
-   os << " POP:" << m_pop_count
-      << " CONST:" <<  m_cf_const
+
+   if (m_pop_count)
+      os << " POP:" << m_pop_count;
+
+   /* Figure out when it is actually used
+    *
+   if (m_condition[m_cond] > 1) {
+      if (m_cf_const)
+         os << " COND_CONST:" <<  m_cf_const;
+
       << " COND:" << m_condition[m_cond]
          << " CNT: " << m_count;
-
+  */
    if (m_valid_pixel_mode)
       os << "VPM";
 
