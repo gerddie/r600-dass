@@ -75,8 +75,8 @@ enum ECFOpCode {
         cf_mem_write_scratch = 80,
         /* reserved 81 */
         cf_mem_ring = 82,
-        /* reserved 83 */
-        /* reserved 84 */
+        cf_export = 83,
+        cf_export_done = 84,
         cf_mem_export = 85,
         cf_mem_rat = 86,
         cf_mem_rat_cacheless = 87,

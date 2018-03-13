@@ -1,0 +1,87 @@
+#include "disassembler.h"
+#include "defines.h"
+
+#include <stdexcept>
+#include <cassert>
+
+using std::make_shared;
+using std::vector;
+using std::invalid_argument;
+
+disassembler::disassembler(const vector<uint64_t>& bc)
+{
+   if (bc.size() & 1)
+      throw invalid_argument("Bytecode length is odd, mut be even");
+
+   bool eop = false;
+   auto i = bc.begin();
+
+   cf_node::pointer cf_instr;
+
+   while (i != bc.end() && !eop) {
+
+      auto node_type = get_cf_node_type(*i);
+      switch (node_type) {
+      case nt_cf_alu:
+         if (require_two_quadwords(*i)) {
+            cf_instr = cf_node::pointer(new cf_alu_node(i[0],i[1]));
+            ++i;
+         } else {
+            cf_instr = cf_node::pointer(new cf_alu_node(i[0]));
+         }
+      default:
+         assert(0 && "Unknown node type encountered");
+      }
+
+      ++i;
+   }
+
+}
+
+bool disassembler::require_two_quadwords(uint64_t bc)
+{
+        return ((bc >> 26) & 0xF) == cf_alu_extended;
+}
+
+disassembler::ECFNodeType
+disassembler::get_cf_node_type(uint64_t bc)
+{
+        if (bc & 1 << 29)
+                return nt_cf_alu;
+
+        int opcode = (bc >> 22) & 0xFF;
+
+        if (opcode < 32)
+                return nt_cf_native;
+
+        if (opcode >= cf_mem_stream0_buf0 &&
+            opcode <= cf_mem_stream3_buf3)
+                return nt_cf_mem_stream;
+
+        switch (opcode) {
+        case cf_mem_write_scratch:
+                return nt_cf_mem_scratch;
+        case cf_mem_ring:
+        case cf_mem_ring1:
+        case cf_mem_ring2:
+        case cf_mem_ring3:
+                return nt_cf_mem_ring;
+        case cf_mem_export:
+        case cf_mem_export_combined:
+                return nt_cf_mem_export;
+        case cf_export:
+        case cf_export_done:
+                return nt_cf_export;
+        case cf_mem_rat:
+        case cf_mem_rat_cacheless:
+        case cf_mem_rat_combined_cacheless:
+                return nt_cf_mem_rat;
+        default:
+                return nt_cf_unknown;
+        }
+}
+
+std::string disassembler::as_string() const
+{
+        return "";
+}

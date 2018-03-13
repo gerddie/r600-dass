@@ -1,6 +1,6 @@
 #
 # This file is part of R600-disass a program to analyse R600
-# binary shaders. 
+# binary shaders.
 #
 # R600-disass is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,6 +72,9 @@ ENDIF()
 
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
+
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIR})
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
