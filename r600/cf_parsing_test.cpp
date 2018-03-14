@@ -46,8 +46,7 @@ TEST_F(TestDisassember, AluNopEOP)
    };
 
    run(bc, "ALU                    ADDR:2 COUNT:2\n"
-           "    KC0: 0@0x0 NOP\n"
-           "    KC1: 0@0x0 NOP\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
            "NOP                    EOP\n"
        );
 }

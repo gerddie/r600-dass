@@ -186,19 +186,21 @@ void cf_alu_node::print_detail(std::ostream& os) const
    print_address(os);
    os << " COUNT:" << m_count + 1;
    for (int i = 0; i < m_nkcache; ++i) {
-      os << "\n    KC" << i << ": " << m_kcache_bank[i]
+      if (! (i & 1))
+         os << "\n";
+      os << "    KC" << i << ": " << m_kcache_bank[i]
             << "@0x" << std::setbase(16) << m_kcache_addr[i]
                << std::setbase(10);
 
       switch (m_kcache_mode[i]) {
-      case 0: os << " NOP"; break;
+      case 0: os << " nop"; break;
       case 1: os << " L1"; break;
       case 2: os << " L2"; break;
       case 3: os << " LLI"; break;
       }
       if (m_nkcache == 4) {
          switch (m_kcache_bank_idx_mode[0]) {
-         case 0: os << " NONE"; break;
+         case 0: os << " none"; break;
          case 1: os << " IDX1"; break;
          case 2: os << " IDX2"; break;
          case 3: os << " INVALID"; break;
