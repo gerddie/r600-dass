@@ -13,6 +13,8 @@ public:
 
         friend std::ostream& operator << (std::ostream&os, const node& n);
 
+        virtual uint64_t as_bytecode() const = 0;
+
 protected:
         static const char *component_names;
 private:

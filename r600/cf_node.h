@@ -28,9 +28,11 @@ protected:
    uint32_t opcode() const;
 private:
    void print(std::ostream& os) const override;
+   void do_append_bytecode(std::vector& program) override;
 
    virtual std::string op_from_opcode(uint32_t m_opcode) const;
    virtual void print_detail(std::ostream& os) const = 0;
+   virtual void encode_parts(std::vector& program) const = 0;
 
    uint32_t m_opcode;
    bool m_barrier;
