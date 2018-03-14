@@ -49,7 +49,7 @@ bool disassembler::require_two_quadwords(uint64_t bc)
 disassembler::ECFNodeType
 disassembler::get_cf_node_type(uint64_t bc)
 {
-   if (bc & 1 << 29)
+   if (bc & 1ul << 61)
       return nt_cf_alu;
 
    int opcode = (bc >> 22) & 0xFF;

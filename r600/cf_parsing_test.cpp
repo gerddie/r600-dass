@@ -37,3 +37,17 @@ TEST_F(TestDisassember, NopNopEOP)
            "NOP                    EOP\n"
        );
 }
+
+TEST_F(TestDisassember, AluNopEOP)
+{
+   vector<uint64_t> bc = {
+      2ul | 1ul << 50 | 1ul << 61,
+      end_of_program_bit
+   };
+
+   run(bc, "ALU                    ADDR:2 COUNT:2\n"
+           "    KC0: 0@0x0 NOP\n"
+           "    KC1: 0@0x0 NOP\n"
+           "NOP                    EOP\n"
+       );
+}

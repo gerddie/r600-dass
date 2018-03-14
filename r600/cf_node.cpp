@@ -110,9 +110,14 @@ cf_node_with_address::cf_node_with_address(unsigned bytecode_size,
 {
 }
 
+void cf_node_with_address::print_address(std::ostream& os) const
+{
+   os << "ADDR:" << m_addr;
+}
+
 uint32_t cf_alu_node::get_alu_opcode(uint64_t bc)
 {
-   return (bc >> 26) & 0xF;
+   return (bc >> 58) & 0xF;
 }
 
 uint32_t cf_alu_node::get_alu_address(uint64_t bc)
@@ -126,7 +131,7 @@ cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
                         bc & barrier_bit,
                         get_alu_address(bc)),
    m_nkcache(alu_ext ? 4 : 2),
-   m_count((bc >> 42) & 0x7F),
+   m_count((bc >> 50) & 0x7F),
    m_alt_const(bc & (1 << 25)),
    m_whole_quad_mode(bc & whole_quad_mode_bit)
 {
@@ -172,12 +177,14 @@ std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
    case 14: return "ALU_BREAK";
    case 15: return "ALU_ELSE_AFTER";
    default:
-      return "ALU_UNKOWN";
+      return "ALU_UNKNOWN";
    }
 }
 
 void cf_alu_node::print_detail(std::ostream& os) const
 {
+   print_address(os);
+   os << " COUNT:" << m_count + 1;
    for (int i = 0; i < m_nkcache; ++i) {
       os << "\n    KC" << i << ": " << m_kcache_bank[i]
             << "@0x" << std::setbase(16) << m_kcache_addr[i]
@@ -197,7 +204,6 @@ void cf_alu_node::print_detail(std::ostream& os) const
          case 3: os << " INVALID"; break;
          }
       }
-      os << "\n";
    }
 }
 

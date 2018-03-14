@@ -61,6 +61,8 @@ public:
                         uint32_t opcode,
                         bool barrier,
                         uint32_t addresss);
+   void print_address(std::ostream& os) const;
+
 private:
    uint32_t m_addr;
 };
