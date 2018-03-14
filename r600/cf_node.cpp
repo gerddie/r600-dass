@@ -20,6 +20,11 @@ uint32_t cf_node::opcode() const
    return m_opcode;
 }
 
+void cf_node::do_append_bytecode(std::vector<uint64_t>& program) const
+{
+   do_append_bytecode(program);
+}
+
 void cf_node::print(std::ostream& os) const
 {
    os << std::setw(23) << std::left << op_from_opcode(m_opcode);
@@ -146,6 +151,11 @@ cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
 
 }
 
+void cf_alu_node::encode_parts(std::vector<uint64_t>& program) const
+{
+
+}
+
 cf_alu_node::cf_alu_node(uint64_t bc):
    cf_alu_node(bc, false)
 {
@@ -238,6 +248,12 @@ uint32_t cf_node::get_address(uint64_t bc)
 {
    return bc  & 0xFFFFFF;
 }
+
+void cf_native_node::encode_parts(std::vector<uint64_t>& program) const
+{
+
+}
+
 
 const char cf_native_node::m_jts_names[6][3] = {
    "CA", "CB", "CC", "CD", "I0", "I1"

@@ -73,7 +73,14 @@ ENDIF()
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 
-find_package(GTest REQUIRED)
+find_package(GTest)
+
+if (NOT GTEST_FOUND)
+        ADD_SUBDIRECTORY(/usr/src/gtest gtest)
+        SET(GTEST_LIBRARY gtest)
+        SET(GTEST_MAIN_LIBRARY gtest_main)
+endif()
+
 include_directories(${GTEST_INCLUDE_DIR})
 
 set(CMAKE_AUTOMOC ON)

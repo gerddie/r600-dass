@@ -28,11 +28,11 @@ protected:
    uint32_t opcode() const;
 private:
    void print(std::ostream& os) const override;
-   void do_append_bytecode(std::vector& program) override;
+   void do_append_bytecode(std::vector<uint64_t>& program) const override;
 
    virtual std::string op_from_opcode(uint32_t m_opcode) const;
    virtual void print_detail(std::ostream& os) const = 0;
-   virtual void encode_parts(std::vector& program) const = 0;
+   virtual void encode_parts(std::vector<uint64_t>& program) const = 0;
 
    uint32_t m_opcode;
    bool m_barrier;
@@ -80,6 +80,7 @@ private:
 
    std::string op_from_opcode(uint32_t m_opcode) const override final;
    void print_detail(std::ostream& os) const override;
+   void encode_parts(std::vector<uint64_t>& program) const override;
 
    uint16_t m_nkcache;
    uint16_t m_kcache_bank_idx_mode[4];
@@ -98,6 +99,7 @@ public:
    cf_native_node(uint64_t bc);
 private:
    void print_detail(std::ostream& os) const override;
+   void encode_parts(std::vector<uint64_t>& program) const override;
 
    uint16_t m_jumptable_se;
    cf_node_cf_word1 m_word1;

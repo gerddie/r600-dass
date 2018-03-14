@@ -16,7 +16,7 @@ int node::bytecode_size() const
         return m_bytecode_size;
 }
 
-void node::append_bytecode(std::vector& program) const
+void node::append_bytecode(std::vector<uint64_t>& program) const
 {
    do_append_bytecode(program);
 }
