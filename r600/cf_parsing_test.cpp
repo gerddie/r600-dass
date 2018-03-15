@@ -71,7 +71,7 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
 {
    vector<uint64_t> bc;
    cf_alu_node(cf_alu_push_before, 0, 6).append_bytecode(bc);
-   cf_native_node(cf_jump, 0, 4).append_bytecode(bc);
+   cf_native_node(cf_jump, cf_node::barrier, 4).append_bytecode(bc);
    cf_alu_node(cf_alu, 0, 7).append_bytecode(bc);
    cf_native_node(cf_else, 0, 5, 1).append_bytecode(bc);
    cf_alu_node(cf_alu_pop_after, 0, 8, 0).append_bytecode(bc);
