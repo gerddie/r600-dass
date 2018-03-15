@@ -89,3 +89,32 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
        );
 }
 
+TEST_F(TestDisassember, LoopBreakEOP)
+{
+   vector<uint64_t> bc;
+   cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
+   cf_native_node(cf_loop_break, 0, 2).append_bytecode(bc);
+   cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
+   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+
+   run(bc, "LOOP_START_DX10        ADDR:2\n"
+           "LOOP_BREAK             ADDR:2\n"
+           "LOOP_END               ADDR:0\n"
+           "NOP                    EOP\n"
+       );
+}
+
+TEST_F(TestDisassember, LoopContinueEOP)
+{
+   vector<uint64_t> bc;
+   cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
+   cf_native_node(cf_loop_continue, 0, 2).append_bytecode(bc);
+   cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
+   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+
+   run(bc, "LOOP_START_DX10        ADDR:2\n"
+           "LOOP_CONTINUE          ADDR:2\n"
+           "LOOP_END               ADDR:0\n"
+           "NOP                    EOP\n"
+       );
+}
