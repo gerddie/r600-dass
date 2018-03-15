@@ -1,6 +1,7 @@
 #include "cf_node.h"
 #include <iostream>
 #include <iomanip>
+#include <cassert>
 
 const uint64_t valid_pixel_mode_bit = 1ul << 20;
 const uint64_t end_of_program_bit = 1ul << 21;
@@ -8,7 +9,7 @@ const uint64_t barrier_bit = 1ul << 63;
 const uint64_t whole_quad_mode_bit = 1ul << 62;
 const uint64_t mark_bit = 1ul << 62;
 
-cf_node::cf_node(int bytecode_size, int opcode, bool barrier):
+cf_node::cf_node(int bytecode_size, uint32_t opcode, bool barrier):
    node(bytecode_size),
    m_opcode(opcode),
    m_barrier(barrier)
@@ -20,9 +21,11 @@ uint32_t cf_node::opcode() const
    return m_opcode;
 }
 
-void cf_node::do_append_bytecode(std::vector<uint64_t>& program) const
+uint64_t cf_node::create_bytecode_byte(int i) const
 {
-   do_append_bytecode(program);
+   uint64_t result = m_barrier ? barrier_bit : 0;
+   encode_parts(i, result);
+   return result;
 }
 
 void cf_node::print(std::ostream& os) const
@@ -33,7 +36,7 @@ void cf_node::print(std::ostream& os) const
    print_detail(os);
 }
 
-std::string cf_node::op_from_opcode(uint32_t opcode) const
+std::string cf_native_node::op_from_opcode(uint32_t opcode) const
 {
    switch (opcode) {
    case cf_nop: return "NOP";
@@ -120,9 +123,14 @@ void cf_node_with_address::print_address(std::ostream& os) const
    os << "ADDR:" << m_addr;
 }
 
+uint32_t cf_node_with_address::address() const
+{
+   return m_addr;
+}
+
 uint32_t cf_alu_node::get_alu_opcode(uint64_t bc)
 {
-   return (bc >> 58) & 0xF;
+   return (bc >> 54) & 0xF0;
 }
 
 uint32_t cf_alu_node::get_alu_address(uint64_t bc)
@@ -137,7 +145,7 @@ cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
                         get_alu_address(bc)),
    m_nkcache(alu_ext ? 4 : 2),
    m_count((bc >> 50) & 0x7F),
-   m_alt_const(bc & (1 << 25)),
+   m_alt_const(bc & (1ul << 57)),
    m_whole_quad_mode(bc & whole_quad_mode_bit)
 {
    m_kcache_bank[0] = (bc >> 22) & 0xF;
@@ -151,9 +159,35 @@ cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
 
 }
 
-void cf_alu_node::encode_parts(std::vector<uint64_t>& program) const
+void cf_alu_node::encode_parts(int i, uint64_t &bc) const
 {
+   assert( i == 0 || (((opcode() >> 4) == cf_alu_extended) && (i < 2)));
 
+   if ((opcode() >> 4) == cf_alu_extended && i ==0) {
+      for (int i = 0; i < 4; ++i) {
+         bc |= static_cast<uint64_t>(m_kcache_bank_idx_mode[i])
+               << (4 + 2*i);
+      }
+      bc |= static_cast<uint64_t>(m_kcache_bank[2]) << 22;
+      bc |= static_cast<uint64_t>(m_kcache_bank[3]) << 26;
+      bc |= static_cast<uint64_t>(m_kcache_mode[2]) << 30;
+      bc |= static_cast<uint64_t>(m_kcache_mode[3]) << 32;
+      bc |= static_cast<uint64_t>(m_kcache_addr[2]) << 34;
+      bc |= static_cast<uint64_t>(m_kcache_addr[3]) << 42;
+   } else {
+      bc |= address();
+      bc |= static_cast<uint64_t>(m_kcache_bank[0]) << 22;
+      bc |= static_cast<uint64_t>(m_kcache_bank[1]) << 26;
+      bc |= static_cast<uint64_t>(m_kcache_mode[0]) << 30;
+      bc |= static_cast<uint64_t>(m_kcache_mode[1]) << 32;
+      bc |= static_cast<uint64_t>(m_kcache_addr[0]) << 34;
+      bc |= static_cast<uint64_t>(m_kcache_addr[1]) << 42;
+      bc |= static_cast<uint64_t>(m_count) << 42;
+      if (m_alt_const)
+         bc |= 1ul << 57;
+      if (m_whole_quad_mode)
+         bc |= whole_quad_mode_bit;
+   }
 }
 
 cf_alu_node::cf_alu_node(uint64_t bc):
@@ -177,7 +211,7 @@ cf_alu_node::cf_alu_node(uint64_t bc, uint64_t bc_ext):
 
 std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
 {
-   switch (opcode) {
+   switch (opcode >> 4) {
    case  8: return "ALU";
    case  9: return "ALU_PUSH_BEFORE";
    case 10: return "ALU_POP_AFTER";
@@ -230,8 +264,25 @@ cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
 {
 }
 
+uint64_t cf_node_cf_word1::encode() const
+{
+   uint64_t bc = 0;
+   bc |= static_cast<uint64_t>(m_pop_count) << 32;
+   bc |= static_cast<uint64_t>(m_cf_const) <<  34;
+   bc |= static_cast<uint64_t>(m_cond) << 40;
+   bc |= static_cast<uint64_t>(m_count) << 42;
+   if (m_valid_pixel_mode)
+      bc |= valid_pixel_mode_bit;
+   if (m_end_of_program)
+      bc |= end_of_program_bit;
+   if (m_whole_quad_mode)
+      bc |= whole_quad_mode_bit;
+   return bc;
+}
+
 cf_native_node::cf_native_node(uint64_t bc):
-   cf_node_with_address(2, get_opcode(bc),
+   cf_node_with_address(2,
+                        get_opcode(bc),
                         bc & barrier_bit,
                         get_address(bc)),
    m_jumptable_se((bc >> 24) & 0x7),
@@ -249,8 +300,13 @@ uint32_t cf_node::get_address(uint64_t bc)
    return bc  & 0xFFFFFF;
 }
 
-void cf_native_node::encode_parts(std::vector<uint64_t>& program) const
+void cf_native_node::encode_parts(int i, uint64_t& bc) const
 {
+   assert(i == 0);
+
+   bc |= address();
+   bc |= m_jumptable_se << 24;
+   bc |= m_word1.encode();
 
 }
 
@@ -261,7 +317,7 @@ const char cf_native_node::m_jts_names[6][3] = {
 
 void cf_native_node::print_detail(std::ostream& os) const
 {
-   if (opcode() == cf_jump_table)
+   if (m_opcode == cf_jump_table)
       os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
    m_word1.print(os);
 }
@@ -294,7 +350,8 @@ void cf_node_cf_word1::print(std::ostream& os) const
 }
 
 cf_gws_node::cf_gws_node(uint64_t bc):
-   cf_node(2, get_opcode(bc),
+   cf_node(2,
+           get_opcode(bc),
            bc & barrier_bit),
    m_value(bc & 0x3FF),
    m_resource((bc >> 16) & 0x1F),

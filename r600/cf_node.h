@@ -18,7 +18,7 @@ class cf_node : public node {
 public:
    using pointer=std::shared_ptr<cf_node>;
 
-   cf_node(int bytecode_size, int opcode, bool barrier);
+   cf_node(int bytecode_size, uint32_t opcode, bool barrier);
 protected:
 
    static const char *m_index_mode_string;
@@ -28,11 +28,12 @@ protected:
    uint32_t opcode() const;
 private:
    void print(std::ostream& os) const override;
-   void do_append_bytecode(std::vector<uint64_t>& program) const override;
+   uint64_t create_bytecode_byte(int i) const override;
 
-   virtual std::string op_from_opcode(uint32_t m_opcode) const;
+
+   virtual std::string op_from_opcode(uint32_t m_opcode) const = 0;
    virtual void print_detail(std::ostream& os) const = 0;
-   virtual void encode_parts(std::vector<uint64_t>& program) const = 0;
+   virtual void encode_parts(int i, uint64_t& bc) const = 0;
 
    uint32_t m_opcode;
    bool m_barrier;
@@ -46,6 +47,7 @@ class cf_node_cf_word1 {
 public:
    cf_node_cf_word1(uint64_t word1);
    void print(std::ostream& os) const;
+   uint64_t encode() const;
 private:
    static const char *m_condition;
    uint16_t m_pop_count;
@@ -59,11 +61,10 @@ private:
 
 class cf_node_with_address : public cf_node {
 public:
-   cf_node_with_address(unsigned bytecode_size,
-                        uint32_t opcode,
-                        bool barrier,
-                        uint32_t addresss);
+   cf_node_with_address(unsigned bytecode_size, uint32_t opcode,
+                        bool barrier, uint32_t addresss);
    void print_address(std::ostream& os) const;
+   uint32_t address() const;
 
 private:
    uint32_t m_addr;
@@ -80,7 +81,7 @@ private:
 
    std::string op_from_opcode(uint32_t m_opcode) const override final;
    void print_detail(std::ostream& os) const override;
-   void encode_parts(std::vector<uint64_t>& program) const override;
+   void encode_parts(int i, uint64_t& bc) const override;
 
    uint16_t m_nkcache;
    uint16_t m_kcache_bank_idx_mode[4];
@@ -98,9 +99,11 @@ class cf_native_node : public cf_node_with_address {
 public:
    cf_native_node(uint64_t bc);
 private:
+   std::string op_from_opcode(uint32_t m_opcode) const override final;
    void print_detail(std::ostream& os) const override;
-   void encode_parts(std::vector<uint64_t>& program) const override;
+   void encode_parts(int i, uint64_t &bc) const override;
 
+   uint16_t m_opcode;
    uint16_t m_jumptable_se;
    cf_node_cf_word1 m_word1;
 
@@ -112,7 +115,6 @@ public:
    cf_gws_node(uint64_t bc);
 private:
    void print_detail(std::ostream& os) const override;
-
    static const char *m_opcode_as_string[4];
    uint16_t m_value;
    uint16_t m_resource;

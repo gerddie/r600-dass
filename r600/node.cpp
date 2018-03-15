@@ -18,7 +18,8 @@ int node::bytecode_size() const
 
 void node::append_bytecode(std::vector<uint64_t>& program) const
 {
-   do_append_bytecode(program);
+   for (int i = 0; i < m_bytecode_size; ++i)
+      program.push_back(create_bytecode_byte(i));
 }
 
 const char *node::component_names = "xyzw01?_";
