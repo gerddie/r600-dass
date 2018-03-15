@@ -79,7 +79,7 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
-           "JUMP                   ADDR:4\n"
+           "JUMP                   B ADDR:4\n"
            "ALU                    ADDR:7 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
            "ELSE                   ADDR:5 POP:1\n"

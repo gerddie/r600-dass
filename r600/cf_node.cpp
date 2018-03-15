@@ -34,7 +34,7 @@ void cf_node::print(std::ostream& os) const
 {
    os << std::setw(23) << std::left << op_from_opcode(m_opcode);
    if (m_barrier)
-      os << "B";
+      os << "B ";
    print_detail(os);
 }
 
