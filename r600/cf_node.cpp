@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <cassert>
 
-const uint64_t valid_pixel_mode_bit = 1ul << 20;
+const uint64_t valid_pixel_mode_bit = 1ul << 52;
 const uint64_t end_of_program_bit = 1ul << 53;
 const uint64_t barrier_bit = 1ul << 63;
 const uint64_t whole_quad_mode_bit = 1ul << 62;
@@ -300,7 +300,7 @@ cf_node_cf_word1::cf_node_cf_word1(uint16_t pop_count,
    m_count(count),
    m_valid_pixel_mode(flags & cf_node::vpm),
    m_end_of_program(flags & cf_node::eop),
-   m_whole_quad_mode(flags & cf_node::qmb)
+   m_whole_quad_mode(flags & cf_node::wqm)
 {
 
 }

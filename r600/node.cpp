@@ -22,4 +22,9 @@ void node::append_bytecode(std::vector<uint64_t>& program) const
       program.push_back(create_bytecode_byte(i));
 }
 
+uint64_t node::get_bytecode_byte(int i) const
+{
+   return create_bytecode_byte(i);
+}
+
 const char *node::component_names = "xyzw01?_";

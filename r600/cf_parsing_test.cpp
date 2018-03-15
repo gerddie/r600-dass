@@ -127,3 +127,31 @@ TEST_F(TestDisassember, WriteScratchEop)
 
    run(bc, "MEM_WRITE_SCRATCH       ES:4 BC:0 R5.xyzw ARR_SIZE:2 EOP\n");
 }
+
+using BasicTest=testing::Test;
+
+TEST_F(BasicTest, BytecodeCreationNative)
+{
+   ASSERT_EQ(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
+   ASSERT_EQ(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
+             end_of_program_bit);
+
+   ASSERT_EQ(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
+             barrier_bit);
+
+   ASSERT_EQ(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
+             whole_quad_mode_bit);
+
+   ASSERT_EQ(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
+             valid_pixel_mode_bit);
+
+   ASSERT_EQ(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
+             0x0380000100000000ul);
+
+   ASSERT_EQ(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
+             0x0380000700000000ul);
+
+   ASSERT_EQ(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
+             0x0390000000000000ul);
+
+}

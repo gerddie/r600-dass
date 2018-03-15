@@ -34,8 +34,8 @@ enum ECFOpCode {
         cf_loop_break = 9,
         cf_jump = 10,
         cf_push = 11,
-        cf_else = 12,
-        cf_pop = 13,
+        cf_else = 13,
+        cf_pop = 14,
         /* 15 - 17 reserved */
         cf_call = 18,
         cf_call_fs = 19,

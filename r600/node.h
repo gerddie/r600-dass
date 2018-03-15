@@ -13,14 +13,14 @@ public:
         int bytecode_size() const;
 
         friend std::ostream& operator << (std::ostream&os, const node& n);
-
+        uint64_t get_bytecode_byte(int i) const;
         void append_bytecode(std::vector<uint64_t>& program) const;
 protected:
         static const char *component_names;
 private:
         int m_bytecode_size;
-        virtual uint64_t create_bytecode_byte(int i) const = 0;
         virtual void print(std::ostream& os) const = 0;
+        virtual uint64_t create_bytecode_byte(int i) const = 0;
 };
 
 inline std::ostream& operator << (std::ostream&os, const node& n)
