@@ -4,10 +4,11 @@
 #include <cassert>
 
 const uint64_t valid_pixel_mode_bit = 1ul << 20;
-const uint64_t end_of_program_bit = 1ul << 21;
+const uint64_t end_of_program_bit = 1ul << 53;
 const uint64_t barrier_bit = 1ul << 63;
 const uint64_t whole_quad_mode_bit = 1ul << 62;
 const uint64_t mark_bit = 1ul << 62;
+const uint64_t rw_rel_bit = 1ul << 22;
 
 cf_node::cf_node(int bytecode_size, uint32_t opcode, bool barrier):
    node(bytecode_size),
@@ -27,6 +28,7 @@ uint64_t cf_node::create_bytecode_byte(int i) const
                      (static_cast<uint64_t>(m_opcode) << 54);
 
    encode_parts(i, result);
+   std::cerr << "bc: " << std::setbase(16) << result << "\n";
    return result;
 }
 
@@ -38,7 +40,7 @@ void cf_node::print(std::ostream& os) const
    print_detail(os);
 }
 
-std::string cf_native_node::op_from_opcode(uint32_t opcode) const
+std::string cf_node::op_from_opcode(uint32_t opcode) const
 {
    switch (opcode) {
    case cf_nop: return "NOP";
@@ -360,7 +362,6 @@ void cf_native_node::encode_parts(int i, uint64_t& bc) const
    bc |= address();
    bc |= m_jumptable_se << 24;
    bc |= m_word1.encode();
-
 }
 
 
@@ -455,8 +456,27 @@ void cf_gws_node::print_detail(std::ostream& os) const
    m_word1.print(os);
 }
 
+cf_mem_node::cf_mem_node(uint16_t opcode,
+                         uint16_t type,
+                         uint16_t rw_gpr,
+                         uint16_t index_gpr,
+                         uint16_t elem_size,
+                         uint16_t burst_count,
+                         int flags):
+   cf_node(1, opcode, flags & cf_node::barrier),
+   m_type(type),
+   m_rw_gpr(rw_gpr),
+   m_rw_rel(flags & cf_node::rw_rel),
+   m_index_gpr(index_gpr),
+   m_elem_size(elem_size),
+   m_burst_count(burst_count),
+   m_valid_pixel_mode(flags & cf_node::vpm),
+   m_mark(flags & cf_node::mark)
+{
+}
+
 cf_mem_node::cf_mem_node(uint64_t bc):
-   cf_node(2, get_opcode(bc), bc & barrier_bit),
+   cf_node(1, get_opcode(bc), bc & barrier_bit),
    m_type((bc >> 13) & 0x3),
    m_rw_gpr((bc >> 15) & 0x7F),
    m_rw_rel(bc & ( 1 << 22)),
@@ -467,6 +487,30 @@ cf_mem_node::cf_mem_node(uint64_t bc):
    m_mark(bc & mark_bit)
 {
 }
+
+void cf_mem_node::encode_parts(int i, uint64_t& bc) const
+{
+   assert(i == 0);
+
+   bc |= m_type << 13;
+   bc |= m_rw_gpr << 15;
+
+   if (m_rw_rel)
+      bc |= rw_rel_bit;
+
+   bc |= m_index_gpr << 23;
+   bc |= static_cast<uint64_t>(m_elem_size) << 30;
+   bc |= static_cast<uint64_t>(m_burst_count) << 48;
+
+   if (m_valid_pixel_mode)
+      bc |= valid_pixel_mode_bit;
+
+   if (m_mark)
+      bc |= mark_bit;
+
+   encode_mem_parts(bc);
+}
+
 
 const char *cf_mem_node::m_type_string[4] = {
    "PIXEL", "POS", "PARAM", "undefined"
@@ -498,6 +542,15 @@ cf_export_node::cf_export_node(uint64_t bc):
    m_comp_mask((bc >> 44) & 0xF),
    m_end_of_program(bc & end_of_program_bit)
 {
+}
+
+void cf_export_node::encode_mem_parts(uint64_t& bc) const
+{
+   bc |= static_cast<uint64_t>(m_array_size) << 32;
+   bc |= static_cast<uint64_t>(m_comp_mask) << 44;
+
+   if (m_end_of_program)
+      bc |= end_of_program_bit;
 }
 
 cf_rat_node::cf_rat_node(uint64_t bc):
@@ -546,8 +599,41 @@ void cf_export_mem_node::print_detail(std::ostream& os) const
    for (int i = 0; i < 4; ++i)
       os << component_names[m_sel[i]];
 
+   os << " ARR_SIZE:" << m_array_size;
+
    if (m_end_of_program)
-      os << "  EOP";
+      os << " EOP";
+}
+
+cf_export_node::cf_export_node(uint16_t opcode,
+                               uint16_t type,
+                               uint16_t rw_gpr,
+                               uint16_t index_gpr,
+                               uint16_t elem_size,
+                               uint16_t array_size,
+                               uint16_t comp_mask,
+                               uint16_t burst_count,
+                               uint16_t flags):
+   cf_mem_node(opcode, type, rw_gpr, index_gpr, elem_size,
+               burst_count, flags),
+   m_array_size(array_size),
+   m_comp_mask(comp_mask),
+   m_end_of_program(flags & cf_node::eop)
+{
+}
+
+void cf_export_node::print_detail(std::ostream& os) const
+{
+   print_mem_detail(os);
+   os << '.';
+   for (int i = 0; i < 4; ++i)
+      if (m_comp_mask & (1 << i))
+         os << component_names[i];
+      else
+         os << '_';
+   os << " ARR_SIZE:" << m_array_size;
+   if (m_end_of_program)
+      os << " EOP";
 }
 
 cf_mem_stream_node::cf_mem_stream_node(uint64_t bc):

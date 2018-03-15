@@ -33,6 +33,9 @@ disassembler::disassembler(const vector<uint64_t>& bc)
       case nt_cf_native:
          cf_instr = cf_node::pointer(new cf_native_node(*i));
          break;
+      case nt_cf_mem_scratch:
+         cf_instr = cf_node::pointer(new cf_export_node(*i));
+         break;
       default:
          assert(0 && "Unknown node type encountered");
       }
@@ -52,7 +55,7 @@ disassembler::get_cf_node_type(uint64_t bc)
    if (bc & 1ul << 61)
       return nt_cf_alu;
 
-   int opcode = (bc >> 22) & 0xFF;
+   int opcode = (bc >> 54) & 0xFF;
 
    if (opcode < 32)
       return nt_cf_native;

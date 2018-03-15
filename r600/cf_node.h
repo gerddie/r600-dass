@@ -14,6 +14,7 @@ extern const uint64_t end_of_program_bit;
 extern const uint64_t barrier_bit;
 extern const uint64_t whole_quad_mode_bit;
 extern const uint64_t mark_bit;
+extern const uint64_t rw_rel_bit;
 
 class cf_node : public node {
 public:
@@ -27,6 +28,8 @@ public:
    static const uint16_t barrier = 8;
    static const uint16_t wqm = 16;
    static const uint16_t alt_const = 32;
+   static const uint16_t rw_rel = 64;
+   static const uint16_t mark = 128;
 protected:
 
    static const char *m_index_mode_string;
@@ -39,7 +42,7 @@ private:
    uint64_t create_bytecode_byte(int i) const override;
 
 
-   virtual std::string op_from_opcode(uint32_t m_opcode) const = 0;
+   virtual std::string op_from_opcode(uint32_t m_opcode) const;
    virtual void print_detail(std::ostream& os) const = 0;
    virtual void encode_parts(int i, uint64_t& bc) const = 0;
 
@@ -131,7 +134,6 @@ public:
                   uint16_t cf_const = 0,
                   uint16_t cond = 0);
 private:
-   std::string op_from_opcode(uint32_t m_opcode) const override final;
    void print_detail(std::ostream& os) const override;
    void encode_parts(int i, uint64_t &bc) const override;
 
@@ -158,12 +160,23 @@ private:
 class cf_mem_node : public cf_node {
 public:
    cf_mem_node(uint64_t bc);
+
+   cf_mem_node(uint16_t opcode,
+               uint16_t type,
+               uint16_t rw_gpr,
+               uint16_t index_gpr,
+               uint16_t elem_size,
+               uint16_t burst_count,
+               int flags);
+
 protected:
    void print_mem_detail(std::ostream& os) const;
 
    static const char *m_type_string[4];
    uint16_t m_type;
 private:
+   void encode_parts(int i, uint64_t& bc) const override final;
+   virtual void encode_mem_parts(uint64_t& bc) const = 0;
    uint16_t m_rw_gpr;
    bool m_rw_rel;
    uint16_t m_index_gpr;
@@ -176,7 +189,19 @@ private:
 class cf_export_node : public cf_mem_node {
 public:
    cf_export_node(uint64_t bc);
+   cf_export_node(uint16_t opcode,
+                  uint16_t type,
+                  uint16_t rw_gpr,
+                  uint16_t index_gpr,
+                  uint16_t elem_size,
+                  uint16_t array_size,
+                  uint16_t comp_mask,
+                  uint16_t burst_count,
+                  uint16_t flags);
 protected:
+   void print_detail(std::ostream& os) const override;
+   void encode_mem_parts(uint64_t& bc) const override final;
+
    uint16_t m_array_size;
    uint16_t m_comp_mask;
    bool m_end_of_program;
@@ -197,6 +222,16 @@ private:
 class cf_export_mem_node: public cf_export_node {
 public:
    cf_export_mem_node(uint64_t bc);
+
+   cf_export_mem_node(uint16_t opcode,
+                      uint16_t type,
+                      uint16_t rw_gpr,
+                      uint16_t index_gpr,
+                      uint16_t elem_size,
+                      uint16_t array_size,
+                      uint16_t comp_mask,
+                      uint16_t burst_count,
+                      uint16_t flags);
 private:
    void print_detail(std::ostream& os) const override;
 
