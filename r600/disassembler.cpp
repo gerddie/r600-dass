@@ -53,8 +53,6 @@ disassembler::get_cf_node_type(uint64_t bc)
       return nt_cf_alu;
 
    int opcode = (bc >> 22) & 0xFF;
-   std::cerr << "opcode: " << opcode << "\n";
-
 
    if (opcode < 32)
       return nt_cf_native;

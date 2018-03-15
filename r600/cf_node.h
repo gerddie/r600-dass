@@ -19,6 +19,11 @@ public:
    using pointer=std::shared_ptr<cf_node>;
 
    cf_node(int bytecode_size, uint32_t opcode, bool barrier);
+
+   static const uint16_t vpm = 1;
+   static const uint16_t eop = 2;
+   static const uint16_t qmb = 4;
+   static const uint16_t barrier = 8;
 protected:
 
    static const char *m_index_mode_string;
@@ -46,8 +51,15 @@ private:
 class cf_node_cf_word1 {
 public:
    cf_node_cf_word1(uint64_t word1);
+   cf_node_cf_word1(uint16_t pop_count,
+                    uint16_t cf_const,
+                    uint16_t cond,
+                    uint16_t count,
+                    uint16_t flags);
+
    void print(std::ostream& os) const;
    uint64_t encode() const;
+
 private:
    static const char *m_condition;
    uint16_t m_pop_count;
@@ -98,12 +110,19 @@ private:
 class cf_native_node : public cf_node_with_address {
 public:
    cf_native_node(uint64_t bc);
+   cf_native_node(uint16_t opcode,
+                  uint16_t flags,
+                  uint32_t address = 0,
+                  uint16_t pop_count = 0,
+                  uint16_t count = 0,
+                  uint16_t jts = 0,
+                  uint16_t cf_const = 0,
+                  uint16_t cond = 0);
 private:
    std::string op_from_opcode(uint32_t m_opcode) const override final;
    void print_detail(std::ostream& os) const override;
    void encode_parts(int i, uint64_t &bc) const override;
 
-   uint16_t m_opcode;
    uint16_t m_jumptable_se;
    cf_node_cf_word1 m_word1;
 

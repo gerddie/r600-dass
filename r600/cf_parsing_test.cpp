@@ -50,3 +50,19 @@ TEST_F(TestDisassember, AluNopEOP)
            "NOP                    EOP\n"
        );
 }
+
+TEST_F(TestDisassember, LoopEOP)
+{
+   cf_native_node loop_begin(cf_loop_start_dx10, 0, 1);
+   cf_native_node loop_end(cf_loop_end, 0, 0);
+
+   vector<uint64_t> bc;
+   loop_begin.append_bytecode(bc);
+   loop_end.append_bytecode(bc);
+   bc.push_back(end_of_program_bit);
+
+   run(bc, "LOOP_START_DX10        ADDR:1\n"
+           "LOOP_END               ADDR:0\n"
+           "NOP                    EOP\n"
+       );
+}

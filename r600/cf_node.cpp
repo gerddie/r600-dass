@@ -23,7 +23,9 @@ uint32_t cf_node::opcode() const
 
 uint64_t cf_node::create_bytecode_byte(int i) const
 {
-   uint64_t result = m_barrier ? barrier_bit : 0;
+   uint64_t result = (m_barrier ? barrier_bit : 0) |
+                     (static_cast<uint64_t>(m_opcode) << 54);
+
    encode_parts(i, result);
    return result;
 }
@@ -139,7 +141,7 @@ uint32_t cf_alu_node::get_alu_address(uint64_t bc)
 }
 
 cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
-   cf_node_with_address(alu_ext ? 4 : 2,
+   cf_node_with_address(alu_ext ? 2 : 1,
                         get_alu_opcode(bc),
                         bc & barrier_bit,
                         get_alu_address(bc)),
@@ -264,6 +266,22 @@ cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
 {
 }
 
+cf_node_cf_word1::cf_node_cf_word1(uint16_t pop_count,
+                                   uint16_t cf_const,
+                                   uint16_t cond,
+                                   uint16_t count,
+                                   uint16_t flags):
+   m_pop_count(pop_count),
+   m_cf_const(cf_const),
+   m_cond(cond),
+   m_count(count),
+   m_valid_pixel_mode(flags & cf_node::vpm),
+   m_end_of_program(flags & cf_node::eop),
+   m_whole_quad_mode(flags & cf_node::qmb)
+{
+
+}
+
 uint64_t cf_node_cf_word1::encode() const
 {
    uint64_t bc = 0;
@@ -281,7 +299,7 @@ uint64_t cf_node_cf_word1::encode() const
 }
 
 cf_native_node::cf_native_node(uint64_t bc):
-   cf_node_with_address(2,
+   cf_node_with_address(1,
                         get_opcode(bc),
                         bc & barrier_bit,
                         get_address(bc)),
@@ -290,9 +308,23 @@ cf_native_node::cf_native_node(uint64_t bc):
 {
 }
 
+cf_native_node::cf_native_node(uint16_t opcode,
+                               uint16_t flags,
+                               uint32_t address,
+                               uint16_t pop_count,
+                               uint16_t count,
+                               uint16_t jts,
+                               uint16_t cf_const,
+                               uint16_t cond):
+   cf_node_with_address(1, opcode, flags & cf_node::barrier, address),
+   m_jumptable_se(jts),
+   m_word1(pop_count, cf_const, cond, count, flags)
+{
+}
+
 uint32_t cf_node::get_opcode(uint64_t bc)
 {
-   return (bc >> 22) & 0xFF;
+   return (bc >> 54) & 0xFF;
 }
 
 uint32_t cf_node::get_address(uint64_t bc)
@@ -317,8 +349,31 @@ const char cf_native_node::m_jts_names[6][3] = {
 
 void cf_native_node::print_detail(std::ostream& os) const
 {
-   if (m_opcode == cf_jump_table)
+   switch (opcode()) {
+   case cf_jump_table:
       os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
+   case cf_call:
+   case cf_call_fs:
+   case cf_loop_start:
+   case cf_loop_end:
+   case cf_loop_break:
+   case cf_loop_continue:
+   case cf_loop_start_dx10:
+   case cf_loop_start_no_al:
+   case cf_jump:
+   case cf_kill:
+   case cf_gds:
+   case cf_else:
+   case cf_push:
+   case cf_tc:
+   case cf_vc:
+      os << "ADDR:" << std::setbase(16) << address();
+      break;
+   case cf_wait_ack:
+      os << "WCNT:" << address();
+      break;
+   }
+
    m_word1.print(os);
 }
 
