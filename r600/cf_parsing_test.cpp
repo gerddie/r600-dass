@@ -66,3 +66,26 @@ TEST_F(TestDisassember, LoopEOP)
            "NOP                    EOP\n"
        );
 }
+
+TEST_F(TestDisassember, JUMPElseNopEOP)
+{
+   vector<uint64_t> bc;
+   cf_alu_node(cf_alu_push_before, 0, 6).append_bytecode(bc);
+   cf_native_node(cf_jump, 0, 4).append_bytecode(bc);
+   cf_alu_node(cf_alu, 0, 7).append_bytecode(bc);
+   cf_native_node(cf_else, 0, 5, 1).append_bytecode(bc);
+   cf_alu_node(cf_alu_pop_after, 0, 8, 0).append_bytecode(bc);
+   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+
+   run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "JUMP                   ADDR:4\n"
+           "ALU                    ADDR:7 COUNT:1\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "ELSE                   ADDR:5 POP:1\n"
+           "ALU_POP_AFTER          ADDR:8 COUNT:1\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "NOP                    EOP\n"
+       );
+}
+

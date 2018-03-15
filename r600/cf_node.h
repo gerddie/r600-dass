@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 
 extern const uint64_t valid_pixel_mode_bit;
 extern const uint64_t end_of_program_bit;
@@ -24,6 +25,8 @@ public:
    static const uint16_t eop = 2;
    static const uint16_t qmb = 4;
    static const uint16_t barrier = 8;
+   static const uint16_t wqm = 16;
+   static const uint16_t alt_const = 32;
 protected:
 
    static const char *m_index_mode_string;
@@ -86,6 +89,15 @@ class cf_alu_node : public cf_node_with_address {
 public:
    cf_alu_node(uint64_t bc);
    cf_alu_node(uint64_t bc, uint64_t bc_ext);
+   cf_alu_node(uint16_t opcode,
+               uint16_t flags,
+               uint16_t addr,
+               uint16_t count = 0,
+               const std::tuple<int, int,int>& kcache0 =
+                     std::make_tuple(0,0,0),
+               const std::tuple<int, int,int>& kcache1 =
+                     std::make_tuple(0,0,0));
+
 private:
    cf_alu_node(uint64_t bc, bool alu_ext);
    static uint32_t get_alu_opcode(uint64_t bc);

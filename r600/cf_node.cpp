@@ -211,6 +211,27 @@ cf_alu_node::cf_alu_node(uint64_t bc, uint64_t bc_ext):
    m_kcache_addr[3] = (bc_ext >> 42) & 0xFF;
 }
 
+cf_alu_node::cf_alu_node(uint16_t opcode,
+                         uint16_t flags,
+                         uint16_t addr,
+                         uint16_t count,
+                         const std::tuple<int, int,int>& kcache0,
+                         const std::tuple<int, int,int>& kcache1
+                         ):
+   cf_node_with_address(1, opcode << 4, flags & cf_node::barrier, addr),
+   m_count(count),
+   m_alt_const(flags & cf_node::alt_const),
+   m_whole_quad_mode(flags & cf_node::wqm)
+{
+   m_kcache_bank[0] = std::get<0>(kcache0);
+   m_kcache_mode[0] = std::get<1>(kcache0);
+   m_kcache_addr[0] = std::get<2>(kcache0);
+
+   m_kcache_bank[1] = std::get<0>(kcache1);
+   m_kcache_mode[1] = std::get<1>(kcache1);
+   m_kcache_addr[1] = std::get<2>(kcache1);
+}
+
 std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
 {
    switch (opcode >> 4) {
@@ -245,7 +266,7 @@ void cf_alu_node::print_detail(std::ostream& os) const
       case 3: os << " LLI"; break;
       }
       if (m_nkcache == 4) {
-         switch (m_kcache_bank_idx_mode[0]) {
+         switch (m_kcache_bank_idx_mode[i]) {
          case 0: os << " none"; break;
          case 1: os << " IDX1"; break;
          case 2: os << " IDX2"; break;
