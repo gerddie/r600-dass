@@ -128,9 +128,10 @@ TEST_F(TestDisassember, WriteScratchEop)
    run(bc, "MEM_WRITE_SCRATCH       ES:4 BC:0 R5.xyzw ARR_SIZE:2 EOP\n");
 }
 
-using BasicTest=testing::Test;
-
-
+/* Below tests strife to check whether the bits are properly arranged in the
+ * byte code. Doing this is a pre-requisit for testing the disassembler part
+ * properly.
+ */
 ::testing::AssertionResult SameBitmap(const uint8_t *spacing,
                                       const char* m_expr,
                                       const char* n_expr,
