@@ -130,28 +130,64 @@ TEST_F(TestDisassember, WriteScratchEop)
 
 using BasicTest=testing::Test;
 
+
+::testing::AssertionResult SameBitmap(const char* dummy,
+                                      const char* m_expr,
+                                      const char* n_expr,
+                                      const uint8_t *spacing,
+                                      uint64_t m,
+                                      uint64_t n) {
+  if (m == n)
+    return ::testing::AssertionSuccess();
+
+  std::ostringstream msg;
+  msg << "Expected:" << m_expr << " == " << n_expr << "\n got\n"
+      << " -" << std::setbase(16) << std::setw(16) << std::setfill('0') << m << "\n"
+      << " +" << std::setw(16) << n << "\n"
+      << " delta: w1: ";
+  uint64_t delta = m ^ n;
+  int tabs = 0;
+  for (int i = 63; i >= 0; --i) {
+     msg << ((delta & (1ul << i)) ? '1' : '0');
+     if (i == spacing[tabs]) {
+        msg << " ";
+        ++tabs;
+     }
+     if (i == 32)
+         msg << "\n        w0: ";
+  }
+
+  return ::testing::AssertionFailure() << msg.str();
+}
+
+#define EXPECT_BITS_EQ(F, X, Y) \
+   EXPECT_PRED_FORMAT3(SameBitmap, F, X, Y);
+
+const uint8_t cf_native_spacing[] = {
+   63, 62, 58, 42, 40, 35, 32, 27, 24, 0
+};
+
 TEST_F(BasicTest, BytecodeCreationNative)
 {
-   ASSERT_EQ(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
-   ASSERT_EQ(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
-             end_of_program_bit);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
+                  end_of_program_bit);
 
-   ASSERT_EQ(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
-             barrier_bit);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
+                  barrier_bit);
 
-   ASSERT_EQ(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
-             whole_quad_mode_bit);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
+                  whole_quad_mode_bit);
 
-   ASSERT_EQ(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
-             valid_pixel_mode_bit);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
+                  valid_pixel_mode_bit);
 
-   ASSERT_EQ(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
-             0x0380000100000000ul);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
+                  0x0380000100000000ul);
 
-   ASSERT_EQ(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
-             0x0380000700000000ul);
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
+                  0x0380000700000000ul);
 
-   ASSERT_EQ(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
-             0x0390000000000000ul);
-
+   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
+                  0x0390000000000000ul);
 }

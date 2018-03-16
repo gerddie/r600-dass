@@ -28,7 +28,6 @@ uint64_t cf_node::create_bytecode_byte(int i) const
                      (static_cast<uint64_t>(m_opcode) << 54);
 
    encode_parts(i, result);
-   std::cerr << "bc: " << std::setbase(16) << result << "\n";
    return result;
 }
 
