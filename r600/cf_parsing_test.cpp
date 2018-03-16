@@ -246,5 +246,9 @@ TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 
 TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
 {
-   check(cf_alu_node(8, 0, 2, 127).get_bytecode_byte(0), 0x21FC000000000002ul);
+   check(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),
+         0x21FC000000000002ul);
+
+   check(cf_alu_node(cf_alu_else_after, 0, 0x3FFFFFu, 1).get_bytecode_byte(0),
+         0x3C040000003FFFFFul);
 }

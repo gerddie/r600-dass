@@ -94,7 +94,7 @@ public:
    cf_alu_node(uint64_t bc, uint64_t bc_ext);
    cf_alu_node(uint16_t opcode,
                uint16_t flags,
-               uint16_t addr,
+               uint32_t addr,
                uint16_t count = 0,
                const std::tuple<int, int,int>& kcache0 =
                      std::make_tuple(0,0,0),
