@@ -164,7 +164,7 @@ using BasicTest=testing::Test;
    EXPECT_PRED_FORMAT3(SameBitmap, F, X, Y);
 
 const uint8_t cf_native_spacing[] = {
-   63, 62, 54, 42, 40, 35, 32, 27, 24, 0
+   63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24, 0
 };
 
 TEST_F(BasicTest, BytecodeCreationNative)
@@ -195,6 +195,6 @@ TEST_F(BasicTest, BytecodeCreationNative)
                   0x82C0000000000000ul);
 
    EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
-                  0x4040000000000000ul);
+                  0x4040080000000003ul);
 
 }
