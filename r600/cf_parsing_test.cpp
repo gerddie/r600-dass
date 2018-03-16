@@ -252,6 +252,32 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
    check(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),
          0x21FC000000000002ul);
 
+   check(cf_alu_node(cf_alu, cf_node::alt_const, 2, 127).get_bytecode_byte(0),
+         0x23FC000000000002ul);
+
+   check(cf_alu_node(cf_alu, cf_node::wqm, 2, 127).get_bytecode_byte(0),
+         0x61FC000000000002ul);
+
+   check(cf_alu_node(cf_alu, cf_node::barrier, 2, 127).get_bytecode_byte(0),
+         0xA1FC000000000002ul);
+
    check(cf_alu_node(cf_alu_else_after, 0, 0x3FFFFFu, 1).get_bytecode_byte(0),
          0x3C040000003FFFFFul);
+
+
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{15, 0, 0}).get_bytecode_byte(0),
+         0x2004000003C00003ul);
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{15, 0, 0}).get_bytecode_byte(0),
+         0x200400003C000003ul);
+
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 3, 0}).get_bytecode_byte(0),
+         0x20040000C0000003ul);
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 3, 0}).get_bytecode_byte(0),
+         0x2004000300000003ul);
+
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 255}).get_bytecode_byte(0),
+         0x200403FC00000003ul);
+   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 0, 255}).get_bytecode_byte(0),
+         0x2007FC0000000003ul);
+
 }
