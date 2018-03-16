@@ -207,6 +207,6 @@ TEST_F(BasicTest, BytecodeCreationNative)
                   0x470014010000000Aul);
 
    EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
-                  0x0100000100000014ul);
+                  0x8280000100000014ul);
 
 }
