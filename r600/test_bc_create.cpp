@@ -68,11 +68,25 @@ protected:
    }
 };
 
-#define TEST_EQ(X, Y) check(#X, #Y, X, Y)
-
 const uint8_t BytecodeCFAluTest::spaces[] = {
    63, 62, 58, 57, 50, 42, 34, 32, 30, 26, 22, 0
 };
+
+class BytecodeCFGlobalWaveSync: public BytecodeCFTest {
+   static const uint8_t spaces[];
+protected:
+   void check(const char *s_data, const char *s_expect,
+              uint64_t data, uint64_t expect) const {
+      do_check(spaces, s_data, s_expect, data, expect);
+   }
+};
+
+const uint8_t BytecodeCFGlobalWaveSync::spaces[] = {
+   63, 62, 54, 53, 52, 48, 42, 40, 35, 32,
+   30, 28, 26, 25, 21, 16, 10, 0
+};
+
+#define TEST_EQ(X, Y) check(#X, #Y, X, Y)
 
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 {
@@ -224,4 +238,99 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
 
    TEST_EQ(ext8.get_bytecode_byte(1), 0x300403FF00000003ul);
    TEST_EQ(ext8.get_bytecode_byte(0), 0x3003FC0000000800ul);
+}
+
+TEST_F(BytecodeCFGlobalWaveSync, )
+{
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x0780000000000000ul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       3 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x07800000C0000000ul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       2 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x0780000020000000ul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       2 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+
+           0x0780000008000000ul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0x1F /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x07800000001F0000ul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       0 /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0x3FF /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x07800000000003FFul);
+
+   TEST_EQ(cf_gws_node(cf_global_wave_sync,
+                       0 /* gws_opcode */,
+                       cf_node::sign /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x0780000002000000ul);
 }

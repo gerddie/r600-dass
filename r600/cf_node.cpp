@@ -9,6 +9,7 @@ const uint64_t barrier_bit = 1ul << 63;
 const uint64_t whole_quad_mode_bit = 1ul << 62;
 const uint64_t mark_bit = 1ul << 62;
 const uint64_t rw_rel_bit = 1ul << 22;
+const uint64_t sign_bit = 1ul << 25;
 
 cf_node::cf_node(int bytecode_size, uint32_t opcode, bool barrier):
    node(bytecode_size),
@@ -475,6 +476,43 @@ void cf_gws_node::print_detail(std::ostream& os) const
    os << "VIDX:" << m_index_mode_string[m_val_index_mode] << " ";
    os << "RIDX:" << m_index_mode_string[m_rsrc_index_mode] << " ";
    m_word1.print(os);
+}
+
+cf_gws_node::cf_gws_node(uint32_t opcode,
+                         short gws_opcode,
+                         int flags,
+                         uint16_t pop_count,
+                         uint16_t cf_const,
+                         uint16_t cond,
+                         uint16_t count,
+                         short value,
+                         short resource,
+                         short val_index_mode,
+                         short rsrc_index_mode):
+   cf_node(1, opcode, flags & cf_node::barrier),
+   m_value(value),
+   m_resource(resource),
+   m_val_index_mode(val_index_mode),
+   m_rsrc_index_mode(rsrc_index_mode),
+   m_gws_opcode(gws_opcode),
+   m_sign(flags & cf_node::sign),
+   m_word1(pop_count, cf_const,cond, count, flags)
+{
+}
+
+void cf_gws_node::encode_parts(int i, uint64_t &bc) const
+{
+   assert(i==0);
+   bc |= m_word1.encode();
+   bc |= m_value;
+   bc |= m_resource << 16;
+   bc |= m_val_index_mode << 26;
+   bc |= m_rsrc_index_mode << 28;
+   bc |= static_cast<uint64_t>(m_gws_opcode) << 30;
+
+   if (m_sign)
+      bc |= sign_bit;
+
 }
 
 cf_mem_node::cf_mem_node(uint16_t opcode,

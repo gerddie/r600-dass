@@ -30,6 +30,7 @@ public:
    static const uint16_t alt_const = 32;
    static const uint16_t rw_rel = 64;
    static const uint16_t mark = 128;
+   static const uint16_t sign = 256;
 protected:
 
    static const char *m_index_mode_string;
@@ -156,14 +157,28 @@ private:
 class cf_gws_node : public cf_node {
 public:
    cf_gws_node(uint64_t bc);
+   cf_gws_node(uint32_t opcode,
+               short gws_opcode,
+               int flags,
+               uint16_t pop_count,
+               uint16_t cf_const,
+               uint16_t cond,
+               uint16_t count,
+               short value,
+               short resources,
+               short val_index_mode,
+               short res_index_mode);
+
 private:
    void print_detail(std::ostream& os) const override;
+   void encode_parts(int i, uint64_t &bc) const override;
    static const char *m_opcode_as_string[4];
    uint16_t m_value;
    uint16_t m_resource;
    uint16_t m_val_index_mode;
    uint16_t m_rsrc_index_mode;
    uint16_t m_gws_opcode;
+   bool m_sign;
    cf_node_cf_word1 m_word1;
 };
 
