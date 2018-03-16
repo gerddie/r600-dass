@@ -318,4 +318,11 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
 
    TEST_EQ(ext4.get_bytecode_byte(1), 0x3004000000000003ul);
    TEST_EQ(ext4.get_bytecode_byte(0), 0x300000003C000400ul);
+
+   cf_alu_node ext5(cf_alu_extended, 0, 0x3u, 1, {2,0,0,0},
+                    {0, 0, 0}, {0, 0, 0},
+                    {0, 3, 0}, {0, 0, 0});
+
+   TEST_EQ(ext5.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext5.get_bytecode_byte(0), 0x30000000C0000008ul);
 }
