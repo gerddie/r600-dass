@@ -101,6 +101,16 @@ public:
                const std::tuple<int, int,int>& kcache1 =
                      std::make_tuple(0,0,0));
 
+   cf_alu_node(uint16_t opcode,
+               uint16_t flags,
+               uint32_t addr,
+               uint16_t count,
+               const std::vector<uint16_t>& mode,
+               const std::tuple<int,int,int>& kcache0,
+               const std::tuple<int,int,int>& kcache1,
+               const std::tuple<int,int,int>& kcache2,
+               const std::tuple<int,int,int>& kcache3);
+
 private:
    cf_alu_node(uint64_t bc, bool alu_ext);
    static uint32_t get_alu_opcode(uint64_t bc);

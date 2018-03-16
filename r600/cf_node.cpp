@@ -233,6 +233,28 @@ cf_alu_node::cf_alu_node(uint16_t opcode,
    m_kcache_addr[1] = std::get<2>(kcache1);
 }
 
+cf_alu_node::cf_alu_node(uint16_t opcode,
+                         uint16_t flags,
+                         uint32_t addr,
+                         uint16_t count,
+                         const std::vector<uint16_t>& mode,
+                         const std::tuple<int,int,int>& kcache0,
+                         const std::tuple<int,int,int>& kcache1,
+                         const std::tuple<int,int,int>& kcache2,
+                         const std::tuple<int,int,int>& kcache3):
+   cf_alu_node(opcode, flags, addr, count, kcache0, kcache1)
+{
+   assert(mode.size() == 4);
+   std::copy(mode.begin(), mode.end(), &m_kcache_bank_idx_mode[0]);
+   m_kcache_bank[2] = std::get<0>(kcache2);
+   m_kcache_mode[2] = std::get<1>(kcache2);
+   m_kcache_addr[2] = std::get<2>(kcache2);
+   m_kcache_bank[3] = std::get<0>(kcache3);
+   m_kcache_mode[3] = std::get<1>(kcache3);
+   m_kcache_addr[3] = std::get<2>(kcache3);
+}
+
+
 std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
 {
    switch (opcode >> 4) {

@@ -131,10 +131,9 @@ TEST_F(TestDisassember, WriteScratchEop)
 using BasicTest=testing::Test;
 
 
-::testing::AssertionResult SameBitmap(const char* dummy,
+::testing::AssertionResult SameBitmap(const uint8_t *spacing,
                                       const char* m_expr,
                                       const char* n_expr,
-                                      const uint8_t *spacing,
                                       uint64_t m,
                                       uint64_t n) {
   if (m == n)
@@ -160,22 +159,21 @@ using BasicTest=testing::Test;
   return ::testing::AssertionFailure() << msg.str();
 }
 
-#define EXPECT_BITS_EQ(F, X, Y) \
-   EXPECT_PRED_FORMAT3(SameBitmap, F, X, Y);
-
-
 class BytecodeCFTest: public testing::Test {
 protected:
-   void do_check(const uint8_t spacing[], uint64_t data, uint64_t expect) const {
-      EXPECT_BITS_EQ(spacing, data, expect);
+   void do_check(const uint8_t spacing[],
+                 const char *s_data, const char *s_expect,
+                 uint64_t data, uint64_t expect) const {
+      GTEST_ASSERT_(SameBitmap(spacing, s_data, s_expect, data, expect),
+                    GTEST_NONFATAL_FAILURE_);
    }
 };
 
 class BytecodeCFNativeTest: public BytecodeCFTest {
    static const uint8_t spaces[];
 protected:
-   void check(uint64_t data, uint64_t expect) const {
-      do_check(spaces, data, expect);
+   void check(const char *s_data, const char *s_expect, uint64_t data, uint64_t expect) const {
+      do_check(spaces, s_data, s_expect, data, expect);
    }
 };
 
@@ -186,98 +184,138 @@ const uint8_t BytecodeCFNativeTest::spaces[] = {
 class BytecodeCFAluTest: public BytecodeCFTest {
    static const uint8_t spaces[];
 protected:
-   void check(uint64_t data, uint64_t expect) const {
-      do_check(spaces, data, expect);
+   void check(const char *s_data, const char *s_expect,
+              uint64_t data, uint64_t expect) const {
+      do_check(spaces, s_data, s_expect, data, expect);
    }
 };
 
+#define TEST_EQ(X, Y) check(#X, #Y, X, Y)
+
 const uint8_t BytecodeCFAluTest::spaces[] = {
-   63, 62, 58, 57, 40, 42, 34, 32, 30, 26, 22, 0
+   63, 62, 58, 57, 50, 42, 34, 32, 30, 26, 22, 0
 };
 
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 {
-   check(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
-   check(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
+   TEST_EQ(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
          end_of_program_bit);
 
-   check(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
          barrier_bit);
 
-   check(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
          whole_quad_mode_bit);
 
-   check(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
          valid_pixel_mode_bit);
 
-   check(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
          0x0380000100000000ul);
 
-   check(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
          0x0380000700000000ul);
 
-   check(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
          0x0390000000000000ul);
 
-   check(cf_native_node(cf_push, cf_node::barrier).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_push, cf_node::barrier).get_bytecode_byte(0),
          0x82C0000000000000ul);
 
-   check(cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
          0x4040080000000003ul);
 
-   check(cf_native_node(cf_tc_ack, 0, 3, 0, 2).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_tc_ack, 0, 3, 0, 2).get_bytecode_byte(0),
          0x06C0080000000003ul);
 
-   check(cf_native_node(cf_vc, cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_vc, cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
          0x00A014010000000Aul);
 
-   check(cf_native_node(cf_vc_ack, cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_vc_ack, cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
          0x470014010000000Aul);
 
-   check(cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
          0x8280000100000014ul);
 
-   check(cf_native_node(cf_jump, cf_node::barrier, 0xFFFFFF, 0).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump, cf_node::barrier, 0xFFFFFF, 0).get_bytecode_byte(0),
          0x8280000000FFFFFFul);
 
-   check(cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
          0x8740000003000100ul);
 
-   check(cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
          0x80C00C0000000100ul);
 }
 
 TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
 {
-   check(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),
          0x21FC000000000002ul);
 
-   check(cf_alu_node(cf_alu, cf_node::alt_const, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, cf_node::alt_const, 2, 127).get_bytecode_byte(0),
          0x23FC000000000002ul);
 
-   check(cf_alu_node(cf_alu, cf_node::wqm, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, cf_node::wqm, 2, 127).get_bytecode_byte(0),
          0x61FC000000000002ul);
 
-   check(cf_alu_node(cf_alu, cf_node::barrier, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, cf_node::barrier, 2, 127).get_bytecode_byte(0),
          0xA1FC000000000002ul);
 
-   check(cf_alu_node(cf_alu_else_after, 0, 0x3FFFFFu, 1).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu_else_after, 0, 0x3FFFFFu, 1).get_bytecode_byte(0),
          0x3C040000003FFFFFul);
 
 
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{15, 0, 0}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{15, 0, 0}).get_bytecode_byte(0),
          0x2004000003C00003ul);
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{15, 0, 0}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{15, 0, 0}).get_bytecode_byte(0),
          0x200400003C000003ul);
 
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 3, 0}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 3, 0}).get_bytecode_byte(0),
          0x20040000C0000003ul);
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 3, 0}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 3, 0}).get_bytecode_byte(0),
          0x2004000300000003ul);
 
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 255}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 255}).get_bytecode_byte(0),
          0x200403FC00000003ul);
-   check(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 0, 255}).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 0, 0x3u, 1,{0, 0, 0},{0, 0, 255}).get_bytecode_byte(0),
          0x2007FC0000000003ul);
+}
 
+TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
+{
+   cf_alu_node ext0(cf_alu_extended, 0, 0x3u, 1, {1,0,0,0},
+                    {0, 0, 0}, {0, 0, 255},
+                    {0, 0, 0}, {0, 0, 0});
+
+   TEST_EQ(ext0.get_bytecode_byte(1), 0x3007FC0000000003ul);
+   TEST_EQ(ext0.get_bytecode_byte(0), 0x3000000000000010ul);
+
+   cf_alu_node ext1(cf_alu_extended, 0, 0x3u, 1, {0,1,0,0},
+                    {0, 0, 0}, {0, 0, 0},
+                    {0, 0, 255}, {0, 0, 0});
+
+   TEST_EQ(ext1.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext1.get_bytecode_byte(0), 0x300003FC00000040ul);
+
+   cf_alu_node ext2(cf_alu_extended, 0, 0x3u, 1, {0,1,0,0},
+                    {0, 0, 0}, {0, 0, 0},
+                    {0, 0, 0}, {0, 0, 255});
+
+   TEST_EQ(ext2.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext2.get_bytecode_byte(0), 0x3003FC0000000040ul);
+
+   cf_alu_node ext3(cf_alu_extended, 0, 0x3u, 1, {0,0,1,0},
+                    {0, 0, 0}, {0, 0, 0},
+                    {15, 0, 0}, {0, 0, 0});
+
+   TEST_EQ(ext3.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext3.get_bytecode_byte(0), 0x3000000003C00100ul);
+
+   cf_alu_node ext4(cf_alu_extended, 0, 0x3u, 1, {0,0,0,1},
+                    {0, 0, 0}, {0, 0, 0},
+                    {0, 0, 0}, {15, 0, 0});
+
+   TEST_EQ(ext4.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext4.get_bytecode_byte(0), 0x300000003C000400ul);
 }
