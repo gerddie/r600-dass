@@ -243,3 +243,8 @@ TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
    check(cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
          0x80C00C0000000100ul);
 }
+
+TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
+{
+   check(cf_alu_node(8, 0, 2, 127).get_bytecode_byte(0), 0x21FC000000000002ul);
+}

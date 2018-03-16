@@ -185,7 +185,7 @@ void cf_alu_node::encode_parts(int i, uint64_t &bc) const
       bc |= static_cast<uint64_t>(m_kcache_mode[1]) << 32;
       bc |= static_cast<uint64_t>(m_kcache_addr[0]) << 34;
       bc |= static_cast<uint64_t>(m_kcache_addr[1]) << 42;
-      bc |= static_cast<uint64_t>(m_count) << 42;
+      bc |= static_cast<uint64_t>(m_count) << 50;
       if (m_alt_const)
          bc |= 1ul << 57;
       if (m_whole_quad_mode)
