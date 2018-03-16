@@ -167,52 +167,61 @@ const uint8_t cf_native_spacing[] = {
    63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24, 0
 };
 
-TEST_F(BasicTest, BytecodeCreationNative)
+class BytecodeCFNativeTest: public testing::Test {
+protected:
+   void check(uint64_t data, uint64_t expect) const;
+};
+
+void BytecodeCFNativeTest::check(uint64_t data, uint64_t expect) const
 {
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
-                  end_of_program_bit);
+   EXPECT_BITS_EQ(cf_native_spacing, data, expect);
+}
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
-                  barrier_bit);
+TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
+{
+   check(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
+   check(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
+         end_of_program_bit);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
-                  whole_quad_mode_bit);
+   check(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
+         barrier_bit);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
-                  valid_pixel_mode_bit);
+   check(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
+         whole_quad_mode_bit);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
-                  0x0380000100000000ul);
+   check(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
+         valid_pixel_mode_bit);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
-                  0x0380000700000000ul);
+   check(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
+         0x0380000100000000ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
-                  0x0390000000000000ul);
+   check(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
+         0x0380000700000000ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_push, cf_node::barrier).get_bytecode_byte(0),
-                  0x82C0000000000000ul);
+   check(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
+         0x0390000000000000ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
-                  0x4040080000000003ul);
+   check(cf_native_node(cf_push, cf_node::barrier).get_bytecode_byte(0),
+         0x82C0000000000000ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_tc_ack, 0, 3, 0, 2).get_bytecode_byte(0),
-                  0x06C0080000000003ul);
+   check(cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
+         0x4040080000000003ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_vc, cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
-                  0x00A014010000000Aul);
+   check(cf_native_node(cf_tc_ack, 0, 3, 0, 2).get_bytecode_byte(0),
+         0x06C0080000000003ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_vc_ack, cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
-                  0x470014010000000Aul);
+   check(cf_native_node(cf_vc, cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
+         0x00A014010000000Aul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
-                  0x8280000100000014ul);
+   check(cf_native_node(cf_vc_ack, cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
+         0x470014010000000Aul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
-                  0x8740000003000100ul);
+   check(cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
+         0x8280000100000014ul);
 
-   EXPECT_BITS_EQ(cf_native_spacing, cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
-                  0x80C00C0000000100ul);
+   check(cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
+         0x8740000003000100ul);
 
+   check(cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
+         0x80C00C0000000100ul);
 }
