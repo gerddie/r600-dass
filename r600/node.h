@@ -19,6 +19,7 @@ protected:
         static const char *component_names;
 private:
         int m_bytecode_size;
+
         virtual void print(std::ostream& os) const = 0;
         virtual uint64_t create_bytecode_byte(int i) const = 0;
 };
