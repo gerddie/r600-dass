@@ -237,6 +237,9 @@ TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
    check(cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
          0x8280000100000014ul);
 
+   check(cf_native_node(cf_jump, cf_node::barrier, 0xFFFFFF, 0).get_bytecode_byte(0),
+         0x8280000000FFFFFFul);
+
    check(cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
          0x8740000003000100ul);
 
