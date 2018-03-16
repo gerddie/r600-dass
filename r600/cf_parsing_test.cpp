@@ -163,19 +163,37 @@ using BasicTest=testing::Test;
 #define EXPECT_BITS_EQ(F, X, Y) \
    EXPECT_PRED_FORMAT3(SameBitmap, F, X, Y);
 
-const uint8_t cf_native_spacing[] = {
-   63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24, 0
-};
 
-class BytecodeCFNativeTest: public testing::Test {
+class BytecodeCFTest: public testing::Test {
 protected:
-   void check(uint64_t data, uint64_t expect) const;
+   void do_check(const uint8_t spacing[], uint64_t data, uint64_t expect) const {
+      EXPECT_BITS_EQ(spacing, data, expect);
+   }
 };
 
-void BytecodeCFNativeTest::check(uint64_t data, uint64_t expect) const
-{
-   EXPECT_BITS_EQ(cf_native_spacing, data, expect);
-}
+class BytecodeCFNativeTest: public BytecodeCFTest {
+   static const uint8_t spaces[];
+protected:
+   void check(uint64_t data, uint64_t expect) const {
+      do_check(spaces, data, expect);
+   }
+};
+
+const uint8_t BytecodeCFNativeTest::spaces[] = {
+     63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24, 0
+};
+
+class BytecodeCFAluTest: public BytecodeCFTest {
+   static const uint8_t spaces[];
+protected:
+   void check(uint64_t data, uint64_t expect) const {
+      do_check(spaces, data, expect);
+   }
+};
+
+const uint8_t BytecodeCFAluTest::spaces[] = {
+   63, 62, 58, 57, 40, 42, 34, 32, 30, 26, 22, 0
+};
 
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 {
