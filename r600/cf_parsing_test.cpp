@@ -324,5 +324,26 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
                     {0, 3, 0}, {0, 0, 0});
 
    TEST_EQ(ext5.get_bytecode_byte(1), 0x3004000000000003ul);
-   TEST_EQ(ext5.get_bytecode_byte(0), 0x30000000C0000008ul);
+   TEST_EQ(ext5.get_bytecode_byte(0), 0x30000000C0000020ul);
+
+   cf_alu_node ext6(cf_alu_extended, 0, 0x3u, 1, {0,2,0,0},
+                    {0, 0, 0}, {0, 0, 0},
+                    {0, 0, 0}, {0, 3, 0});
+
+   TEST_EQ(ext6.get_bytecode_byte(1), 0x3004000000000003ul);
+   TEST_EQ(ext6.get_bytecode_byte(0), 0x3000000300000080ul);
+
+   cf_alu_node ext7(cf_alu_extended, 0, 0x3u, 1, {0,0,2,0},
+                    {0, 0, 0}, {0, 3, 0},
+                    {0, 0, 0}, {0, 0, 0});
+
+   TEST_EQ(ext7.get_bytecode_byte(1), 0x3004000300000003ul);
+   TEST_EQ(ext7.get_bytecode_byte(0), 0x3000000000000200ul);
+
+   cf_alu_node ext8(cf_alu_extended, 0, 0x3u, 1, {0,0,0,2},
+                    {0, 0, 255}, {0, 3, 0},
+                    {0, 0, 0}, {0, 0, 255});
+
+   TEST_EQ(ext8.get_bytecode_byte(1), 0x300403FF00000003ul);
+   TEST_EQ(ext8.get_bytecode_byte(0), 0x3003FC0000000800ul);
 }
