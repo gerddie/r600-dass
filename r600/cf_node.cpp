@@ -670,6 +670,7 @@ void cf_export_node::encode_mem_parts(uint64_t& bc) const
 {
    bc |= static_cast<uint64_t>(m_array_size) << 32;
    bc |= static_cast<uint64_t>(m_comp_mask) << 44;
+   encode_export_parts(bc);
 }
 
 void cf_export_node::print_mem_detail(std::ostream& os) const
