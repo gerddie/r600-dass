@@ -632,7 +632,7 @@ const char *cf_mem_node::m_type_string[4] = {
 };
 
 
-void cf_mem_node::print_mem_detail(std::ostream& os) const
+void cf_mem_node::print_detail(std::ostream& os) const
 {
    os << " ES:" << m_elem_size + 1;
    os << " BC:"  << m_burst_count;
@@ -640,67 +640,14 @@ void cf_mem_node::print_mem_detail(std::ostream& os) const
    os << " R" << m_rw_gpr;
    if (m_type & 1)
       os << "[R" << m_index_gpr << "]";
+   print_mem_detail(os);
+   print_flags(os);
 }
 
 cf_export_node::cf_export_node(uint64_t bc):
    cf_mem_node(bc),
-   m_array_size((bc >> 32) & 0xFFF),
-   m_comp_mask((bc >> 44) & 0xF)
+   m_array_size((bc >> 32) & 0xFFF)
 {
-}
-
-void cf_export_node::encode_mem_parts(uint64_t& bc) const
-{
-   bc |= static_cast<uint64_t>(m_array_size) << 32;
-   bc |= static_cast<uint64_t>(m_comp_mask) << 44;
-}
-
-cf_rat_node::cf_rat_node(uint64_t bc):
-   cf_export_node(bc),
-   m_rat_id(bc & 0xF),
-   m_rat_inst((bc >> 4) & 0x3F),
-   m_rat_index_mode((bc >> 11) & 0x3)
-{
-}
-
-const char *cf_rat_node::m_type_string[4] = {
-   "WRITE", "WRITE_IND", "WRITE_ACK", "WRITE_IND_ACK"
-};
-
-
-void cf_rat_node::print_detail(std::ostream& os) const
-{
-   os << std::setw(23) << rat_inst_string(m_rat_inst) << " ";
-   os << "ID:" << m_rat_id << " ";
-   os << "IDXM:" << m_index_mode_string[m_rat_index_mode] << " ";
-   os << m_type_string[m_type] << " ";
-   print_mem_detail(os);
-
-   for (int i = 0; i < 4; ++i) {
-      if (m_comp_mask & 1 << i)
-         os << component_names[i];
-      else
-         os << "_";
-   }
-   print_flags(os);
-}
-
-cf_export_mem_node::cf_export_mem_node(uint64_t bc):
-   cf_export_node(bc),
-   m_array_base(bc & 0x1FFF)
-{
-   for (int i = 0; i < 4; ++i)
-      m_sel[i] = (bc >> (3*i + 32)) & 0x7;
-}
-
-void cf_export_mem_node::print_detail(std::ostream& os) const
-{
-   print_mem_detail(os);
-   for (int i = 0; i < 4; ++i)
-      os << component_names[m_sel[i]];
-
-   os << " ARR_SIZE:" << m_array_size;
-   print_flags(os);
 }
 
 cf_export_node::cf_export_node(uint16_t opcode,
@@ -711,7 +658,7 @@ cf_export_node::cf_export_node(uint16_t opcode,
                                uint16_t array_size,
                                uint16_t comp_mask,
                                uint16_t burst_count,
-                               const cf_flags& flags):
+                               const cf_flags &flags):
    cf_mem_node(opcode, type, rw_gpr, index_gpr, elem_size,
                burst_count, flags),
    m_array_size(array_size),
@@ -719,29 +666,131 @@ cf_export_node::cf_export_node(uint16_t opcode,
 {
 }
 
-void cf_export_node::print_detail(std::ostream& os) const
+void cf_export_node::encode_mem_parts(uint64_t& bc) const
 {
-   print_mem_detail(os);
-   os << '.';
-   for (int i = 0; i < 4; ++i)
-      if (m_comp_mask & (1 << i))
-         os << component_names[i];
-      else
-         os << '_';
-   os << " ARR_SIZE:" << m_array_size;
-   print_flags(os);
+   bc |= static_cast<uint64_t>(m_array_size) << 32;
+   bc |= static_cast<uint64_t>(m_comp_mask) << 44;
 }
 
-cf_mem_stream_node::cf_mem_stream_node(uint64_t bc):
+void cf_export_node::print_mem_detail(std::ostream& os) const
+{
+   for (int i = 0; i < 4; ++i) {
+      if (m_comp_mask & 1 << i)
+         os << component_names[i];
+      else
+         os << "_";
+   }
+   os << " ARR_SIZE:" << m_array_size;
+   print_export_detail(os);
+}
+
+cf_rat_node::cf_rat_node(uint64_t bc):
+   cf_export_node(bc),
+   m_rat_id(bc & 0xF),
+   m_rat_inst((bc >> 4) & 0x3F),
+   m_rat_index_mode((bc >> 11) & 0x3)
+{
+}
+
+cf_rat_node::cf_rat_node(uint16_t opcode,
+                         uint16_t rat_inst,
+                         uint16_t rat_id,
+                         uint16_t rat_index_mode,
+                         uint16_t type,
+                         uint16_t rw_gpr,
+                         uint16_t index_gpr,
+                         uint16_t elem_size,
+                         uint16_t array_size,
+                         uint16_t comp_mask,
+                         uint16_t burst_count,
+                         const cf_flags &flags):
+   cf_export_node(opcode, type, rw_gpr, index_gpr, elem_size,
+                  array_size, comp_mask, burst_count, flags),
+   m_rat_id(rat_id),
+   m_rat_inst(rat_inst),
+   m_rat_index_mode(rat_index_mode)
+{
+}
+
+const char *cf_rat_node::m_type_string[4] = {
+   "WRITE", "WRITE_IND", "WRITE_ACK", "WRITE_IND_ACK"
+};
+
+
+void cf_rat_node::encode_export_parts(uint64_t &bc) const
+{
+   bc |= m_rat_id;
+   bc |= m_rat_inst << 4;
+   bc |= m_rat_index_mode << 11;
+}
+
+
+void cf_rat_node::print_export_detail(std::ostream& os) const
+{
+   os << std::setw(23) << " " << rat_inst_string(m_rat_inst) << " ";
+   os << "ID:" << m_rat_id << " ";
+   os << "IDXM:" << m_index_mode_string[m_rat_index_mode] << " ";
+   os << m_type_string[m_type];
+}
+
+cf_mem_ring_node::cf_mem_ring_node(uint64_t bc):
    cf_mem_node(bc),
+   m_array_base(bc & 0x1FFF),
+   m_sel(4)
+{
+   for (int i = 0; i < 4; ++i)
+      m_sel[i] = (bc >> (3*i + 32)) & 0x7;
+}
+
+cf_mem_ring_node::cf_mem_ring_node(uint16_t opcode,
+                                   uint16_t type,
+                                   uint16_t rw_gpr,
+                                   uint16_t index_gpr,
+                                   uint16_t elem_size,
+                                   uint16_t burst_count,
+                                   uint16_t array_base,
+                                   const std::vector<uint16_t>& sel,
+                                   const cf_flags &flags):
+   cf_mem_node(opcode, type, rw_gpr, index_gpr, elem_size,
+               burst_count, flags),
+   m_array_base(array_base),
+   m_sel(sel)
+{
+   std::cerr << "m_array_base=" << m_array_base << "\n";
+}
+
+void cf_mem_ring_node::print_mem_detail(std::ostream& os) const
+{
+   os << '.';
+   for (int i = 0; i < 4; ++i)
+      os << component_names[m_sel[i]];
+   os << " ARR_BASE:" << m_array_base;
+}
+
+void cf_mem_ring_node::encode_mem_parts(uint64_t &bc) const
+{
+   for (int i = 0; i < 4; ++i)
+      bc |= static_cast<uint64_t>(m_sel[i]) << (i * 3 + 32);
+
+   bc |= m_array_base;
+}
+
+
+cf_mem_stream_node::cf_mem_stream_node(uint64_t bc):
+   cf_export_node(bc),
    m_array_base(bc & 0x1FFF)
 {
 }
 
-void cf_mem_stream_node::print_detail(std::ostream& os) const
+void cf_mem_stream_node::print_export_detail(std::ostream& os) const
 {
-   print_mem_detail(os);
 }
+
+void cf_mem_stream_node::encode_export_parts(uint64_t &bc) const
+{
+
+}
+
 
 const char *cf_rat_node::rat_inst_string(int opcode) const
 {

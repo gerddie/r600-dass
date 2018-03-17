@@ -216,12 +216,14 @@ public:
                const cf_flags &flags);
 
 protected:
-   void print_mem_detail(std::ostream& os) const;
+
 
    static const char *m_type_string[4];
    uint16_t m_type;
 private:
+   void print_detail(std::ostream& os) const override final;
    void encode_parts(int i, uint64_t& bc) const override final;
+   virtual void print_mem_detail(std::ostream& os) const = 0;
    virtual void encode_mem_parts(uint64_t& bc) const = 0;
    uint16_t m_rw_gpr;
    uint16_t m_index_gpr;
@@ -242,8 +244,11 @@ public:
                   uint16_t burst_count,
                   const cf_flags &flags);
 protected:
-   void print_detail(std::ostream& os) const override;
+   void print_mem_detail(std::ostream& os) const  override final;
    void encode_mem_parts(uint64_t& bc) const override final;
+
+   virtual void print_export_detail(std::ostream& os) const = 0;
+   virtual void encode_export_parts(uint64_t& bc) const = 0;
 
    uint16_t m_array_size;
    uint16_t m_comp_mask;
@@ -252,40 +257,58 @@ protected:
 class cf_rat_node : public cf_export_node {
 public:
    cf_rat_node(uint64_t bc);
+   cf_rat_node(uint16_t opcode,
+               uint16_t rat_inst,
+               uint16_t rat_id,
+               uint16_t rat_index_mode,
+               uint16_t type,
+               uint16_t rw_gpr,
+               uint16_t index_gpr,
+               uint16_t elem_size,
+               uint16_t array_size,
+               uint16_t comp_mask,
+               uint16_t burst_count,
+               const cf_flags &flags);
+
+
 private:
    static const char *m_type_string[4];
-   void print_detail(std::ostream& os) const override;
+   void print_export_detail(std::ostream& os) const override;
+   void encode_export_parts(uint64_t& bc) const override;
+
    const char *rat_inst_string(int m_opcode) const;
    uint16_t m_rat_id;
    uint16_t m_rat_inst;
    uint16_t m_rat_index_mode;
 };
 
-class cf_export_mem_node: public cf_export_node {
+class cf_mem_ring_node: public cf_mem_node {
 public:
-   cf_export_mem_node(uint64_t bc);
+   cf_mem_ring_node(uint64_t bc);
 
-   cf_export_mem_node(uint16_t opcode,
-                      uint16_t type,
-                      uint16_t rw_gpr,
-                      uint16_t index_gpr,
-                      uint16_t elem_size,
-                      uint16_t array_size,
-                      uint16_t comp_mask,
-                      uint16_t burst_count,
-                      const cf_flags &flags);
+   cf_mem_ring_node(uint16_t opcode,
+                    uint16_t type,
+                    uint16_t rw_gpr,
+                    uint16_t index_gpr,
+                    uint16_t elem_size,
+                    uint16_t burst_count,
+                    uint16_t array_base,
+                    const std::vector<uint16_t> &m_sel,
+                    const cf_flags &flags);
 private:
-   void print_detail(std::ostream& os) const override;
+   void print_mem_detail(std::ostream& os) const override;
+   void encode_mem_parts(uint64_t& bc) const override;
 
    uint16_t m_array_base;
-   uint16_t m_sel[4];
+   std::vector<uint16_t> m_sel;
 };
 
-class cf_mem_stream_node: public cf_mem_node {
+class cf_mem_stream_node: public cf_export_node {
 public:
    cf_mem_stream_node(uint64_t bc);
 private:
-   void print_detail(std::ostream& os) const override;
+   void print_export_detail(std::ostream& os) const override;
+   void encode_export_parts(uint64_t& bc) const override;
 
    uint16_t m_array_base;
 };

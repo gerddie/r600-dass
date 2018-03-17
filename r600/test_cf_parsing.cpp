@@ -124,9 +124,15 @@ TEST_F(TestDisassember, LoopContinueEOP)
 TEST_F(TestDisassember, WriteScratchEop)
 {
    vector<uint64_t> bc;
-   cf_export_node(cf_mem_write_scratch, 0, 5, 0, 3,
-                  2, 0xf, 0, 1 << cf_node::eop).append_bytecode(bc);
 
-   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:0 R5.xyzw ARR_SIZE:2 EOP\n");
+   cf_mem_ring_node(cf_mem_write_scratch,
+                    0,
+                    5,
+                    0,
+                    3,
+                    2,
+                    4, {0,1,2,3},
+                    1 << cf_node::eop).append_bytecode(bc);
+   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:2 R5.xyzw ARR_BASE:4 EOP\n");
 }
 

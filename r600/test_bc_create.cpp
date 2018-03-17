@@ -255,7 +255,7 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
    TEST_EQ(ext8.get_bytecode_byte(0), 0x3003FC0000000800ul);
 }
 
-TEST_F(BytecodeCFGlobalWaveSync, )
+TEST_F(BytecodeCFGlobalWaveSync, gws)
 {
    TEST_EQ(cf_gws_node(cf_global_wave_sync,
                        0 /* gws_opcode */,
@@ -350,3 +350,19 @@ TEST_F(BytecodeCFGlobalWaveSync, )
            0x0780000002000000ul);
 }
 
+
+TEST_F(BytecodeCFMemRat, memrat)
+{
+   TEST_EQ(cf_gws_node(cf_mem_rat,
+                       0 /* gws_opcode */,
+                       1 << cf_node::sign /* flags */,
+                       0 /* pop_count */,
+                       0 /* cf_const */,
+                       0 /* cond */,
+                       0 /* count */,
+                       0 /* value */,
+                       0 /* resource */,
+                       0 /* val_index_mode */,
+                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
+           0x1580000002000000ul);
+}

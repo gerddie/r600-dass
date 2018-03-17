@@ -34,7 +34,7 @@ disassembler::disassembler(const vector<uint64_t>& bc)
          cf_instr = cf_node::pointer(new cf_native_node(*i));
          break;
       case nt_cf_mem_scratch:
-         cf_instr = cf_node::pointer(new cf_export_node(*i));
+         cf_instr = cf_node::pointer(new cf_mem_ring_node(*i));
          break;
       default:
          assert(0 && "Unknown node type encountered");
