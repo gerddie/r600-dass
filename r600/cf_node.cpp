@@ -25,7 +25,7 @@ uint32_t cf_node::opcode() const
 
 uint64_t cf_node::create_bytecode_byte(int i) const
 {
-   uint64_t result = (static_cast<uint64_t>(m_opcode) << 54);
+   uint64_t result = static_cast<uint64_t>(m_opcode) << 54;
    encode_parts(i, result);
    return result;
 }
@@ -649,7 +649,8 @@ void cf_mem_node::print_detail(std::ostream& os) const
 
 cf_export_node::cf_export_node(uint64_t bc):
    cf_mem_node(bc),
-   m_array_size((bc >> 32) & 0xFFF)
+   m_array_size((bc >> 32) & 0xFFF),
+   m_comp_mask((bc >> 44) & 0xf)
 {
 }
 
@@ -684,7 +685,6 @@ void cf_export_node::print_mem_detail(std::ostream& os) const
       else
          os << "_";
    }
-   os << " ARR_SIZE:" << m_array_size;
    print_export_detail(os);
 }
 

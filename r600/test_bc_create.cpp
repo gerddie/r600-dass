@@ -563,3 +563,28 @@ TEST_F(BytecodeCFMemRat, memrat)
                        1 << cf_node::mark/* flags */).get_bytecode_byte(0),
            0x5580000000000000ul);
 }
+
+TEST_F(BytecodeCFMemRat, memrat_rountrip)
+{
+   std::vector<uint64_t> bc = {
+      0x1580F00000000000ul,
+      0x15800fff00000000ul,
+      0x158f000000000000ul,
+      0x158000000000000ful,
+      0x15800000000003f0ul,
+      0x1580000000001800ul,
+      0x1580000000006000ul,
+      0x15800000003f8000ul,
+      0x158000003f800000ul,
+      0x15800000c0000000ul,
+      0x15800fff00000000ul,
+      0x1580f00000000000ul,
+      0x158f000000000000ul,
+      0x15a0000000000000ul,
+      0x5580000000000000ul};
+
+   for (auto x: bc)
+      TEST_EQ(cf_rat_node(x).get_bytecode_byte(0), x);
+}
+
+
