@@ -815,4 +815,121 @@ TEST_F(BytecodeCFMemExport, CFMemExportCreateTest)
                               {0,0,0,0}, /* sel */
                               0 /*flags */).get_bytecode_byte(0),
            0x1540000000006000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0x7f, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x15400000003f8000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0x7f, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x154000003f800000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              3, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x15400000c0000000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0x1fff, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x1540000000001ffful);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0xf, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x154f000000000000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {7,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x1540000700000000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,7,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x1540003800000000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,7,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x154001c000000000ul);
+
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              0, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,7}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x15400e0000000000ul);
+}
+
+TEST_F(BytecodeCFMemExport, CFMemExportRoundtripTest)
+{
+   std::vector<uint64_t> bc = {
+      0x1540000000006000ul,
+      0x15400000003f8000ul,
+      0x154000003f800000ul,
+      0x15400000c0000000ul,
+      0x1540000000001ffful,
+      0x154f000000000000ul,
+      0x1540000700000000ul,
+      0x1540003800000000ul,
+      0x154001c000000000ul,
+      0x15400e0000000000ul};
+
+   for (auto x: bc)
+      TEST_EQ(cf_mem_export_node(x).get_bytecode_byte(0), x);
 }

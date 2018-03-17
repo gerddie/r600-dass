@@ -779,6 +779,7 @@ void cf_mem_ring_node::encode_export_parts(uint64_t &bc) const
 
 cf_mem_export_node::cf_mem_export_node(uint64_t bc):
    cf_mem_node(bc),
+   m_array_base(bc & 0x1fff),
    m_sel(4)
 {
    for (int i = 0; i < 4; ++i)
@@ -815,7 +816,7 @@ void cf_mem_export_node::encode_mem_parts(uint64_t &bc) const
 {
    bc |= m_array_base;
    for (int i = 0; i < 4; ++i)
-      bc |= m_sel[i] << (32 + 3 * i);
+      bc |= static_cast<uint64_t>(m_sel[i]) << (32 + 3 * i);
 }
 
 const char *cf_rat_node::rat_inst_string(int opcode) const
