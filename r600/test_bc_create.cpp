@@ -610,7 +610,7 @@ TEST_F(BytecodeCFMemRat, memrat_rountrip)
 
 class BytecodeCFMemRing: public BytecodeCFTest {
    void SetUp() {
-      set_spacing({63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
+      set_spacing({63, 62, 54, 53, 52, 48, 44, 32,
                    30, 23, 22, 15, 13, 12});
    }
 };
@@ -794,4 +794,25 @@ TEST_F(BytecodeCFMemRing, CFMemRingRoundTripTest)
 
    for (auto x: bc)
       TEST_EQ(cf_mem_ring_node(x).get_bytecode_byte(0), x);
+}
+
+class BytecodeCFMemExport: public BytecodeCFTest {
+   void SetUp() {
+      set_spacing({63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
+                   30, 23, 22, 15, 13, 12});
+   }
+};
+
+TEST_F(BytecodeCFMemExport, CFMemExportCreateTest)
+{
+   TEST_EQ(cf_mem_export_node(cf_mem_export,
+                              3, /* type */
+                              0, /* rw_gpr */
+                              0, /* index_gpr */
+                              0, /* elem_size */
+                              0, /* array_base */
+                              0, /*burst_count */
+                              {0,0,0,0}, /* sel */
+                              0 /*flags */).get_bytecode_byte(0),
+           0x1540000000006000ul);
 }

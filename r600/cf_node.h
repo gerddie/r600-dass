@@ -213,7 +213,6 @@ public:
                uint16_t rw_gpr,
                uint16_t index_gpr,
                uint16_t elem_size,
-               uint32_t array_size,
                uint16_t burst_count,
                const cf_flags &flags);
 
@@ -230,7 +229,6 @@ private:
    uint16_t m_index_gpr;
    uint16_t m_elem_size;
    uint16_t m_burst_count;
-   uint32_t m_array_size;
 };
 
 class cf_mem_comp_node : public cf_mem_node {
@@ -251,6 +249,7 @@ private:
    void encode_mem_parts(uint64_t& bc) const override final;
    virtual void print_export_detail(std::ostream& os) const = 0;
    virtual void encode_export_parts(uint64_t& bc) const = 0;
+   uint32_t m_array_size;
    uint16_t m_comp_mask;
 };
 
@@ -319,7 +318,7 @@ public:
 private:
    void print_mem_detail(std::ostream& os) const override;
    void encode_mem_parts(uint64_t& bc) const override;
-
+   uint16_t m_array_base;
    std::vector<unsigned> m_sel;
 };
 
