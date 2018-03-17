@@ -155,6 +155,32 @@ TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
          0x80C00C0000000100ul);
 }
 
+TEST_F(BytecodeCFNativeTest, BytecodeCFNativeRountrip)
+{
+   std::vector<uint64_t> bc = {
+      0,
+      end_of_program_bit,
+      barrier_bit,
+      whole_quad_mode_bit,
+      valid_pixel_mode_bit,
+      0x0380000100000000ul,
+      0x0380000700000000ul,
+      0x0390000000000000ul,
+      0x82C0000000000000ul,
+      0x4040080000000003ul,
+      0x06C0080000000003ul,
+      0x00A014010000000Aul,
+      0x470014010000000Aul,
+      0x8280000100000014ul,
+      0x8280000000FFFFFFul,
+      0x8740000003000100ul,
+      0x80C00C0000000100ul
+   };
+
+   for (auto x: bc)
+      TEST_EQ(cf_native_node(x).get_bytecode_byte(0), x);
+}
+
 TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
 {
    TEST_EQ(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),

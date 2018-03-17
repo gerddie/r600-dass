@@ -365,6 +365,9 @@ cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
 {
    if (word1 & end_of_program_bit)
       set_flag(cf_node::eop);
+
+   if (word1 & valid_pixel_mode_bit)
+      set_flag(cf_node::vpm);
 }
 
 cf_node_cf_word1::cf_node_cf_word1(uint16_t pop_count,
