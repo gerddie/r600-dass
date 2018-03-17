@@ -10,11 +10,11 @@ const uint64_t whole_quad_mode_bit = 1ul << 62;
 const uint64_t mark_bit = 1ul << 62;
 const uint64_t rw_rel_bit = 1ul << 22;
 const uint64_t sign_bit = 1ul << 25;
+const uint64_t alt_const_bit = 1ul << 57;
 
-cf_node::cf_node(int bytecode_size, uint32_t opcode, bool barrier):
+cf_node::cf_node(int bytecode_size, uint32_t opcode):
    node(bytecode_size),
-   m_opcode(opcode),
-   m_barrier(barrier)
+   m_opcode(opcode)
 {
 }
 
@@ -25,9 +25,7 @@ uint32_t cf_node::opcode() const
 
 uint64_t cf_node::create_bytecode_byte(int i) const
 {
-   uint64_t result = (m_barrier ? barrier_bit : 0) |
-                     (static_cast<uint64_t>(m_opcode) << 54);
-
+   uint64_t result = (static_cast<uint64_t>(m_opcode) << 54);
    encode_parts(i, result);
    return result;
 }
@@ -35,8 +33,6 @@ uint64_t cf_node::create_bytecode_byte(int i) const
 void cf_node::print(std::ostream& os) const
 {
    os << std::setw(22) << std::left << op_from_opcode(m_opcode);
-   if (m_barrier)
-      os << " B";
    print_detail(os);
 }
 
@@ -114,9 +110,8 @@ std::string cf_node::op_from_opcode(uint32_t opcode) const
 
 cf_node_with_address::cf_node_with_address(unsigned bytecode_size,
                                            uint32_t opcode,
-                                           bool barrier,
                                            uint32_t addresss):
-   cf_node(bytecode_size, opcode, barrier),
+   cf_node(bytecode_size, opcode),
    m_addr(addresss)
 
 {
@@ -145,12 +140,10 @@ uint32_t cf_alu_node::get_alu_address(uint64_t bc)
 cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
    cf_node_with_address(alu_ext ? 2 : 1,
                         get_alu_opcode(bc),
-                        bc & barrier_bit,
                         get_alu_address(bc)),
+   cf_node_flags(bc),
    m_nkcache(alu_ext ? 4 : 2),
-   m_count((bc >> 50) & 0x7F),
-   m_alt_const(bc & (1ul << 57)),
-   m_whole_quad_mode(bc & whole_quad_mode_bit)
+   m_count((bc >> 50) & 0x7F)
 {
    m_kcache_bank[0] = (bc >> 22) & 0xF;
    m_kcache_bank[1] = (bc >> 26) & 0xF;
@@ -161,6 +154,8 @@ cf_alu_node::cf_alu_node(uint64_t bc, bool alu_ext):
    m_kcache_addr[0] = (bc >> 34) & 0xFF;
    m_kcache_addr[1] = (bc >> 42) & 0xFF;
 
+   if (bc & alt_const_bit)
+      set_flag(alt_const);
 }
 
 void cf_alu_node::encode_parts(int i, uint64_t &bc) const
@@ -187,10 +182,7 @@ void cf_alu_node::encode_parts(int i, uint64_t &bc) const
       bc |= static_cast<uint64_t>(m_kcache_addr[0]) << 34;
       bc |= static_cast<uint64_t>(m_kcache_addr[1]) << 42;
       bc |= static_cast<uint64_t>(m_count) << 50;
-      if (m_alt_const)
-         bc |= 1ul << 57;
-      if (m_whole_quad_mode)
-         bc |= whole_quad_mode_bit;
+      encode_flags(bc);
    }
 }
 
@@ -220,10 +212,9 @@ cf_alu_node::cf_alu_node(uint16_t opcode,
                          const std::tuple<int, int,int>& kcache0,
                          const std::tuple<int, int,int>& kcache1
                          ):
-   cf_node_with_address(1, opcode << 4, flags.test(cf_node::barrier), addr),
-   m_count(count),
-   m_alt_const(flags.test(cf_node::alt_const)),
-   m_whole_quad_mode(flags.test(cf_node::wqm))
+   cf_node_with_address(1, opcode << 4, addr),
+   cf_node_flags(flags),
+   m_count(count)
 {
    m_kcache_bank[0] = std::get<0>(kcache0);
    m_kcache_mode[0] = std::get<1>(kcache0);
@@ -298,26 +289,29 @@ void cf_alu_node::print_detail(std::ostream& os) const
          }
       }
    }
+   print_flags(os);
 }
 
-cf_node_word1_base::cf_node_word1_base(uint64_t bc)
+cf_node_flags::cf_node_flags(uint64_t bc)
 {
-   if (bc & valid_pixel_mode_bit)
-      m_flags.set(cf_node::vpm);
-
-   if (bc & end_of_program_bit)
-      m_flags.set(cf_node::eop);
+   if (bc & barrier_bit)
+      m_flags.set(cf_node::barrier);
 
    if (bc & whole_quad_mode_bit)
       m_flags.set(cf_node::wqm);
 }
 
-cf_node_word1_base::cf_node_word1_base(const cf_flags& flags):
+cf_node_flags::cf_node_flags(const cf_flags& flags):
    m_flags(flags)
 {
 }
 
-void cf_node_word1_base::encode_flags(uint64_t& bc) const
+void cf_node_flags::set_flag(int flag)
+{
+   m_flags.set(flag);
+}
+
+void cf_node_flags::encode_flags(uint64_t& bc) const
 {
    if (m_flags.test(cf_node::vpm))
       bc |= valid_pixel_mode_bit;
@@ -327,9 +321,18 @@ void cf_node_word1_base::encode_flags(uint64_t& bc) const
 
    if (m_flags.test(cf_node::eop))
       bc |= end_of_program_bit;
+
+   if (m_flags.test(cf_node::barrier))
+      bc |= barrier_bit;
+
+   if (m_flags.test(cf_node::sign))
+      bc |= sign_bit;
+
+   if (m_flags.test(cf_node::alt_const))
+      bc |= alt_const_bit;
 }
 
-void cf_node_word1_base::print_flags(std::ostream& os) const
+void cf_node_flags::print_flags(std::ostream& os) const
 {
    if (m_flags.test(cf_node::vpm))
       os << " VPM";
@@ -339,15 +342,26 @@ void cf_node_word1_base::print_flags(std::ostream& os) const
 
    if (m_flags.test(cf_node::eop))
       os << " EOP";
+
+   if (m_flags.test(cf_node::barrier))
+      os << " B";
+
+   if (m_flags.test(cf_node::sign))
+      os << " S";
+
+   if (m_flags.test(cf_node::alt_const))
+      os << " AC";
 }
 
 cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
-   cf_node_word1_base(word1),
+   cf_node_flags(word1),
    m_pop_count((word1 >> 32 )& 0x3),
    m_cf_const((word1 >> 34) & 0x1F),
    m_cond((word1 >> 40) & 0x3),
    m_count((word1 >> 42) & 0x3F)
 {
+   if (word1 & end_of_program_bit)
+      set_flag(cf_node::eop);
 }
 
 cf_node_cf_word1::cf_node_cf_word1(uint16_t pop_count,
@@ -355,7 +369,7 @@ cf_node_cf_word1::cf_node_cf_word1(uint16_t pop_count,
                                    uint16_t cond,
                                    uint16_t count,
                                    const cf_flags& flags):
-   cf_node_word1_base(flags),
+   cf_node_flags(flags),
    m_pop_count(pop_count),
    m_cf_const(cf_const),
    m_cond(cond),
@@ -398,7 +412,6 @@ uint64_t cf_node_cf_word1::encode() const
 cf_native_node::cf_native_node(uint64_t bc):
    cf_node_with_address(1,
                         get_opcode(bc),
-                        bc & barrier_bit,
                         get_address(bc)),
    m_jumptable_se((bc >> 24) & 0x7),
    m_word1(bc)
@@ -413,7 +426,7 @@ cf_native_node::cf_native_node(uint16_t opcode,
                                uint16_t jts,
                                uint16_t cf_const,
                                uint16_t cond):
-   cf_node_with_address(1, opcode, flags.test(cf_node::barrier), address),
+   cf_node_with_address(1, opcode, address),
    m_jumptable_se(jts),
    m_word1(pop_count, cf_const, cond, count, flags)
 {
@@ -475,9 +488,7 @@ void cf_native_node::print_detail(std::ostream& os) const
 
 
 cf_gws_node::cf_gws_node(uint64_t bc):
-   cf_node(2,
-           get_opcode(bc),
-           bc & barrier_bit),
+   cf_node(2, get_opcode(bc)),
    m_value(bc & 0x3FF),
    m_resource((bc >> 16) & 0x1F),
    m_val_index_mode((bc >> 26) & 0x3),
@@ -492,7 +503,7 @@ cf_node_alloc_export_word1(unsigned array_size,
                            unsigned comp_mask,
                            unsigned burst_count,
                            const cf_flags &flags):
-   cf_node_word1_base(flags),
+   cf_node_flags(flags),
    m_array_size(array_size),
    m_comp_mask(comp_mask),
    m_burst_count(burst_count)
@@ -541,13 +552,12 @@ cf_gws_node::cf_gws_node(uint32_t opcode,
                          short resource,
                          short val_index_mode,
                          short rsrc_index_mode):
-   cf_node(1, opcode, flags.test(cf_node::barrier)),
+   cf_node(1, opcode),
    m_value(value),
    m_resource(resource),
    m_val_index_mode(val_index_mode),
    m_rsrc_index_mode(rsrc_index_mode),
    m_gws_opcode(gws_opcode),
-   m_sign(flags.test(cf_node::sign)),
    m_word1(pop_count, cf_const,cond, count, flags)
 {
 }
@@ -561,10 +571,6 @@ void cf_gws_node::encode_parts(int i, uint64_t &bc) const
    bc |= m_val_index_mode << 26;
    bc |= m_rsrc_index_mode << 28;
    bc |= static_cast<uint64_t>(m_gws_opcode) << 30;
-
-   if (m_sign)
-      bc |= sign_bit;
-
 }
 
 cf_mem_node::cf_mem_node(uint16_t opcode,
@@ -574,29 +580,36 @@ cf_mem_node::cf_mem_node(uint16_t opcode,
                          uint16_t elem_size,
                          uint16_t burst_count,
                          const cf_flags& flags):
-   cf_node(1, opcode, flags.test(cf_node::barrier)),
+   cf_node(1, opcode),
+   cf_node_flags(flags),
    m_type(type),
    m_rw_gpr(rw_gpr),
-   m_rw_rel(flags.test(cf_node::rw_rel)),
    m_index_gpr(index_gpr),
    m_elem_size(elem_size),
-   m_burst_count(burst_count),
-   m_valid_pixel_mode(flags.test(cf_node::vpm)),
-   m_mark(flags.test(cf_node::mark))
+   m_burst_count(burst_count)
 {
 }
 
 cf_mem_node::cf_mem_node(uint64_t bc):
-   cf_node(1, get_opcode(bc), bc & barrier_bit),
+   cf_node(1, get_opcode(bc)),
+   cf_node_flags(bc),
    m_type((bc >> 13) & 0x3),
    m_rw_gpr((bc >> 15) & 0x7F),
-   m_rw_rel(bc & ( 1 << 22)),
    m_index_gpr((bc >> 23) & 0x7F),
    m_elem_size((bc >> 30) & 0x3),
-   m_burst_count((bc >> 48) & 0xF),
-   m_valid_pixel_mode(bc & valid_pixel_mode_bit),
-   m_mark(bc & mark_bit)
+   m_burst_count((bc >> 48) & 0xF)
 {
+   if (bc & valid_pixel_mode_bit)
+      set_flag(cf_node::vpm);
+
+   if (bc & mark_bit)
+      set_flag(cf_node::mark);
+
+   if (bc & rw_rel_bit)
+      set_flag(cf_node::rw_rel);
+
+   if (bc & end_of_program_bit)
+      set_flag(cf_node::eop);
 }
 
 void cf_mem_node::encode_parts(int i, uint64_t& bc) const
@@ -605,20 +618,11 @@ void cf_mem_node::encode_parts(int i, uint64_t& bc) const
 
    bc |= m_type << 13;
    bc |= m_rw_gpr << 15;
-
-   if (m_rw_rel)
-      bc |= rw_rel_bit;
-
    bc |= m_index_gpr << 23;
    bc |= static_cast<uint64_t>(m_elem_size) << 30;
    bc |= static_cast<uint64_t>(m_burst_count) << 48;
 
-   if (m_valid_pixel_mode)
-      bc |= valid_pixel_mode_bit;
-
-   if (m_mark)
-      bc |= mark_bit;
-
+   encode_flags(bc);
    encode_mem_parts(bc);
 }
 
@@ -633,15 +637,6 @@ void cf_mem_node::print_mem_detail(std::ostream& os) const
    os << " ES:" << m_elem_size + 1;
    os << " BC:"  << m_burst_count;
 
-   if (m_rw_rel)
-      os << " Loop-Rel";
-
-   if (m_valid_pixel_mode)
-      os << " VPM";
-
-   if (m_mark)
-      os << " Req-ACK";
-
    os << " R" << m_rw_gpr;
    if (m_type & 1)
       os << "[R" << m_index_gpr << "]";
@@ -650,8 +645,7 @@ void cf_mem_node::print_mem_detail(std::ostream& os) const
 cf_export_node::cf_export_node(uint64_t bc):
    cf_mem_node(bc),
    m_array_size((bc >> 32) & 0xFFF),
-   m_comp_mask((bc >> 44) & 0xF),
-   m_end_of_program(bc & end_of_program_bit)
+   m_comp_mask((bc >> 44) & 0xF)
 {
 }
 
@@ -659,9 +653,6 @@ void cf_export_node::encode_mem_parts(uint64_t& bc) const
 {
    bc |= static_cast<uint64_t>(m_array_size) << 32;
    bc |= static_cast<uint64_t>(m_comp_mask) << 44;
-
-   if (m_end_of_program)
-      bc |= end_of_program_bit;
 }
 
 cf_rat_node::cf_rat_node(uint64_t bc):
@@ -691,9 +682,7 @@ void cf_rat_node::print_detail(std::ostream& os) const
       else
          os << "_";
    }
-
-   if (m_end_of_program)
-      os << "  EOP";
+   print_flags(os);
 }
 
 cf_export_mem_node::cf_export_mem_node(uint64_t bc):
@@ -711,9 +700,7 @@ void cf_export_mem_node::print_detail(std::ostream& os) const
       os << component_names[m_sel[i]];
 
    os << " ARR_SIZE:" << m_array_size;
-
-   if (m_end_of_program)
-      os << " EOP";
+   print_flags(os);
 }
 
 cf_export_node::cf_export_node(uint16_t opcode,
@@ -728,8 +715,7 @@ cf_export_node::cf_export_node(uint16_t opcode,
    cf_mem_node(opcode, type, rw_gpr, index_gpr, elem_size,
                burst_count, flags),
    m_array_size(array_size),
-   m_comp_mask(comp_mask),
-   m_end_of_program(flags.test(cf_node::eop))
+   m_comp_mask(comp_mask)
 {
 }
 
@@ -743,8 +729,7 @@ void cf_export_node::print_detail(std::ostream& os) const
       else
          os << '_';
    os << " ARR_SIZE:" << m_array_size;
-   if (m_end_of_program)
-      os << " EOP";
+   print_flags(os);
 }
 
 cf_mem_stream_node::cf_mem_stream_node(uint64_t bc):

@@ -23,7 +23,7 @@ class cf_node : public node {
 public:
    using pointer = std::shared_ptr<cf_node>;
 
-   cf_node(int bytecode_size, uint32_t opcode, bool barrier);
+   cf_node(int bytecode_size, uint32_t opcode);
 
    static const uint16_t vpm = 0;
    static const uint16_t eop = 1;
@@ -34,6 +34,7 @@ public:
    static const uint16_t rw_rel = 6;
    static const uint16_t mark = 7;
    static const uint16_t sign = 8;
+
 protected:
 
    static const char *m_index_mode_string;
@@ -51,24 +52,23 @@ private:
    virtual void encode_parts(int i, uint64_t& bc) const = 0;
 
    uint32_t m_opcode;
-   bool m_barrier;
 
    pointer parent;
    std::vector<pointer> children;
 };
 
-class cf_node_word1_base {
+class cf_node_flags {
 protected:
-   cf_node_word1_base(uint64_t bc);
-   cf_node_word1_base(const cf_flags& flags);
-
+   cf_node_flags(uint64_t bc);
+   cf_node_flags(const cf_flags& flags);
+   void set_flag(int flag);
    void encode_flags(uint64_t& bc) const;
    void print_flags(std::ostream& os) const;
 private:
    std::bitset<16> m_flags;
 };
 
-class cf_node_cf_word1: public cf_node_word1_base {
+class cf_node_cf_word1: public cf_node_flags {
 public:
    cf_node_cf_word1(uint64_t word1);
    cf_node_cf_word1(uint16_t pop_count,
@@ -88,7 +88,7 @@ private:
    uint16_t m_count;
 };
 
-class cf_node_alloc_export_word1: public cf_node_word1_base {
+class cf_node_alloc_export_word1: public cf_node_flags {
 public:
 
    cf_node_alloc_export_word1(unsigned array_size,
@@ -106,7 +106,7 @@ private:
 class cf_node_with_address : public cf_node {
 public:
    cf_node_with_address(unsigned bytecode_size, uint32_t opcode,
-                        bool barrier, uint32_t addresss);
+                        uint32_t addresss);
    void print_address(std::ostream& os) const;
    uint32_t address() const;
 
@@ -114,7 +114,8 @@ private:
    uint32_t m_addr;
 };
 
-class cf_alu_node : public cf_node_with_address {
+class cf_alu_node: public cf_node_with_address,
+      protected cf_node_flags {
 public:
    cf_alu_node(uint64_t bc);
    cf_alu_node(uint64_t bc, uint64_t bc_ext);
@@ -136,7 +137,6 @@ public:
                const std::tuple<int,int,int>& kcache1,
                const std::tuple<int,int,int>& kcache2,
                const std::tuple<int,int,int>& kcache3);
-
 private:
    cf_alu_node(uint64_t bc, bool alu_ext);
    static uint32_t get_alu_opcode(uint64_t bc);
@@ -152,9 +152,6 @@ private:
    uint16_t m_kcache_mode[4];
    uint16_t m_kcache_addr[4];
    uint16_t m_count;
-   bool m_alt_const;
-   bool m_whole_quad_mode;
-
    static constexpr uint64_t alt_const_bit = 1 << 25;
 };
 
@@ -203,11 +200,10 @@ private:
    uint16_t m_val_index_mode;
    uint16_t m_rsrc_index_mode;
    uint16_t m_gws_opcode;
-   bool m_sign;
    cf_node_cf_word1 m_word1;
 };
 
-class cf_mem_node : public cf_node {
+class cf_mem_node : public cf_node, protected cf_node_flags {
 public:
    cf_mem_node(uint64_t bc);
 
@@ -228,12 +224,9 @@ private:
    void encode_parts(int i, uint64_t& bc) const override final;
    virtual void encode_mem_parts(uint64_t& bc) const = 0;
    uint16_t m_rw_gpr;
-   bool m_rw_rel;
    uint16_t m_index_gpr;
    uint16_t m_elem_size;
    uint16_t m_burst_count;
-   bool m_valid_pixel_mode;
-   bool m_mark;
 };
 
 class cf_export_node : public cf_mem_node {
@@ -254,7 +247,6 @@ protected:
 
    uint16_t m_array_size;
    uint16_t m_comp_mask;
-   bool m_end_of_program;
 };
 
 class cf_rat_node : public cf_export_node {
