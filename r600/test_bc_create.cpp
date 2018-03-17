@@ -106,16 +106,16 @@ const uint8_t BytecodeCFMemRat::spaces[] = {
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 {
    TEST_EQ(cf_native_node(cf_nop, 0).get_bytecode_byte(0), 0);
-   TEST_EQ(cf_native_node(cf_nop, cf_node::eop).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, 1 << cf_node::eop).get_bytecode_byte(0),
          end_of_program_bit);
 
-   TEST_EQ(cf_native_node(cf_nop, cf_node::barrier).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, 1 << cf_node::barrier).get_bytecode_byte(0),
          barrier_bit);
 
-   TEST_EQ(cf_native_node(cf_nop, cf_node::wqm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, 1 << cf_node::wqm).get_bytecode_byte(0),
          whole_quad_mode_bit);
 
-   TEST_EQ(cf_native_node(cf_nop, cf_node::vpm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_nop, 1 << cf_node::vpm).get_bytecode_byte(0),
          valid_pixel_mode_bit);
 
    TEST_EQ(cf_native_node(cf_pop, 0, 0, 1).get_bytecode_byte(0),
@@ -124,34 +124,34 @@ TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
    TEST_EQ(cf_native_node(cf_pop, 0, 0, 7).get_bytecode_byte(0),
          0x0380000700000000ul);
 
-   TEST_EQ(cf_native_node(cf_pop, cf_node::vpm).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_pop, 1 << cf_node::vpm).get_bytecode_byte(0),
          0x0390000000000000ul);
 
-   TEST_EQ(cf_native_node(cf_push, cf_node::barrier).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_push, 1 << cf_node::barrier).get_bytecode_byte(0),
          0x82C0000000000000ul);
 
-   TEST_EQ(cf_native_node(cf_tc, cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_tc, 1 << cf_node::wqm, 3, 0, 2).get_bytecode_byte(0),
          0x4040080000000003ul);
 
    TEST_EQ(cf_native_node(cf_tc_ack, 0, 3, 0, 2).get_bytecode_byte(0),
          0x06C0080000000003ul);
 
-   TEST_EQ(cf_native_node(cf_vc, cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_vc, 1 << cf_node::eop, 10, 1, 5).get_bytecode_byte(0),
          0x00A014010000000Aul);
 
-   TEST_EQ(cf_native_node(cf_vc_ack, cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_vc_ack, 1 << cf_node::wqm, 10, 1, 5).get_bytecode_byte(0),
          0x470014010000000Aul);
 
-   TEST_EQ(cf_native_node(cf_jump, cf_node::barrier, 20, 1).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump, 1 << cf_node::barrier, 20, 1).get_bytecode_byte(0),
          0x8280000100000014ul);
 
-   TEST_EQ(cf_native_node(cf_jump, cf_node::barrier, 0xFFFFFF, 0).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump, 1 << cf_node::barrier, 0xFFFFFF, 0).get_bytecode_byte(0),
          0x8280000000FFFFFFul);
 
-   TEST_EQ(cf_native_node(cf_jump_table, cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_jump_table, 1 << cf_node::barrier, 256, 0, 0, 3).get_bytecode_byte(0),
          0x8740000003000100ul);
 
-   TEST_EQ(cf_native_node(cf_gds, cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
+   TEST_EQ(cf_native_node(cf_gds, 1 << cf_node::barrier, 256, 0, 3, 0).get_bytecode_byte(0),
          0x80C00C0000000100ul);
 }
 
@@ -160,13 +160,13 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
    TEST_EQ(cf_alu_node(cf_alu, 0, 2, 127).get_bytecode_byte(0),
          0x21FC000000000002ul);
 
-   TEST_EQ(cf_alu_node(cf_alu, cf_node::alt_const, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 1 << cf_node::alt_const, 2, 127).get_bytecode_byte(0),
          0x23FC000000000002ul);
 
-   TEST_EQ(cf_alu_node(cf_alu, cf_node::wqm, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 1 << cf_node::wqm, 2, 127).get_bytecode_byte(0),
          0x61FC000000000002ul);
 
-   TEST_EQ(cf_alu_node(cf_alu, cf_node::barrier, 2, 127).get_bytecode_byte(0),
+   TEST_EQ(cf_alu_node(cf_alu, 1 << cf_node::barrier, 2, 127).get_bytecode_byte(0),
          0xA1FC000000000002ul);
 
    TEST_EQ(cf_alu_node(cf_alu_else_after, 0, 0x3FFFFFu, 1).get_bytecode_byte(0),
@@ -338,7 +338,7 @@ TEST_F(BytecodeCFGlobalWaveSync, )
 
    TEST_EQ(cf_gws_node(cf_global_wave_sync,
                        0 /* gws_opcode */,
-                       cf_node::sign /* flags */,
+                       1 << cf_node::sign /* flags */,
                        0 /* pop_count */,
                        0 /* cf_const */,
                        0 /* cond */,

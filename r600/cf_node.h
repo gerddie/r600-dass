@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <bitset>
 
 extern const uint64_t valid_pixel_mode_bit;
 extern const uint64_t end_of_program_bit;
@@ -16,21 +17,23 @@ extern const uint64_t whole_quad_mode_bit;
 extern const uint64_t mark_bit;
 extern const uint64_t rw_rel_bit;
 
+using cf_flags = const std::bitset<16>;
+
 class cf_node : public node {
 public:
-   using pointer=std::shared_ptr<cf_node>;
+   using pointer = std::shared_ptr<cf_node>;
 
    cf_node(int bytecode_size, uint32_t opcode, bool barrier);
 
-   static const uint16_t vpm = 1;
-   static const uint16_t eop = 2;
-   static const uint16_t qmb = 4;
-   static const uint16_t barrier = 8;
-   static const uint16_t wqm = 16;
-   static const uint16_t alt_const = 32;
-   static const uint16_t rw_rel = 64;
-   static const uint16_t mark = 128;
-   static const uint16_t sign = 256;
+   static const uint16_t vpm = 0;
+   static const uint16_t eop = 1;
+   static const uint16_t qmb = 2;
+   static const uint16_t barrier = 3;
+   static const uint16_t wqm = 4;
+   static const uint16_t alt_const = 5;
+   static const uint16_t rw_rel = 6;
+   static const uint16_t mark = 7;
+   static const uint16_t sign = 8;
 protected:
 
    static const char *m_index_mode_string;
@@ -50,19 +53,29 @@ private:
    uint32_t m_opcode;
    bool m_barrier;
 
-
    pointer parent;
    std::vector<pointer> children;
 };
 
-class cf_node_cf_word1 {
+class cf_node_word1_base {
+protected:
+   cf_node_word1_base(uint64_t bc);
+   cf_node_word1_base(const cf_flags& flags);
+
+   void encode_flags(uint64_t& bc) const;
+   void print_flags(std::ostream& os) const;
+private:
+   std::bitset<16> m_flags;
+};
+
+class cf_node_cf_word1: public cf_node_word1_base {
 public:
    cf_node_cf_word1(uint64_t word1);
    cf_node_cf_word1(uint16_t pop_count,
                     uint16_t cf_const,
                     uint16_t cond,
                     uint16_t count,
-                    uint16_t flags);
+                    const cf_flags& flags);
 
    void print(std::ostream& os) const;
    uint64_t encode() const;
@@ -73,9 +86,21 @@ private:
    uint16_t m_cf_const;
    uint16_t m_cond;
    uint16_t m_count;
-   bool m_valid_pixel_mode;
-   bool m_end_of_program;
-   bool m_whole_quad_mode;
+};
+
+class cf_node_alloc_export_word1: public cf_node_word1_base {
+public:
+
+   cf_node_alloc_export_word1(unsigned array_size,
+                              unsigned comp_mask,
+                              unsigned burst_count,
+                              const cf_flags& flags);
+   void print(std::ostream& os) const;
+   uint64_t encode() const;
+private:
+   unsigned m_array_size;
+   unsigned m_comp_mask;
+   unsigned m_burst_count;
 };
 
 class cf_node_with_address : public cf_node {
@@ -137,7 +162,7 @@ class cf_native_node : public cf_node_with_address {
 public:
    cf_native_node(uint64_t bc);
    cf_native_node(uint16_t opcode,
-                  uint16_t flags,
+                  const cf_flags &flags,
                   uint32_t address = 0,
                   uint16_t pop_count = 0,
                   uint16_t count = 0,
@@ -159,7 +184,7 @@ public:
    cf_gws_node(uint64_t bc);
    cf_gws_node(uint32_t opcode,
                short gws_opcode,
-               int flags,
+               const cf_flags &flags,
                uint16_t pop_count,
                uint16_t cf_const,
                uint16_t cond,
@@ -192,7 +217,7 @@ public:
                uint16_t index_gpr,
                uint16_t elem_size,
                uint16_t burst_count,
-               int flags);
+               const cf_flags &flags);
 
 protected:
    void print_mem_detail(std::ostream& os) const;
@@ -222,7 +247,7 @@ public:
                   uint16_t array_size,
                   uint16_t comp_mask,
                   uint16_t burst_count,
-                  uint16_t flags);
+                  const cf_flags &flags);
 protected:
    void print_detail(std::ostream& os) const override;
    void encode_mem_parts(uint64_t& bc) const override final;
@@ -256,7 +281,7 @@ public:
                       uint16_t array_size,
                       uint16_t comp_mask,
                       uint16_t burst_count,
-                      uint16_t flags);
+                      const cf_flags &flags);
 private:
    void print_detail(std::ostream& os) const override;
 
