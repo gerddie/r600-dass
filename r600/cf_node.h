@@ -204,6 +204,7 @@ private:
 };
 
 class cf_mem_node : public cf_node, protected cf_node_flags {
+
 public:
    cf_mem_node(uint64_t bc);
 
@@ -212,49 +213,29 @@ public:
                uint16_t rw_gpr,
                uint16_t index_gpr,
                uint16_t elem_size,
+               uint32_t array_size,
+               uint16_t comp_mask,
                uint16_t burst_count,
                const cf_flags &flags);
 
 protected:
-
-
    static const char *m_type_string[4];
    uint16_t m_type;
+
 private:
    void print_detail(std::ostream& os) const override final;
    void encode_parts(int i, uint64_t& bc) const override final;
-   virtual void print_mem_detail(std::ostream& os) const = 0;
-   virtual void encode_mem_parts(uint64_t& bc) const = 0;
+   virtual void print_export_detail(std::ostream& os) const = 0;
+   virtual void encode_export_parts(uint64_t& bc) const = 0;
    uint16_t m_rw_gpr;
    uint16_t m_index_gpr;
    uint16_t m_elem_size;
    uint16_t m_burst_count;
-};
-
-class cf_export_node : public cf_mem_node {
-public:
-   cf_export_node(uint64_t bc);
-   cf_export_node(uint16_t opcode,
-                  uint16_t type,
-                  uint16_t rw_gpr,
-                  uint16_t index_gpr,
-                  uint16_t elem_size,
-                  uint32_t array_size,
-                  uint16_t comp_mask,
-                  uint16_t burst_count,
-                  const cf_flags &flags);
-protected:
-   void print_mem_detail(std::ostream& os) const  override final;
-   void encode_mem_parts(uint64_t& bc) const override final;
-
-   virtual void print_export_detail(std::ostream& os) const = 0;
-   virtual void encode_export_parts(uint64_t& bc) const = 0;
-
    uint32_t m_array_size;
    uint16_t m_comp_mask;
 };
 
-class cf_rat_node : public cf_export_node {
+class cf_rat_node : public cf_mem_node {
 public:
    cf_rat_node(uint64_t bc);
    cf_rat_node(uint16_t opcode,
@@ -283,7 +264,7 @@ private:
 };
 
 /* Scratch, stream, and ring buffers */
-class cf_mem_ring_node: public cf_export_node {
+class cf_mem_ring_node: public cf_mem_node {
 public:
    cf_mem_ring_node(uint64_t bc);
 
@@ -303,7 +284,7 @@ private:
    uint16_t m_array_base;
 };
 
-class cf_mem_export_node: public cf_export_node {
+class cf_mem_export_node: public cf_mem_node {
 public:
    cf_mem_export_node(uint64_t bc);
 private:
