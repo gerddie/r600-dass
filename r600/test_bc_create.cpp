@@ -189,6 +189,25 @@ TEST_F(BytecodeCFAluTest, BytecodeCreationAlu)
          0x2007FC0000000003ul);
 }
 
+TEST_F(BytecodeCFAluTest, BytecodeAluRoundtrip)
+{
+   std::vector<uint64_t> bc = {
+      0x21FC000000000002ul,
+      0x23FC000000000002ul,
+      0x61FC000000000002ul,
+      0xA1FC000000000002ul,
+      0x3C040000003FFFFFul,
+      0x2004000003C00003ul,
+      0x200400003C000003ul,
+      0x20040000C0000003ul,
+      0x2004000300000003ul,
+      0x200403FC00000003ul,
+      0x2007FC0000000003ul
+   };
+   for (auto x: bc)
+      TEST_EQ(cf_alu_node(x).get_bytecode_byte(0), x);
+}
+
 TEST_F(BytecodeCFAluTest, BytecodeCreationAluExtended)
 {
    cf_alu_node ext0(cf_alu_extended, 0, 0x3u, 1, {1,0,0,0},

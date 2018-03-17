@@ -152,7 +152,7 @@ private:
    uint16_t m_kcache_mode[4];
    uint16_t m_kcache_addr[4];
    uint16_t m_count;
-   static constexpr uint64_t alt_const_bit = 1 << 25;
+   static constexpr uint64_t alt_const_bit = 1ul << 57;
 };
 
 class cf_native_node : public cf_node_with_address {
