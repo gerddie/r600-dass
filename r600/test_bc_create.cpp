@@ -806,3 +806,24 @@ TEST_F(BytecodeCFMemRing, CFMemRingTest)
            0x5480000000000000ul);
 }
 
+
+TEST_F(BytecodeCFMemRing, CFMemRingRoundTripTest)
+{
+   std::vector<uint64_t> bc = {
+      0x1480000000000000ul,
+      0x1480000000006000ul,
+      0x14800000003f8000ul,
+      0x148000003f800000ul,
+      0x14800000c0000000ul,
+      0x14800fff00000000ul,
+      0x1480000000001ffful,
+      0x1480f00000000000ul,
+      0x148f000000000000ul,
+      0x1490000000000000ul,
+      0x14a0000000000000ul,
+      0x9480000000000000ul,
+      0x5480000000000000ul};
+
+   for (auto x: bc)
+      TEST_EQ(cf_mem_ring_node(x).get_bytecode_byte(0), x);
+}
