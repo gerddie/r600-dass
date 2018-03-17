@@ -9,7 +9,7 @@
  * byte code. Doing this is a pre-requisit for testing the disassembler part
  * properly.
  */
-::testing::AssertionResult SameBitmap(const uint8_t *spacing,
+::testing::AssertionResult SameBitmap(const std::vector<uint8_t>& spacing,
                                       const char* m_expr,
                                       const char* n_expr,
                                       uint64_t m,
@@ -39,67 +39,43 @@
 
 class BytecodeCFTest: public testing::Test {
 protected:
-   void do_check(const uint8_t spacing[],
-                 const char *s_data, const char *s_expect,
-                 uint64_t data, uint64_t expect) const {
+   void check(const char *s_data, const char *s_expect,
+              uint64_t data, uint64_t expect) const {
       GTEST_ASSERT_(SameBitmap(spacing, s_data, s_expect, data, expect),
                     GTEST_NONFATAL_FAILURE_);
    }
+   void set_spacing(const std::vector<uint8_t>& s) {
+      spacing = s;
+   }
+private:
+   std::vector<uint8_t> spacing;
 };
 
 class BytecodeCFNativeTest: public BytecodeCFTest {
-   static const uint8_t spaces[];
-protected:
-   void check(const char *s_data, const char *s_expect, uint64_t data, uint64_t expect) const {
-      do_check(spaces, s_data, s_expect, data, expect);
+   void SetUp() {
+      set_spacing({63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24});
    }
-};
-
-const uint8_t BytecodeCFNativeTest::spaces[] = {
-     63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24, 0
 };
 
 class BytecodeCFAluTest: public BytecodeCFTest {
-   static const uint8_t spaces[];
-protected:
-   void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      do_check(spaces, s_data, s_expect, data, expect);
+   void SetUp() {
+      set_spacing({63, 62, 58, 57, 50, 42, 34, 32, 30, 26, 22});
    }
-};
-
-const uint8_t BytecodeCFAluTest::spaces[] = {
-   63, 62, 58, 57, 50, 42, 34, 32, 30, 26, 22, 0
 };
 
 class BytecodeCFGlobalWaveSync: public BytecodeCFTest {
-   static const uint8_t spaces[];
-protected:
-   void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      do_check(spaces, s_data, s_expect, data, expect);
+   void SetUp() {
+      set_spacing({63, 62, 54, 53, 52, 48, 42, 40, 35, 32,
+                   30, 28, 26, 25, 21, 16, 10});
    }
-};
-
-const uint8_t BytecodeCFGlobalWaveSync::spaces[] = {
-   63, 62, 54, 53, 52, 48, 42, 40, 35, 32,
-   30, 28, 26, 25, 21, 16, 10, 0
 };
 
 class BytecodeCFMemRat: public BytecodeCFTest {
-   static const uint8_t spaces[];
-protected:
-   void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      do_check(spaces, s_data, s_expect, data, expect);
+   void SetUp() {
+      set_spacing({63, 62, 54, 53, 52, 48, 44, 32,
+                   30, 23, 22, 15, 13, 11, 10, 4});
    }
 };
-
-const uint8_t BytecodeCFMemRat::spaces[] = {
-   63, 62, 54, 53, 52, 48, 44, 32,
-   30, 23, 22, 15, 13, 11, 10, 4, 0
-};
-
 
 #define TEST_EQ(X, Y) check(#X, #Y, X, Y)
 
@@ -633,19 +609,11 @@ TEST_F(BytecodeCFMemRat, memrat_rountrip)
 }
 
 class BytecodeCFMemRing: public BytecodeCFTest {
-   static const uint8_t spaces[];
-protected:
-   void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      do_check(spaces, s_data, s_expect, data, expect);
+   void SetUp() {
+      set_spacing({63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
+                   30, 23, 22, 15, 13, 12});
    }
 };
-
-const uint8_t BytecodeCFMemRing::spaces[] = {
-   63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
-   30, 23, 22, 15, 13, 12, 0
-};
-
 
 TEST_F(BytecodeCFMemRing, CFMemRingTest)
 {
