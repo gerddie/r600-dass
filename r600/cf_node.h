@@ -119,7 +119,7 @@ public:
    cf_alu_node(uint64_t bc);
    cf_alu_node(uint64_t bc, uint64_t bc_ext);
    cf_alu_node(uint16_t opcode,
-               uint16_t flags,
+               const cf_flags& flags,
                uint32_t addr,
                uint16_t count = 0,
                const std::tuple<int, int,int>& kcache0 =
@@ -128,7 +128,7 @@ public:
                      std::make_tuple(0,0,0));
 
    cf_alu_node(uint16_t opcode,
-               uint16_t flags,
+               const cf_flags& flags,
                uint32_t addr,
                uint16_t count,
                const std::vector<uint16_t>& mode,

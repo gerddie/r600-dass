@@ -34,9 +34,9 @@ uint64_t cf_node::create_bytecode_byte(int i) const
 
 void cf_node::print(std::ostream& os) const
 {
-   os << std::setw(23) << std::left << op_from_opcode(m_opcode);
+   os << std::setw(22) << std::left << op_from_opcode(m_opcode);
    if (m_barrier)
-      os << "B ";
+      os << " B";
    print_detail(os);
 }
 
@@ -124,7 +124,7 @@ cf_node_with_address::cf_node_with_address(unsigned bytecode_size,
 
 void cf_node_with_address::print_address(std::ostream& os) const
 {
-   os << "ADDR:" << m_addr;
+   os << " ADDR:" << m_addr;
 }
 
 uint32_t cf_node_with_address::address() const
@@ -214,16 +214,16 @@ cf_alu_node::cf_alu_node(uint64_t bc, uint64_t bc_ext):
 }
 
 cf_alu_node::cf_alu_node(uint16_t opcode,
-                         uint16_t flags,
+                         const cf_flags& flags,
                          uint32_t addr,
                          uint16_t count,
                          const std::tuple<int, int,int>& kcache0,
                          const std::tuple<int, int,int>& kcache1
                          ):
-   cf_node_with_address(1, opcode << 4, flags & cf_node::barrier, addr),
+   cf_node_with_address(1, opcode << 4, flags.test(cf_node::barrier), addr),
    m_count(count),
-   m_alt_const(flags & cf_node::alt_const),
-   m_whole_quad_mode(flags & cf_node::wqm)
+   m_alt_const(flags.test(cf_node::alt_const)),
+   m_whole_quad_mode(flags.test(cf_node::wqm))
 {
    m_kcache_bank[0] = std::get<0>(kcache0);
    m_kcache_mode[0] = std::get<1>(kcache0);
@@ -235,7 +235,7 @@ cf_alu_node::cf_alu_node(uint16_t opcode,
 }
 
 cf_alu_node::cf_alu_node(uint16_t opcode,
-                         uint16_t flags,
+                         const cf_flags& flags,
                          uint32_t addr,
                          uint16_t count,
                          const std::vector<uint16_t>& mode,
@@ -303,13 +303,13 @@ void cf_alu_node::print_detail(std::ostream& os) const
 cf_node_word1_base::cf_node_word1_base(uint64_t bc)
 {
    if (bc & valid_pixel_mode_bit)
-      m_flags |= cf_node::vpm;
+      m_flags.set(cf_node::vpm);
 
    if (bc & end_of_program_bit)
-      m_flags |= cf_node::eop;
+      m_flags.set(cf_node::eop);
 
    if (bc & whole_quad_mode_bit)
-      m_flags |= cf_node::wqm;
+      m_flags.set(cf_node::wqm);
 }
 
 cf_node_word1_base::cf_node_word1_base(const cf_flags& flags):
@@ -332,13 +332,13 @@ void cf_node_word1_base::encode_flags(uint64_t& bc) const
 void cf_node_word1_base::print_flags(std::ostream& os) const
 {
    if (m_flags.test(cf_node::vpm))
-      os << "VPM ";
+      os << " VPM";
 
    if (m_flags.test(cf_node::wqm))
-      os << "WQM ";
+      os << " WQM";
 
    if (m_flags.test(cf_node::eop))
-      os << "EOP";
+      os << " EOP";
 }
 
 cf_node_cf_word1::cf_node_cf_word1(uint64_t word1):
@@ -369,7 +369,7 @@ void cf_node_cf_word1::print(std::ostream& os) const
 {
 
    if (m_pop_count)
-      os << " POP:" << m_pop_count << " ";
+      os << " POP:" << m_pop_count;
 
    /* Figure out when it is actually used
     *
@@ -463,7 +463,7 @@ void cf_native_node::print_detail(std::ostream& os) const
    case cf_push:
    case cf_tc:
    case cf_vc:
-      os << "ADDR:" << std::setbase(16) << address();
+      os << " ADDR:" << std::setbase(16) << address();
       break;
    case cf_wait_ack:
       os << "WCNT:" << address();
@@ -630,19 +630,19 @@ const char *cf_mem_node::m_type_string[4] = {
 
 void cf_mem_node::print_mem_detail(std::ostream& os) const
 {
-   os << " ES:" << m_elem_size + 1 << " ";
-   os << "BC:"  << m_burst_count << " ";
+   os << " ES:" << m_elem_size + 1;
+   os << " BC:"  << m_burst_count;
 
    if (m_rw_rel)
-      os << "Loop-Rel";
+      os << " Loop-Rel";
 
    if (m_valid_pixel_mode)
-      os << "VPM ";
+      os << " VPM";
 
    if (m_mark)
-      os << "Req-ACK ";
+      os << " Req-ACK";
 
-   os << "R" << m_rw_gpr;
+   os << " R" << m_rw_gpr;
    if (m_type & 1)
       os << "[R" << m_index_gpr << "]";
 }

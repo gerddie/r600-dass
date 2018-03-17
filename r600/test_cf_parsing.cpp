@@ -35,7 +35,7 @@ TEST_F(TestDisassember, NopNopEOP)
       end_of_program_bit
    };
 
-   run(bc, "NOP                    \n"
+   run(bc, "NOP                   \n"
            "NOP                    EOP\n"
        );
 }
@@ -73,11 +73,11 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
 {
    vector<uint64_t> bc;
    cf_alu_node(cf_alu_push_before, 0, 6).append_bytecode(bc);
-   cf_native_node(cf_jump, cf_node::barrier, 4).append_bytecode(bc);
+   cf_native_node(cf_jump, 1 << cf_node::barrier, 4).append_bytecode(bc);
    cf_alu_node(cf_alu, 0, 7).append_bytecode(bc);
    cf_native_node(cf_else, 0, 5, 1).append_bytecode(bc);
    cf_alu_node(cf_alu_pop_after, 0, 8, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
@@ -97,7 +97,7 @@ TEST_F(TestDisassember, LoopBreakEOP)
    cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
    cf_native_node(cf_loop_break, 0, 2).append_bytecode(bc);
    cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
            "LOOP_BREAK             ADDR:2\n"
@@ -112,7 +112,7 @@ TEST_F(TestDisassember, LoopContinueEOP)
    cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
    cf_native_node(cf_loop_continue, 0, 2).append_bytecode(bc);
    cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, cf_node::eop).append_bytecode(bc);
+   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
            "LOOP_CONTINUE          ADDR:2\n"
@@ -125,8 +125,8 @@ TEST_F(TestDisassember, WriteScratchEop)
 {
    vector<uint64_t> bc;
    cf_export_node(cf_mem_write_scratch, 0, 5, 0, 3,
-                  2, 0xf, 0, cf_node::eop).append_bytecode(bc);
+                  2, 0xf, 0, 1 << cf_node::eop).append_bytecode(bc);
 
-   run(bc, "MEM_WRITE_SCRATCH       ES:4 BC:0 R5.xyzw ARR_SIZE:2 EOP\n");
+   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:0 R5.xyzw ARR_SIZE:2 EOP\n");
 }
 
