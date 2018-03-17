@@ -548,4 +548,18 @@ TEST_F(BytecodeCFMemRat, memrat)
                        0 /* burst_count */,
                        1 << cf_node::eop /* flags */).get_bytecode_byte(0),
            0x15a0000000000000ul);
+
+   TEST_EQ(cf_rat_node(cf_mem_rat,
+                       0 /* rat_inst */,
+                       0 /* rat_id */,
+                       0 /* rat_idx_mode */,
+                       0 /* type */,
+                       0 /* rw_gpr */,
+                       0 /* index_gpr*/,
+                       0 /* elm_size */,
+                       0 /* array_size */,
+                       0 /* comp_mask */,
+                       0 /* burst_count */,
+                       1 << cf_node::mark/* flags */).get_bytecode_byte(0),
+           0x5580000000000000ul);
 }

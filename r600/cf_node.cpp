@@ -330,6 +330,9 @@ void cf_node_flags::encode_flags(uint64_t& bc) const
 
    if (m_flags.test(cf_node::alt_const))
       bc |= alt_const_bit;
+
+   if (m_flags.test(cf_node::mark))
+      bc |= mark_bit;
 }
 
 void cf_node_flags::print_flags(std::ostream& os) const
