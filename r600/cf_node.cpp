@@ -682,12 +682,14 @@ void cf_export_node::encode_mem_parts(uint64_t& bc) const
 
 void cf_export_node::print_mem_detail(std::ostream& os) const
 {
+   os << '.';
    for (int i = 0; i < 4; ++i) {
       if (m_comp_mask & 1 << i)
          os << component_names[i];
       else
          os << "_";
    }
+   os << " ARR_SIZE:" << m_array_size;
    print_export_detail(os);
 }
 
@@ -741,12 +743,9 @@ void cf_rat_node::print_export_detail(std::ostream& os) const
 }
 
 cf_mem_ring_node::cf_mem_ring_node(uint64_t bc):
-   cf_mem_node(bc),
-   m_array_base(bc & 0x1FFF),
-   m_sel(4)
+   cf_export_node(bc),
+   m_array_base(bc & 0x1FFF)
 {
-   for (int i = 0; i < 4; ++i)
-      m_sel[i] = (bc >> (3*i + 32)) & 0x7;
 }
 
 cf_mem_ring_node::cf_mem_ring_node(uint16_t opcode,
@@ -754,46 +753,39 @@ cf_mem_ring_node::cf_mem_ring_node(uint16_t opcode,
                                    uint16_t rw_gpr,
                                    uint16_t index_gpr,
                                    uint16_t elem_size,
-                                   uint16_t burst_count,
+                                   uint16_t array_size,
                                    uint16_t array_base,
-                                   const std::vector<uint16_t>& sel,
+                                   uint16_t comp_mask,
+                                   uint16_t burst_count,
                                    const cf_flags &flags):
-   cf_mem_node(opcode, type, rw_gpr, index_gpr, elem_size,
-               burst_count, flags),
-   m_array_base(array_base),
-   m_sel(sel)
+   cf_export_node(opcode, type, rw_gpr, index_gpr, elem_size,
+                  array_size, comp_mask, burst_count, flags),
+   m_array_base(array_base)
 {
-   std::cerr << "m_array_base=" << m_array_base << "\n";
 }
 
-void cf_mem_ring_node::print_mem_detail(std::ostream& os) const
+void cf_mem_ring_node::print_export_detail(std::ostream& os) const
 {
-   os << '.';
-   for (int i = 0; i < 4; ++i)
-      os << component_names[m_sel[i]];
    os << " ARR_BASE:" << m_array_base;
 }
 
-void cf_mem_ring_node::encode_mem_parts(uint64_t &bc) const
+void cf_mem_ring_node::encode_export_parts(uint64_t &bc) const
 {
-   for (int i = 0; i < 4; ++i)
-      bc |= static_cast<uint64_t>(m_sel[i]) << (i * 3 + 32);
-
    bc |= m_array_base;
 }
 
 
-cf_mem_stream_node::cf_mem_stream_node(uint64_t bc):
+cf_mem_export_node::cf_mem_export_node(uint64_t bc):
    cf_export_node(bc),
-   m_array_base(bc & 0x1FFF)
+   m_sel(4)
 {
 }
 
-void cf_mem_stream_node::print_export_detail(std::ostream& os) const
+void cf_mem_export_node::print_export_detail(std::ostream& os) const
 {
 }
 
-void cf_mem_stream_node::encode_export_parts(uint64_t &bc) const
+void cf_mem_export_node::encode_export_parts(uint64_t &bc) const
 {
 
 }

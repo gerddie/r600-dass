@@ -282,7 +282,8 @@ private:
    uint16_t m_rat_index_mode;
 };
 
-class cf_mem_ring_node: public cf_mem_node {
+/* Scratch, stream, and ring buffers */
+class cf_mem_ring_node: public cf_export_node {
 public:
    cf_mem_ring_node(uint64_t bc);
 
@@ -291,26 +292,25 @@ public:
                     uint16_t rw_gpr,
                     uint16_t index_gpr,
                     uint16_t elem_size,
-                    uint16_t burst_count,
+                    uint16_t array_size,
                     uint16_t array_base,
-                    const std::vector<uint16_t> &m_sel,
+                    uint16_t comp_mask,
+                    uint16_t burst_count,
                     const cf_flags &flags);
 private:
-   void print_mem_detail(std::ostream& os) const override;
-   void encode_mem_parts(uint64_t& bc) const override;
-
+   void print_export_detail(std::ostream& os) const override final;
+   void encode_export_parts(uint64_t& bc) const override final;
    uint16_t m_array_base;
-   std::vector<uint16_t> m_sel;
 };
 
-class cf_mem_stream_node: public cf_export_node {
+class cf_mem_export_node: public cf_export_node {
 public:
-   cf_mem_stream_node(uint64_t bc);
+   cf_mem_export_node(uint64_t bc);
 private:
    void print_export_detail(std::ostream& os) const override;
    void encode_export_parts(uint64_t& bc) const override;
 
-   uint16_t m_array_base;
+   std::vector<unsigned> m_sel;
 };
 
 #endif // CF_NODE_H

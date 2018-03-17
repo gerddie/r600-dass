@@ -632,4 +632,34 @@ TEST_F(BytecodeCFMemRat, memrat_rountrip)
       TEST_EQ(cf_rat_node(x).get_bytecode_byte(0), x);
 }
 
+class BytecodeCFMemRing: public BytecodeCFTest {
+   static const uint8_t spaces[];
+protected:
+   void check(const char *s_data, const char *s_expect,
+              uint64_t data, uint64_t expect) const {
+      do_check(spaces, s_data, s_expect, data, expect);
+   }
+};
+
+const uint8_t BytecodeCFMemRing::spaces[] = {
+   63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
+   30, 23, 22, 15, 13, 12, 0
+};
+
+
+TEST_F(BytecodeCFMemRing, CFMemRingTest)
+{
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /*rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0 /*flags */).get_bytecode_byte(0),
+           0x1480000000000000ul);
+
+}
 

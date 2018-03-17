@@ -130,9 +130,11 @@ TEST_F(TestDisassember, WriteScratchEop)
                     5,
                     0,
                     3,
+                    3,
+                    4,
+                    0xf,
                     2,
-                    4, {0,1,2,3},
                     1 << cf_node::eop).append_bytecode(bc);
-   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:2 R5.xyzw ARR_BASE:4 EOP\n");
+   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:2 R5.xyzw ARR_SIZE:3 ARR_BASE:4 EOP\n");
 }
 
