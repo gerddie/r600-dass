@@ -353,16 +353,17 @@ TEST_F(BytecodeCFGlobalWaveSync, gws)
 
 TEST_F(BytecodeCFMemRat, memrat)
 {
-   TEST_EQ(cf_gws_node(cf_mem_rat,
-                       0 /* gws_opcode */,
-                       1 << cf_node::sign /* flags */,
-                       0 /* pop_count */,
-                       0 /* cf_const */,
-                       0 /* cond */,
-                       0 /* count */,
-                       0 /* value */,
-                       0 /* resource */,
-                       0 /* val_index_mode */,
-                       0 /* rsrc_index_mode */).get_bytecode_byte(0),
-           0x1580000002000000ul);
+   TEST_EQ(cf_rat_node(cf_mem_rat,
+                       0 /* rat_inst */,
+                       0 /* rat_id */,
+                       0 /* rat_idx_mode */,
+                       0 /* type */,
+                       0 /* rw_gpr */,
+                       0 /* index_gpr*/,
+                       0 /* elm_size */,
+                       0 /* array_size */,
+                       0xf /* comp_mask */,
+                       0 /* burst_count */,
+                       0 /* flags */).get_bytecode_byte(0),
+           0x1580F00000000000ul);
 }
