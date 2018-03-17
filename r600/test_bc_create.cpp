@@ -651,15 +651,158 @@ TEST_F(BytecodeCFMemRing, CFMemRingTest)
 {
    TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
                             0, /* type */
-                            0, /*rw_gpr */
+                            0, /* rw_gpr */
                             0, /* index_gpr */
                             0, /* elem_size */
                             0, /* array_size */
                             0, /* array_base */
                             0, /* comp_mask */
                             0, /* burst_count */
-                            0 /*flags */).get_bytecode_byte(0),
+                            0  /* flags */).get_bytecode_byte(0),
            0x1480000000000000ul);
 
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            3, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x1480000000006000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0x7f, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x14800000003f8000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0x7f, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x148000003f800000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            3, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x14800000c0000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0xfff, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x14800fff00000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0x1fff, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x1480000000001ffful);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0xf, /* comp_mask */
+                            0, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x1480f00000000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0xf, /* burst_count */
+                            0  /* flags */).get_bytecode_byte(0),
+           0x148f000000000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            1 << cf_node::vpm  /* flags */).get_bytecode_byte(0),
+           0x1490000000000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            1 << cf_node::eop  /* flags */).get_bytecode_byte(0),
+           0x14a0000000000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            1 << cf_node::barrier /* flags */).get_bytecode_byte(0),
+           0x9480000000000000ul);
+
+   TEST_EQ(cf_mem_ring_node(cf_mem_ring, /* opcpde */
+                            0, /* type */
+                            0, /* rw_gpr */
+                            0, /* index_gpr */
+                            0, /* elem_size */
+                            0, /* array_size */
+                            0, /* array_base */
+                            0, /* comp_mask */
+                            0, /* burst_count */
+                            1 << cf_node::wqm /* flags */).get_bytecode_byte(0),
+           0x5480000000000000ul);
 }
 
