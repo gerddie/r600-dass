@@ -86,6 +86,21 @@ const uint8_t BytecodeCFGlobalWaveSync::spaces[] = {
    30, 28, 26, 25, 21, 16, 10, 0
 };
 
+class BytecodeCFMemRat: public BytecodeCFTest {
+   static const uint8_t spaces[];
+protected:
+   void check(const char *s_data, const char *s_expect,
+              uint64_t data, uint64_t expect) const {
+      do_check(spaces, s_data, s_expect, data, expect);
+   }
+};
+
+const uint8_t BytecodeCFMemRat::spaces[] = {
+   63, 62, 54, 53, 52, 48, 44, 32,
+   30, 23, 22, 15, 13, 11, 10, 4, 0
+};
+
+
 #define TEST_EQ(X, Y) check(#X, #Y, X, Y)
 
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
@@ -334,3 +349,4 @@ TEST_F(BytecodeCFGlobalWaveSync, )
                        0 /* rsrc_index_mode */).get_bytecode_byte(0),
            0x0780000002000000ul);
 }
+
