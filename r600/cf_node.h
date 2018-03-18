@@ -217,8 +217,16 @@ public:
                const cf_flags &flags);
 
 protected:
-   static const char *m_type_string[4];
-   uint16_t m_type;
+   enum types {
+      export_pixel,
+      export_pos,
+      export_param,
+      export_unknown
+   };
+
+   int get_type() const;
+   int get_burst_count() const;
+   bool is_type(types t) const;
 
 private:
    void print_detail(std::ostream& os) const override final;
@@ -226,6 +234,8 @@ private:
    virtual void print_mem_detail(std::ostream& os) const = 0;
    virtual void encode_mem_parts(uint64_t& bc) const = 0;
    virtual void print_elm_size(std::ostream& os) const;
+
+   uint16_t m_type;
    uint16_t m_rw_gpr;
    uint16_t m_index_gpr;
    uint16_t m_elem_size;
@@ -335,6 +345,7 @@ public:
                   const std::vector<unsigned>& sel,
                   const cf_flags &flags);
 private:
+   static const char *m_type_string[4];
    void print_mem_detail(std::ostream& os) const override;
    void encode_mem_parts(uint64_t& bc) const override;
    void print_elm_size(std::ostream& os) const override;

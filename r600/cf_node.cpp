@@ -632,12 +632,6 @@ void cf_mem_node::encode_parts(int i, uint64_t& bc) const
    encode_mem_parts(bc);
 }
 
-
-const char *cf_mem_node::m_type_string[4] = {
-   "PIXEL", "POS", "PARAM", "undefined"
-};
-
-
 void cf_mem_node::print_detail(std::ostream& os) const
 {
    os << " R" << m_rw_gpr;
@@ -647,14 +641,28 @@ void cf_mem_node::print_detail(std::ostream& os) const
    print_mem_detail(os);
    print_elm_size(os);
 
-   os << " BC:"  << m_burst_count;
-
    print_flags(os);
 }
 
 void cf_mem_node::print_elm_size(std::ostream& os) const
 {
    os << " ES:" << m_elem_size + 1;
+   os << " BC:" << m_burst_count;
+}
+
+int cf_mem_node::get_type() const
+{
+   return m_type;
+}
+
+int cf_mem_node::get_burst_count() const
+{
+   return m_burst_count;
+}
+
+bool cf_mem_node::is_type(types t) const
+{
+   return t == m_type;
 }
 
 cf_mem_comp_node::cf_mem_comp_node(uint64_t bc):
@@ -733,7 +741,6 @@ const char *cf_rat_node::m_type_string[4] = {
    "WRITE", "WRITE_IND", "WRITE_ACK", "WRITE_IND_ACK"
 };
 
-
 void cf_rat_node::encode_export_parts(uint64_t &bc) const
 {
    bc |= m_rat_id;
@@ -747,7 +754,7 @@ void cf_rat_node::print_export_detail(std::ostream& os) const
    os << std::setw(23) << " " << rat_inst_string(m_rat_inst) << " ";
    os << "ID:" << m_rat_id << " ";
    os << "IDXM:" << m_index_mode_string[m_rat_index_mode] << " ";
-   os << m_type_string[m_type];
+   os << m_type_string[get_type()];
 }
 
 cf_mem_ring_node::cf_mem_ring_node(uint64_t bc):
@@ -850,13 +857,29 @@ cf_export_node::cf_export_node(uint16_t opcode,
 
 }
 
+const char *cf_export_node::m_type_string[4] = {
+   "PIXEL", "POS", "PARAM", "undefined"
+};
+
 void cf_export_node::print_mem_detail(std::ostream& os) const
 {
    os << ".";
    for (int i = 0; i < 4; ++i) {
       os << component_names[m_sel[i]];
    }
-   os << " ARR_BASE:" << m_array_base;
+
+   os << " " << m_type_string[get_type()];
+
+
+   int base = m_array_base;
+   if (is_type(export_param))
+      base += 60;
+
+   os << base;
+
+   int bc = get_burst_count();
+   if (bc)
+      os << "-" << base + bc;
 }
 
 void cf_export_node::encode_mem_parts(uint64_t &bc) const

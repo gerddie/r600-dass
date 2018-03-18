@@ -252,8 +252,8 @@ TEST_F(TestDisassember, AllCFOpsEOP)
        "MEM_WRITE_SCRATCH      R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
           /* reserved 81 */
        "MEM_RING               R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
-       "EXPORT                 R0.xxxx ARR_BASE:0 BC:0\n"
-       "EXPORT_DONE            R0.xxxx ARR_BASE:0 BC:0\n"
+       "EXPORT                 R0.xxxx PIXEL0\n"
+       "EXPORT_DONE            R0.xxxx PIXEL0\n"
        "MEM_EXPORT             R0.xxxx ARR_BASE:0 ES:1 BC:0\n"
        "MEM_RAT                R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
        "MEM_RAT_CACHELESS      R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
