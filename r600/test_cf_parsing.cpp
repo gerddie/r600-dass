@@ -9,7 +9,6 @@ using std::vector;
 class TestDisassember : public testing::Test {
 protected:
    void run(const std::vector<uint64_t>& bc, const std::string& expect) const;
-
 };
 
 void TestDisassember::run(const std::vector<uint64_t>& bc,
@@ -265,5 +264,3 @@ TEST_F(TestDisassember, AllCFOpsEOP)
        "MEM_RAT_COMB_CACHELESS R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
        );
 }
-
-
