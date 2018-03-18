@@ -225,6 +225,7 @@ private:
    void encode_parts(int i, uint64_t& bc) const override final;
    virtual void print_mem_detail(std::ostream& os) const = 0;
    virtual void encode_mem_parts(uint64_t& bc) const = 0;
+   virtual void print_elm_size(std::ostream& os) const;
    uint16_t m_rw_gpr;
    uint16_t m_index_gpr;
    uint16_t m_elem_size;
@@ -318,6 +319,25 @@ public:
 private:
    void print_mem_detail(std::ostream& os) const override;
    void encode_mem_parts(uint64_t& bc) const override;
+   uint16_t m_array_base;
+   std::vector<unsigned> m_sel;
+};
+
+class cf_export_node: public cf_mem_node {
+public:
+   cf_export_node(uint64_t bc);
+   cf_export_node(uint16_t opcode,
+                  uint16_t type,
+                  uint16_t rw_gpr,
+                  uint16_t index_gpr,
+                  uint16_t array_base,
+                  uint16_t burst_count,
+                  const std::vector<unsigned>& sel,
+                  const cf_flags &flags);
+private:
+   void print_mem_detail(std::ostream& os) const override;
+   void encode_mem_parts(uint64_t& bc) const override;
+   void print_elm_size(std::ostream& os) const override;
    uint16_t m_array_base;
    std::vector<unsigned> m_sel;
 };

@@ -135,7 +135,7 @@ TEST_F(TestDisassember, WriteScratchEop)
                     0xf,
                     2,
                     1 << cf_node::eop).append_bytecode(bc);
-   run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:2 R5.xyzw ARR_SIZE:3 ARR_BASE:4 EOP\n");
+   run(bc, "MEM_WRITE_SCRATCH      R5.xyzw ARR_SIZE:3 ARR_BASE:4 ES:4 BC:2 EOP\n");
 }
 
 TEST_F(TestDisassember, AllCFOpsEOP)
@@ -229,40 +229,40 @@ TEST_F(TestDisassember, AllCFOpsEOP)
        "GLOBAL_WAVE_SYNC      \n"
        "HALT                  \n"
           /* gap 32-63*/
-       "MEM_STREAM0_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM0_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM0_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM0_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM0_BUF0       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM0_BUF1       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM0_BUF2       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM0_BUF3       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
 
-       "MEM_STREAM1_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM1_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM1_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM1_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM1_BUF0       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM1_BUF1       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM1_BUF2       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM1_BUF3       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
 
-       "MEM_STREAM2_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM2_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM2_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM2_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM2_BUF0       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM2_BUF1       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM2_BUF2       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM2_BUF3       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
 
-       "MEM_STREAM3_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM3_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM3_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_STREAM3_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM3_BUF0       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM3_BUF1       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM3_BUF2       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_STREAM3_BUF3       R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
 
-       "MEM_WRITE_SCRATCH      ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_WRITE_SCRATCH      R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
           /* reserved 81 */
-       "MEM_RING               ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "EXPORT                 ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
-       "EXPORT_DONE            ES:1 BC:0 R0.xxxx ARR_BASE:0\n"          /* reserved 84 */
-       "MEM_EXPORT             ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
-       "MEM_RAT                ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
-       "MEM_RAT_CACHELESS      ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
+       "MEM_RING               R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "EXPORT                 R0.xxxx ARR_BASE:0 BC:0\n"
+       "EXPORT_DONE            R0.xxxx ARR_BASE:0 BC:0\n"
+       "MEM_EXPORT             R0.xxxx ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_RAT                R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
+       "MEM_RAT_CACHELESS      R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
 
-       "MEM_RING1              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_RING2              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_RING3              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
-       "MEM_EXPORT_COMB        ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
-       "MEM_RAT_COMB_CACHELESS ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
+       "MEM_RING1              R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_RING2              R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_RING3              R0.____ ARR_SIZE:0 ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_EXPORT_COMB        R0.xxxx ARR_BASE:0 ES:1 BC:0\n"
+       "MEM_RAT_COMB_CACHELESS R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE ES:1 BC:0\n"
        );
 }
 

@@ -42,8 +42,11 @@ disassembler::disassembler(const vector<uint64_t>& bc)
       case nt_cf_mem_rat:
          cf_instr = cf_node::pointer(new cf_rat_node(*i));
          break;
-      case nt_cf_export:
+      case nt_cf_mem_export:
          cf_instr = cf_node::pointer(new cf_mem_export_node(*i));
+         break;
+      case nt_cf_export:
+         cf_instr = cf_node::pointer(new cf_export_node(*i));
          break;
       default:
          std::cerr << std::setbase(16) << *i << ": unknown node type " <<
@@ -84,6 +87,7 @@ disassembler::get_cf_node_type(uint64_t bc)
       return nt_cf_mem_ring;
    case cf_mem_export:
    case cf_mem_export_combined:
+      return nt_cf_mem_export;
    case cf_export:
    case cf_export_done:
       return nt_cf_export;

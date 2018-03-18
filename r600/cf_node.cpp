@@ -640,15 +640,21 @@ const char *cf_mem_node::m_type_string[4] = {
 
 void cf_mem_node::print_detail(std::ostream& os) const
 {
-   os << " ES:" << m_elem_size + 1;
-   os << " BC:"  << m_burst_count;
-
    os << " R" << m_rw_gpr;
    if (m_type & 1)
       os << "[R" << m_index_gpr << "]";
 
    print_mem_detail(os);
+   print_elm_size(os);
+
+   os << " BC:"  << m_burst_count;
+
    print_flags(os);
+}
+
+void cf_mem_node::print_elm_size(std::ostream& os) const
+{
+   os << " ES:" << m_elem_size + 1;
 }
 
 cf_mem_comp_node::cf_mem_comp_node(uint64_t bc):
@@ -817,6 +823,52 @@ void cf_mem_export_node::encode_mem_parts(uint64_t &bc) const
    bc |= m_array_base;
    for (int i = 0; i < 4; ++i)
       bc |= static_cast<uint64_t>(m_sel[i]) << (32 + 3 * i);
+}
+
+cf_export_node::cf_export_node(uint64_t bc):
+   cf_mem_node(bc),
+   m_array_base(bc & 0x1fff),
+   m_sel(4)
+{
+   for (int i = 0; i < 4; ++i)
+      m_sel[i] = (bc >> (32 + 3 * i)) & 0x7;
+}
+
+cf_export_node::cf_export_node(uint16_t opcode,
+                               uint16_t type,
+                               uint16_t rw_gpr,
+                               uint16_t index_gpr,
+                               uint16_t array_base,
+                               uint16_t burst_count,
+                               const std::vector<unsigned>& sel,
+                               const cf_flags &flags):
+   cf_mem_node(opcode, type, rw_gpr, index_gpr, 0,
+               burst_count, flags),
+   m_array_base(array_base),
+   m_sel(sel)
+{
+
+}
+
+void cf_export_node::print_mem_detail(std::ostream& os) const
+{
+   os << ".";
+   for (int i = 0; i < 4; ++i) {
+      os << component_names[m_sel[i]];
+   }
+   os << " ARR_BASE:" << m_array_base;
+}
+
+void cf_export_node::encode_mem_parts(uint64_t &bc) const
+{
+   bc |= m_array_base;
+   for (int i = 0; i < 4; ++i)
+      bc |= static_cast<uint64_t>(m_sel[i]) << (32 + 3 * i);
+}
+
+void cf_export_node::print_elm_size(std::ostream& os) const
+{
+   (void)os;
 }
 
 const char *cf_rat_node::rat_inst_string(int opcode) const
