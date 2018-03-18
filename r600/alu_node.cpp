@@ -23,6 +23,7 @@
 
 namespace r600 {
 using std::unique_ptr;
+using std::move;
 
 const uint64_t src0_rel_bit = 1ul << 9;
 const uint64_t src1_rel_bit = 1ul << 22;
@@ -54,7 +55,7 @@ AluNode *AluNode::decode(uint64_t bc, int literal_index)
    uint16_t src0_chan = (bc >> 10) & 3;
    uint16_t src1_chan = (bc >> 23) & 3;
 
-   uint16_t index_mode = (bc >> 26) & 3;
+   auto index_mode = static_cast<EIndexMode>((bc >> 26) & 3);
 
    uint16_t pred_sel = (bc >> 29) & 3;
    if (bc & last_instr_bit)
@@ -63,19 +64,19 @@ AluNode *AluNode::decode(uint64_t bc, int literal_index)
    bool src0_abs = 0;
    bool src1_abs = 0;
 
-   uint16_t bank_swizzle = (bc >> 18) & 3;
+   auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 18) & 3);
    uint16_t dst_sel = (bc >> 21) & 0x3f;
    bool dst_rel = bc & dst_rel_bit;
    bool clamp = bc & clamp_bit;
    uint16_t dst_chan = (bc >> 61) & 3;
    uint16_t opcode = 0;
-   uint16_t omod = 0;
+   EOutputModify omod = omod_off;
 
    bool is_op2 = (bc & (7ul << 47)) == 0;
    if (is_op2) {
       /* op2 */
       opcode = (bc >> 39) & 0x7ff;
-      omod = (bc >> 37) & 3;
+      omod = static_cast<EOutputModify>((bc >> 37) & 3);
 
       src0_abs = bc & src0_abs_bit;
       src1_abs = bc & src1_abs_bit;
@@ -109,12 +110,48 @@ AluNode *AluNode::decode(uint64_t bc, int literal_index)
    unique_ptr<Value> dst(new GPRValue(dst_sel, dst_chan, 0, dst_rel, 0));
 
    if (is_op2) {
-      return new AluNodeOp2(opcode, std::move(src0), std::move(src1), std::move(dst), index_mode, bank_swizzle,
-                            omod, flags);
+      return new AluNodeOp2(opcode, std::move(src0), std::move(src1), std::move(dst),
+                            index_mode, bank_swizzle, omod, flags);
    } else {
-      return new AluNodeOp3(opcode, src0, src1, src2, dst, index_mode,
-                            bank_swizzle, omod, flags);
+      return new AluNodeOp3(opcode, std::move(src0), std::move(src1), std::move(src2),
+                            std::move(dst), index_mode, bank_swizzle, flags);
    }
+}
+
+AluNode::AluNode(uint16_t opcode,
+                 PValue src0, PValue src1,
+                 PValue dst, EIndexMode index_mode,
+                 EBankSwizzle bank_swizzle,
+                 AluOpFlags flags):
+   m_opcode(opcode),
+   m_src0(src0),
+   m_src1(src1),
+   m_dst(dst),
+   m_index_mode(index_mode),
+   m_bank_swizzle(bank_swizzle),
+   m_flags(flags)
+{
+}
+
+AluNodeOp2::AluNodeOp2(uint16_t opcode,
+                       PValue src0, PValue src1, PValue dst,
+                       EIndexMode index_mode, EBankSwizzle bank_swizzle,
+                       EOutputModify output_modify,
+                       AluOpFlags flags):
+   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, flags),
+   m_output_modify(output_modify)
+{
+}
+
+AluNodeOp3::AluNodeOp3(uint16_t opcode,
+                       PValue src0, PValue  src1, PValue  src2,
+                       PValue dst, EIndexMode index_mode,
+                       EBankSwizzle bank_swizzle,
+                       AluOpFlags flags):
+   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, flags),
+   m_src2(src2)
+{
+
 }
 
 

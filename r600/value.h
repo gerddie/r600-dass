@@ -55,7 +55,7 @@ private:
    bool m_neg;
 };
 
-using PValue=std::unique_ptr<Value>;
+using PValue=std::shared_ptr<Value>;
 
 class GPRValue : public Value
 {
@@ -83,7 +83,7 @@ private:
 class InlineConstValue: public Value
 {
 public:
-        InlineConstValue(AluInlineConstants value,
+        InlineConstValue(int value,
                          bool abs, bool rel, bool neg);
 private:
         AluInlineConstants m_value;

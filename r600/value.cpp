@@ -52,10 +52,10 @@ Value *Value::create(uint16_t sel, uint16_t chan, bool abs,
                 return new ConstValue(sel, chan, abs, rel, neg);
 
         if (sel == ALU_SRC_LITERAL)
-                return new LiteralValue*(literal_index, chan, abs, rel, neg);
+                return new LiteralValue(literal_index, chan, abs, rel, neg);
 
         if (sel < 255)
-           return new InlineConstValue(sel, chan, abs, rel, neg);
+           return new InlineConstValue(sel, abs, rel, neg);
 
         return nullptr;
 }
@@ -75,10 +75,10 @@ LiteralValue::LiteralValue(uint32_t index, uint16_t chan,
 {
 }
 
-InlineConstValue::InlineConstValue(AluInlineConstants value,
+InlineConstValue::InlineConstValue(int value,
                                    bool abs, bool rel, bool neg):
    Value(Value::cinline, abs, rel, neg),
-   m_value(value)
+   m_value(static_cast<AluInlineConstants>(value))
 {
 }
 
@@ -88,4 +88,6 @@ ConstValue::ConstValue(uint16_t sel, uint16_t chan,
    m_index((sel >> 7) & 0x1f),
    m_kcache_bank((sel >> 12) & 0x3)
 {
+}
+
 }

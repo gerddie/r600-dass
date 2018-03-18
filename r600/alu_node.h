@@ -31,28 +31,28 @@ using AluOpFlags=std::bitset<16>;
 
 class AluNode {
 public:
-        enum EAluIndexMode {
+        enum EIndexMode {
                 idx_ar_x,
                 idx_loop,
                 idx_global,
                 idx_global_ar_x
         };
 
-        enum EAluPredSelect {
+        enum EPredSelect {
                 pred_sel_off = 0,
                 pred_sel_reserved,
                 pred_sel_zero,
                 pred_sel_one
         };
 
-        enum EAluOutputModify {
+        enum EOutputModify {
                 omod_off,
                 omod_mul_2,
                 omod_mul_4,
                 omod_div_2,
         };
 
-        enum AluBankSwizzle {
+        enum EBankSwizzle {
                 alu_vec_012 = 0,
                 sq_alu_scl_201 = 0,
                 alu_vec_021 = 1,
@@ -76,38 +76,38 @@ public:
         static AluNode *decode(uint64_t bc, int literal_index);
 
         AluNode(uint16_t opcode,
-                    PValue&& src0, PValue&&  src1,
-                    PValue&& dst, EAluIndexMode index_mode,
-                    AluBankSwizzle bank_swizzle,
-                    AluOpFlags flags);
+                PValue src0, PValue src1,
+                PValue dst, EIndexMode index_mode,
+                EBankSwizzle bank_swizzle,
+                AluOpFlags flags);
 
 private:
         uint16_t m_opcode;
         PValue m_src0;
         PValue m_src1;
         PValue m_dst;
-        EAluIndexMode m_index_mode;
+        EIndexMode m_index_mode;
         AluOpFlags m_flags;
-        AluBankSwizzle m_bank_swizzle;
+        EBankSwizzle m_bank_swizzle;
 };
 
 class AluNodeOp2: public AluNode {
 public:
         AluNodeOp2(uint16_t opcode,
-                   PValue&& src0, PValue&&  src1, PValue&& dst,
-                   EAluIndexMode index_mode, AluBankSwizzle bank_swizzle,
-                   EAluOutputModify output_modify,
+                   PValue src0, PValue src1, PValue dst,
+                   EIndexMode index_mode, EBankSwizzle bank_swizzle,
+                   EOutputModify output_modify,
                    AluOpFlags flags);
 private:
-        EAluOutputModify m_output_modify;
+        EOutputModify m_output_modify;
 };
 
 class AluNodeOp3: public AluNode {
 public:
         AluNodeOp3(uint16_t opcode,
-                   PValue&& src0, PValue&&  src1, PValue&&  src2,
-                   PValue&& dst, EAluIndexMode index_mode,
-                   AluBankSwizzle bank_swizzle,
+                   PValue src0, PValue src1, PValue src2,
+                   PValue dst, EIndexMode index_mode,
+                   EBankSwizzle bank_swizzle,
                    AluOpFlags flags);
 private:
         PValue m_src2;
