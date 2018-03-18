@@ -25,6 +25,8 @@
 #include <iosfwd>
 #include <vector>
 
+namespace r600 {
+
 class node
 {
 public:
@@ -49,5 +51,7 @@ inline std::ostream& operator << (std::ostream&os, const node& n)
         n.print(os);
         return os;
 }
+
+} // ns r600
 
 #endif // NODE_H

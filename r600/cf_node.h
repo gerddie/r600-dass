@@ -30,6 +30,8 @@
 #include <tuple>
 #include <bitset>
 
+namespace r600 {
+
 extern const uint64_t valid_pixel_mode_bit;
 extern const uint64_t end_of_program_bit;
 extern const uint64_t barrier_bit;
@@ -372,5 +374,7 @@ private:
    uint16_t m_array_base;
    std::vector<unsigned> m_sel;
 };
+
+}
 
 #endif // CF_NODE_H

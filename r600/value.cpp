@@ -1,6 +1,6 @@
 /* -*- mia-c++  -*-
  *
- * This file is part of R600-disass a tool to disassemble R600 byte code. 
+ * This file is part of R600-disass a tool to disassemble R600 byte code.
  * Copyright (c) Genoa 2018 Gert Wollny
  *
  * R600-disass  is free software; you can redistribute it and/or modify
@@ -20,7 +20,72 @@
 
 #include "r600/value.h"
 
-R600Value::R600Value()
-{
+namespace r600 {
 
+using std::unique_ptr;
+using std::make_unique;
+
+Value::Value()
+{
+}
+
+Value::Value(Type type, bool abs, bool rel, bool neg):
+   m_type(type),
+   m_abs(abs),
+   m_rel(rel),
+   m_neg(neg)
+{
+}
+
+Value::Type Value::get_type() const
+{
+   return m_type;
+}
+
+Value *Value::create(uint16_t sel, uint16_t chan, bool abs,
+                     bool rel, bool neg, int literal_index)
+{
+        if (sel < 128)
+                return new GPRValue(sel, chan, abs, rel, neg);
+
+        if ((sel < 192) || (sel >=256 && sel < 320))
+                return new ConstValue(sel, chan, abs, rel, neg);
+
+        if (sel == ALU_SRC_LITERAL)
+                return new LiteralValue*(literal_index, chan, abs, rel, neg);
+
+        if (sel < 255)
+           return new InlineConstValue(sel, chan, abs, rel, neg);
+
+        return nullptr;
+}
+
+GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):
+   Value(Value::gpr, abs, rel, neg),
+   m_sel(sel),
+   m_chan(chan)
+{
+}
+
+LiteralValue::LiteralValue(uint32_t index, uint16_t chan,
+                           bool abs, bool rel, bool neg):
+   Value(Value::literal, abs, rel, neg),
+   m_index(index),
+   m_chan(chan)
+{
+}
+
+InlineConstValue::InlineConstValue(AluInlineConstants value,
+                                   bool abs, bool rel, bool neg):
+   Value(Value::cinline, abs, rel, neg),
+   m_value(value)
+{
+}
+
+ConstValue::ConstValue(uint16_t sel, uint16_t chan,
+                       bool abs, bool rel, bool neg):
+   Value(Value::kconst, abs, rel, neg),
+   m_index((sel >> 7) & 0x1f),
+   m_kcache_bank((sel >> 12) & 0x3)
+{
 }

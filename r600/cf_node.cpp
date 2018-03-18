@@ -23,6 +23,8 @@
 #include <iomanip>
 #include <cassert>
 
+namespace r600 {
+
 const uint64_t valid_pixel_mode_bit = 1ul << 52;
 const uint64_t end_of_program_bit = 1ul << 53;
 const uint64_t barrier_bit = 1ul << 63;
@@ -958,3 +960,5 @@ const char *cf_rat_node::rat_inst_string(int opcode) const
    default: return "UNDEF";
    }
 }
+
+} // ns r600

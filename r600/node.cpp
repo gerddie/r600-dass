@@ -19,8 +19,9 @@
  */
 
 #include "node.h"
-
 #include <cstdint>
+
+namespace r600 {
 
 node::node(unsigned bytecode_size):
         m_bytecode_size(bytecode_size)
@@ -48,3 +49,6 @@ uint64_t node::get_bytecode_byte(int i) const
 }
 
 const char *node::component_names = "xyzw01?_";
+
+
+} // ns r600

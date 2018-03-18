@@ -19,8 +19,9 @@
  */
 
 #include <r600/disassembler.h>
-
 #include <gtest/gtest.h>
+
+using namespace r600; 
 
 using std::vector;
 

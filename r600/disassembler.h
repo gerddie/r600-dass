@@ -28,6 +28,8 @@
 #include <cstdint>
 #include <string>
 
+namespace r600 {
+
 class disassembler
 {
 public:
@@ -53,5 +55,7 @@ private:
 
    std::vector<cf_node::pointer> program;
 };
+
+}
 
 #endif // DISASSEMBLER_H

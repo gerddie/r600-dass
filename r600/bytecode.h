@@ -25,6 +25,8 @@
 #include <set>
 #include <bitset>
 
+namespace r600 {
+
 class bytecode
 {
 public:
@@ -100,5 +102,7 @@ private:
    uint8_t m_sel[4];
 
 };
+
+}
 
 #endif // BYTECODE_H

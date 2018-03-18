@@ -1,10 +1,12 @@
 SET(SRC
+   alu_node.cpp
    cf_node.cpp
    disassembler.cpp
    node.cpp
    value.cpp)
 
 SET(HEADERS
+   alu_node.h   
    cf_node.h
    defines.h
    disassembler.h

@@ -27,6 +27,8 @@
 #include <iomanip>
 #include <cassert>
 
+namespace r600 {
+
 using std::make_shared;
 using std::vector;
 using std::invalid_argument;
@@ -128,3 +130,5 @@ std::string disassembler::as_string() const
    }
    return os.str();
 }
+
+} // ns r600

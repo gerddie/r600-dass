@@ -21,6 +21,7 @@
 #include <r600/cf_node.h>
 #include <gtest/gtest.h>
 
+using namespace r600; 
 
 /* Below tests strife to check whether the bits are properly arranged in the
  * byte code. Doing this is a pre-requisit for testing the disassembler part
