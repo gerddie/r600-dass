@@ -43,21 +43,23 @@ Value::Type Value::get_type() const
 }
 
 Value *Value::create(uint16_t sel, uint16_t chan, bool abs,
-                     bool rel, bool neg, int literal_index)
+                     bool rel, bool neg, LiteralFlags &literal_index)
 {
-        if (sel < 128)
-                return new GPRValue(sel, chan, abs, rel, neg);
+   if (sel < 128)
+      return new GPRValue(sel, chan, abs, rel, neg);
 
-        if ((sel < 192) || (sel >=256 && sel < 320))
-                return new ConstValue(sel, chan, abs, rel, neg);
+   if ((sel < 192) || (sel >=256 && sel < 320))
+      return new ConstValue(sel, chan, abs, rel, neg);
 
-        if (sel == ALU_SRC_LITERAL)
-                return new LiteralValue(literal_index, chan, abs, rel, neg);
+   if (sel == ALU_SRC_LITERAL) {
+      literal_index.set(chan);
+      return new LiteralValue(chan, abs, rel, neg);
+   }
 
-        if (sel < 255)
-           return new InlineConstValue(sel, abs, rel, neg);
+   if (sel < 255)
+      return new InlineConstValue(sel, abs, rel, neg);
 
-        return nullptr;
+   return nullptr;
 }
 
 GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):
@@ -67,10 +69,9 @@ GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):
 {
 }
 
-LiteralValue::LiteralValue(uint32_t index, uint16_t chan,
+LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
    Value(Value::literal, abs, rel, neg),
-   m_index(index),
    m_chan(chan)
 {
 }

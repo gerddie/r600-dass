@@ -20,10 +20,11 @@
 
 #include <r600/alu_node.h>
 
+#include <stdexcept>
+
 
 namespace r600 {
-using std::unique_ptr;
-using std::move;
+using std::runtime_error;
 
 const uint64_t src0_rel_bit = 1ul << 9;
 const uint64_t src1_rel_bit = 1ul << 22;
@@ -40,10 +41,10 @@ const uint64_t write_mask_bit = 1ul << 36;
 const uint64_t dst_rel_bit = 1ul << 60;
 const uint64_t clamp_bit = 1ul << 63;
 
-AluNode *AluNode::decode(uint64_t bc, int literal_index)
+AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
 {
    AluOpFlags flags;
-   unique_ptr<Value> src2;
+   std::shared_ptr<Value> src2;
    // decode word 0:
    uint16_t src0_sel = bc & 0x1ff;
    uint16_t src1_sel = (bc >> 13) & 0x1ff;
@@ -101,26 +102,26 @@ AluNode *AluNode::decode(uint64_t bc, int literal_index)
       opcode = (bc >> 45) & 0x1f;
    }
 
-   unique_ptr<Value> src0(Value::create(src0_sel, src0_chan, src0_abs,
+   PValue src0(Value::create(src0_sel, src0_chan, src0_abs,
                                         src0_rel, src0_neg, literal_index));
 
-   unique_ptr<Value> src1(Value::create(src1_sel, src1_chan, src1_abs,
+   PValue src1(Value::create(src1_sel, src1_chan, src1_abs,
                                         src1_rel, src1_neg, literal_index));
 
-   unique_ptr<Value> dst(new GPRValue(dst_sel, dst_chan, 0, dst_rel, 0));
+   GPRValue dst(dst_sel, dst_chan, 0, dst_rel, 0);
 
    if (is_op2) {
-      return new AluNodeOp2(opcode, std::move(src0), std::move(src1), std::move(dst),
+      return new AluNodeOp2(opcode, src0, src1, dst,
                             index_mode, bank_swizzle, omod, flags);
    } else {
-      return new AluNodeOp3(opcode, std::move(src0), std::move(src1), std::move(src2),
-                            std::move(dst), index_mode, bank_swizzle, flags);
+      return new AluNodeOp3(opcode, src0, src1, src2,
+                            dst, index_mode, bank_swizzle, flags);
    }
 }
 
 AluNode::AluNode(uint16_t opcode,
                  PValue src0, PValue src1,
-                 PValue dst, EIndexMode index_mode,
+                 const GPRValue& dst, EIndexMode index_mode,
                  EBankSwizzle bank_swizzle,
                  AluOpFlags flags):
    m_opcode(opcode),
@@ -133,8 +134,18 @@ AluNode::AluNode(uint16_t opcode,
 {
 }
 
+int AluNode::get_dst_chan() const
+{
+   return m_dst.get_chan();
+}
+
+bool AluNode::last_instr() const
+{
+   return m_flags.test(is_last_instr);
+}
+
 AluNodeOp2::AluNodeOp2(uint16_t opcode,
-                       PValue src0, PValue src1, PValue dst,
+                       PValue src0, PValue src1, const GPRValue& dst,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EOutputModify output_modify,
                        AluOpFlags flags):
@@ -145,7 +156,7 @@ AluNodeOp2::AluNodeOp2(uint16_t opcode,
 
 AluNodeOp3::AluNodeOp3(uint16_t opcode,
                        PValue src0, PValue  src1, PValue  src2,
-                       PValue dst, EIndexMode index_mode,
+                       const GPRValue &dst, EIndexMode index_mode,
                        EBankSwizzle bank_swizzle,
                        AluOpFlags flags):
    AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, flags),
@@ -154,5 +165,42 @@ AluNodeOp3::AluNodeOp3(uint16_t opcode,
 
 }
 
+AluGroup::AluGroup():
+   m_ops(5)
+{
 
+}
+
+std::vector<uint64_t>::const_iterator
+AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
+{
+   PAluNode node;
+   Value::LiteralFlags lflags;
+   bool group_should_finish = false;
+
+   do {
+      if (group_should_finish)
+         throw runtime_error("Alu group should have ended");
+      node.reset(AluNode::decode(*bc, lflags));
+      int chan = node->get_dst_chan();
+      if (m_ops[chan]) {
+         if (m_ops[4])
+            throw runtime_error("Alu group wants to use same slot more than "
+                                "once and trans is already occupied");
+         m_ops[4] = node;
+         group_should_finish = true;
+      } else {
+         m_ops[chan] = node;
+      }
+      ++bc;
+   } while (!node->last_instr());
+
+   for (int lp = 0; lp < 2; ++lp)
+      if (lflags.test(0) || lflags.test(1)) {
+         m_literals[lp] = *bc & 0xffffffff;
+         m_literals[lp+1] = (*bc >> 32 ) & 0xffffffff;
+         ++bc;
+      }
+   return bc;
+}
 }

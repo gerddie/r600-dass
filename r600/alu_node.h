@@ -73,28 +73,32 @@ public:
            do_update_pred
         };
 
-        static AluNode *decode(uint64_t bc, int literal_index);
+        static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
 
         AluNode(uint16_t opcode,
                 PValue src0, PValue src1,
-                PValue dst, EIndexMode index_mode,
+                const GPRValue& dst, EIndexMode index_mode,
                 EBankSwizzle bank_swizzle,
                 AluOpFlags flags);
 
+        int get_dst_chan() const;
+        bool last_instr() const;
 private:
         uint16_t m_opcode;
         PValue m_src0;
         PValue m_src1;
-        PValue m_dst;
+        GPRValue m_dst;
         EIndexMode m_index_mode;
         AluOpFlags m_flags;
         EBankSwizzle m_bank_swizzle;
 };
 
+using PAluNode = std::shared_ptr<AluNode>;
+
 class AluNodeOp2: public AluNode {
 public:
         AluNodeOp2(uint16_t opcode,
-                   PValue src0, PValue src1, PValue dst,
+                   PValue src0, PValue src1, const GPRValue& dst,
                    EIndexMode index_mode, EBankSwizzle bank_swizzle,
                    EOutputModify output_modify,
                    AluOpFlags flags);
@@ -106,11 +110,23 @@ class AluNodeOp3: public AluNode {
 public:
         AluNodeOp3(uint16_t opcode,
                    PValue src0, PValue src1, PValue src2,
-                   PValue dst, EIndexMode index_mode,
+                   const GPRValue& dst, EIndexMode index_mode,
                    EBankSwizzle bank_swizzle,
                    AluOpFlags flags);
 private:
         PValue m_src2;
+};
+
+class AluGroup {
+public:
+   AluGroup();
+
+   std::vector<uint64_t>::const_iterator
+   decode(std::vector<uint64_t>::const_iterator bc);
+
+private:
+   std::vector<PAluNode> m_ops;
+   uint32_t m_literals[4];
 };
 
 }

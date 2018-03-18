@@ -24,6 +24,7 @@
 #include <r600/defines.h>
 #include <cstdint>
 #include <memory>
+#include <bitset>
 
 namespace r600 {
 
@@ -38,12 +39,14 @@ public:
       unknown
    };
 
+   using LiteralFlags=std::bitset<4>;
+
    Value();
    Value(Type type, bool abs, bool rel, bool neg);
 
    static Value *create(uint16_t sel, uint16_t chan,
                         bool abs, bool rel, bool neg,
-                        int literal_index);
+                        LiteralFlags& literal_index);
 
    Type get_type() const;
 
@@ -62,6 +65,8 @@ class GPRValue : public Value
 public:
         GPRValue(uint16_t sel, uint16_t chan,
                  bool abs, bool rel, bool neg);
+
+        int get_chan() const { return m_chan;}
 private:
         uint16_t m_sel;
         uint16_t m_chan;
@@ -71,10 +76,8 @@ private:
 class LiteralValue: public Value
 {
 public:
-        LiteralValue(uint32_t index, uint16_t chan,
-                     bool abs, bool rel, bool neg);
+        LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
 private:
-        uint32_t m_index;
         uint16_t m_chan;
 
 
