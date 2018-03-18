@@ -854,7 +854,6 @@ cf_export_node::cf_export_node(uint16_t opcode,
    m_array_base(array_base),
    m_sel(sel)
 {
-
 }
 
 const char *cf_export_node::m_type_string[4] = {
