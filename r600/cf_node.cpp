@@ -92,8 +92,8 @@ std::string cf_node::op_from_opcode(uint32_t opcode) const
    case cf_mem_write_scratch: return "MEM_WRITE_SCRATCH";
       /* reserved 81 */
    case cf_mem_ring: return "MEM_RING";
-      /* reserved 83 */
-      /* reserved 84 */
+   case cf_export: return "EXPORT";
+   case cf_export_done: return "EXPORT_DONE";
    case cf_mem_export: return "MEM_EXPORT";
    case cf_mem_rat: return "MEM_RAT";
    case cf_mem_rat_cacheless: return "MEM_RAT_CACHELESS";
@@ -466,7 +466,7 @@ void cf_native_node::print_detail(std::ostream& os) const
 {
    switch (opcode()) {
    case cf_jump_table:
-      os << "JTS:" << m_jts_names[m_jumptable_se] << " ";
+      os << " JTS:" << m_jts_names[m_jumptable_se];
    case cf_call:
    case cf_call_fs:
    case cf_loop_start:
@@ -485,7 +485,7 @@ void cf_native_node::print_detail(std::ostream& os) const
       os << " ADDR:" << std::setbase(16) << address();
       break;
    case cf_wait_ack:
-      os << "WCNT:" << address();
+      os << " WCNT:" << address();
       break;
    }
 

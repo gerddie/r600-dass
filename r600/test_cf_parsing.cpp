@@ -138,3 +138,132 @@ TEST_F(TestDisassember, WriteScratchEop)
    run(bc, "MEM_WRITE_SCRATCH      ES:4 BC:2 R5.xyzw ARR_SIZE:3 ARR_BASE:4 EOP\n");
 }
 
+TEST_F(TestDisassember, AllCFOpsEOP)
+{
+   vector<uint64_t> bc = {
+      static_cast<uint64_t>(cf_nop) << 54,
+      static_cast<uint64_t>(cf_tc) << 54,
+      static_cast<uint64_t>(cf_vc) << 54,
+      static_cast<uint64_t>(cf_gds) << 54,
+      static_cast<uint64_t>(cf_loop_start) << 54,
+      static_cast<uint64_t>(cf_loop_end) << 54,
+      static_cast<uint64_t>(cf_loop_start_dx10) << 54,
+      static_cast<uint64_t>(cf_loop_start_no_al) << 54,
+      static_cast<uint64_t>(cf_loop_continue ) << 54,
+      static_cast<uint64_t>(cf_loop_break ) << 54,
+      static_cast<uint64_t>(cf_jump ) << 54,
+      static_cast<uint64_t>(cf_push ) << 54,
+      static_cast<uint64_t>(cf_else ) << 54,
+      static_cast<uint64_t>(cf_pop ) << 54,
+      static_cast<uint64_t>(cf_call ) << 54,
+      static_cast<uint64_t>(cf_call_fs ) << 54,
+      static_cast<uint64_t>(cf_return ) << 54,
+      static_cast<uint64_t>(cf_emit_vertex ) << 54,
+      static_cast<uint64_t>(cf_emit_cut_vertex ) << 54,
+      static_cast<uint64_t>(cf_cut_vertex ) << 54,
+      static_cast<uint64_t>(cf_kill ) << 54,
+      static_cast<uint64_t>(cf_wait_ack ) << 54,
+      static_cast<uint64_t>(cf_tc_ack ) << 54,
+      static_cast<uint64_t>(cf_vc_ack ) << 54,
+      static_cast<uint64_t>(cf_jump_table ) << 54,
+      static_cast<uint64_t>(cf_global_wave_sync ) << 54,
+      static_cast<uint64_t>(cf_halt ) << 54,
+      static_cast<uint64_t>(cf_mem_stream0_buf0 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream0_buf1 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream0_buf2 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream0_buf3 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream1_buf0 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream1_buf1 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream1_buf2 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream1_buf3 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream2_buf0 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream2_buf1 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream2_buf2 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream2_buf3 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream3_buf0 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream3_buf1 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream3_buf2 ) << 54,
+      static_cast<uint64_t>(cf_mem_stream3_buf3 ) << 54,
+      static_cast<uint64_t>(cf_mem_write_scratch ) << 54,
+      static_cast<uint64_t>(cf_mem_ring ) << 54,
+      static_cast<uint64_t>(cf_export ) << 54,
+      static_cast<uint64_t>(cf_export_done ) << 54,
+      static_cast<uint64_t>(cf_mem_export ) << 54,
+      static_cast<uint64_t>(cf_mem_rat ) << 54,
+      static_cast<uint64_t>(cf_mem_rat_cacheless ) << 54,
+      static_cast<uint64_t>(cf_mem_ring1) << 54,
+      static_cast<uint64_t>(cf_mem_ring2) << 54,
+      static_cast<uint64_t>(cf_mem_ring3) << 54,
+      static_cast<uint64_t>(cf_mem_export_combined ) << 54,
+      static_cast<uint64_t>(cf_mem_rat_combined_cacheless ) << 54
+   };
+
+   run(bc,
+       "NOP                   \n"
+       "TC                     ADDR:0\n"
+       "VC                     ADDR:0\n"
+       "GDS                    ADDR:0\n"
+       "LOOP_START             ADDR:0\n"
+       "LOOP_END               ADDR:0\n"
+       "LOOP_START_DX10        ADDR:0\n"
+       "LOOP_START_NO_AL       ADDR:0\n"
+       "LOOP_CONTINUE          ADDR:0\n"
+       "LOOP_BREAK             ADDR:0\n"
+       "JUMP                   ADDR:0\n"
+       "PUSH                   ADDR:0\n"
+       "ELSE                   ADDR:0\n"
+       "POP                   \n"
+          /* 15 - 17 reserved */
+       "CALL                   ADDR:0\n"
+       "CALL_FS                ADDR:0\n"
+       "RETURN                \n"
+       "EMIT_VERTEX           \n"
+       "EMIT_CUT_VERTEX       \n"
+       "CUT_VERTEX            \n"
+       "KILL                   ADDR:0\n"
+          /* 25 reserved */
+       "WAIT_ACK               WCNT:0\n"
+       "TC_ACK                \n"
+       "VC_ACK                \n"
+       "JUMP_TABLE             JTS:CA ADDR:0\n"
+       "GLOBAL_WAVE_SYNC      \n"
+       "HALT                  \n"
+          /* gap 32-63*/
+       "MEM_STREAM0_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM0_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM0_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM0_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+
+       "MEM_STREAM1_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM1_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM1_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM1_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+
+       "MEM_STREAM2_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM2_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM2_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM2_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+
+       "MEM_STREAM3_BUF0       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM3_BUF1       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM3_BUF2       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_STREAM3_BUF3       ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+
+       "MEM_WRITE_SCRATCH      ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+          /* reserved 81 */
+       "MEM_RING               ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "EXPORT                 ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
+       "EXPORT_DONE            ES:1 BC:0 R0.xxxx ARR_BASE:0\n"          /* reserved 84 */
+       "MEM_EXPORT             ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
+       "MEM_RAT                ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
+       "MEM_RAT_CACHELESS      ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
+
+       "MEM_RING1              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_RING2              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_RING3              ES:1 BC:0 R0.____ ARR_SIZE:0 ARR_BASE:0\n"
+       "MEM_EXPORT_COMB        ES:1 BC:0 R0.xxxx ARR_BASE:0\n"
+       "MEM_RAT_COMB_CACHELESS ES:1 BC:0 R0.____ ARR_SIZE:0                       NOP ID:0 IDXM:N WRITE\n"
+       );
+}
+
+
