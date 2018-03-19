@@ -29,8 +29,9 @@ Value::Value()
 {
 }
 
-Value::Value(Type type, bool abs, bool rel, bool neg):
+Value::Value(Type type, uint16_t chan, bool abs, bool rel, bool neg):
    m_type(type),
+   m_chan(chan),
    m_abs(abs),
    m_rel(rel),
    m_neg(neg)
@@ -63,32 +64,52 @@ Value *Value::create(uint16_t sel, uint16_t chan, bool abs,
 }
 
 GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):
-   Value(Value::gpr, abs, rel, neg),
-   m_sel(sel),
-   m_chan(chan)
+   Value(Value::gpr, chan, abs, rel, neg),
+   m_sel(sel)
 {
+}
+
+uint64_t GPRValue::get_sel() const
+{
+   return m_sel;
 }
 
 LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
-   Value(Value::literal, abs, rel, neg),
-   m_chan(chan)
+   Value(Value::literal, chan, abs, rel, neg)
 {
+}
+
+uint64_t LiteralValue::get_sel() const
+{
+   return ALU_SRC_LITERAL;
 }
 
 InlineConstValue::InlineConstValue(int value,
                                    bool abs, bool rel, bool neg):
-   Value(Value::cinline, abs, rel, neg),
+   Value(Value::cinline, 0, abs, rel, neg),
    m_value(static_cast<AluInlineConstants>(value))
 {
 }
 
+uint64_t InlineConstValue::get_sel() const
+{
+   return m_value;
+}
+
 ConstValue::ConstValue(uint16_t sel, uint16_t chan,
                        bool abs, bool rel, bool neg):
-   Value(Value::kconst, abs, rel, neg),
-   m_index((sel >> 7) & 0x1f),
-   m_kcache_bank((sel >> 12) & 0x3)
+   Value(Value::kconst, chan, abs, rel, neg),
+   m_index(sel & 0x1f),
+   m_kcache_bank(((sel >> 5) & 1) |  ((sel >> 7) & 1))
 {
+}
+
+uint64_t ConstValue::get_sel() const
+{
+   return m_index |
+         ((m_kcache_bank & 1) << 5) |
+         ((m_kcache_bank & 2) << 7);
 }
 
 }

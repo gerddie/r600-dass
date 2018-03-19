@@ -58,17 +58,20 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
 
    auto index_mode = static_cast<EIndexMode>((bc >> 26) & 3);
 
-   uint16_t pred_sel = (bc >> 29) & 3;
+   EPredSelect pred_sel = static_cast<EPredSelect>((bc >> 29) & 3);
    if (bc & last_instr_bit)
       flags.set(is_last_instr);
 
    bool src0_abs = 0;
    bool src1_abs = 0;
 
-   auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 18) & 3);
+   auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 50) & 3);
    uint16_t dst_sel = (bc >> 21) & 0x3f;
    bool dst_rel = bc & dst_rel_bit;
-   bool clamp = bc & clamp_bit;
+
+   if (bc & clamp_bit)
+      flags.set(1 << do_clamp);
+
    uint16_t dst_chan = (bc >> 61) & 3;
    uint16_t opcode = 0;
    EOutputModify omod = omod_off;
@@ -91,6 +94,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
       if (bc & up_pred_bit)
          flags.set(do_update_pred);
 
+
    } else {
       uint16_t src2_sel = (bc >> 32) & 0x1ff;
       uint16_t src2_chan = (bc >> 42) & 3;
@@ -112,17 +116,17 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
 
    if (is_op2) {
       return new AluNodeOp2(opcode, src0, src1, dst,
-                            index_mode, bank_swizzle, omod, flags);
+                            index_mode, bank_swizzle, omod, pred_sel, flags);
    } else {
-      return new AluNodeOp3(opcode, src0, src1, src2,
-                            dst, index_mode, bank_swizzle, flags);
+      return new AluNodeOp3(opcode << 6, src0, src1, src2,
+                            dst, index_mode, bank_swizzle, pred_sel, flags);
    }
 }
 
 AluNode::AluNode(uint16_t opcode,
                  PValue src0, PValue src1,
                  const GPRValue& dst, EIndexMode index_mode,
-                 EBankSwizzle bank_swizzle,
+                 EBankSwizzle bank_swizzle, EPredSelect pred_select,
                  AluOpFlags flags):
    m_opcode(opcode),
    m_src0(src0),
@@ -130,6 +134,7 @@ AluNode::AluNode(uint16_t opcode,
    m_dst(dst),
    m_index_mode(index_mode),
    m_bank_swizzle(bank_swizzle),
+   m_pred_select(pred_select),
    m_flags(flags)
 {
 }
@@ -144,31 +149,112 @@ bool AluNode::last_instr() const
    return m_flags.test(is_last_instr);
 }
 
+bool AluNode::get_src0_abs() const
+{
+   return m_src0->get_abs();
+}
+bool AluNode::get_src1_abs() const
+{
+   return m_src1->get_abs();
+}
+
+bool AluNode::test_flag(FlagsShifts f) const
+{
+   return m_flags.test(f);
+}
+
+uint64_t AluNode::get_bytecode() const
+{
+   uint64_t bc;
+
+   bc = static_cast<uint64_t>(m_opcode) << 39;
+   bc |= m_src0->get_sel();
+   bc |= m_src0->get_chan() << 10;
+
+   if (m_src0->get_rel())
+      bc |= src0_rel_bit;
+   if (m_src0->get_neg())
+      bc |= src0_neg_bit;
+
+   bc |= m_src1->get_sel() << 13;
+   bc |= m_src1->get_chan() << 23;
+
+   if (m_src1->get_rel())
+      bc |= src1_rel_bit;
+   if (m_src1->get_neg())
+      bc |= src1_neg_bit;
+
+   bc |= m_dst.get_sel() << 21;
+   bc |= m_dst.get_chan() << 61;
+   if (m_dst.get_rel())
+      bc |= dst_rel_bit;
+
+   if (m_flags.test(do_clamp))
+      bc |= clamp_bit;
+
+   bc |= static_cast<uint64_t>(m_bank_swizzle) << 50;
+   bc |= static_cast<uint64_t>(m_index_mode) << 26;
+   bc |= static_cast<uint64_t>(m_pred_select) << 29;
+
+   encode(bc);
+   return bc;
+}
+
 AluNodeOp2::AluNodeOp2(uint16_t opcode,
                        PValue src0, PValue src1, const GPRValue& dst,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
-                       EOutputModify output_modify,
+                       EOutputModify output_modify, EPredSelect pred_select,
                        AluOpFlags flags):
-   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, flags),
+   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, pred_select, flags),
    m_output_modify(output_modify)
 {
+}
+
+void AluNodeOp2::encode(uint64_t& bc) const
+{
+   if (get_src0_abs())
+      bc |= src0_abs_bit;
+
+   if (get_src1_abs())
+      bc |= src1_abs_bit;
+
+   if (test_flag(do_update_exec_mask))
+      bc |= up_exec_mask_bit;
+
+   if (test_flag(do_update_pred))
+      bc |= up_pred_bit;
+
+   if (test_flag(do_write))
+       bc |= write_mask_bit;
+
+   bc |= static_cast<uint64_t>(m_output_modify) << 37;
 }
 
 AluNodeOp3::AluNodeOp3(uint16_t opcode,
                        PValue src0, PValue  src1, PValue  src2,
                        const GPRValue &dst, EIndexMode index_mode,
-                       EBankSwizzle bank_swizzle,
+                       EBankSwizzle bank_swizzle, EPredSelect pred_select,
                        AluOpFlags flags):
-   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, flags),
+   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle,
+           pred_select, flags),
    m_src2(src2)
 {
 
 }
 
+void AluNodeOp3::encode(uint64_t& bc) const
+{
+   bc |= m_src2->get_sel() << 32;
+   bc |= m_src2->get_chan() << 42;
+   if (m_src2->get_rel())
+      bc |= src2_rel_bit;
+   if (m_src2->get_neg())
+      bc |= src2_neg_bit;
+}
+
 AluGroup::AluGroup():
    m_ops(5)
 {
-
 }
 
 std::vector<uint64_t>::const_iterator

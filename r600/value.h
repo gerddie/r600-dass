@@ -42,17 +42,23 @@ public:
    using LiteralFlags=std::bitset<4>;
 
    Value();
-   Value(Type type, bool abs, bool rel, bool neg);
+   Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
 
    static Value *create(uint16_t sel, uint16_t chan,
                         bool abs, bool rel, bool neg,
                         LiteralFlags& literal_index);
 
    Type get_type() const;
+   virtual uint64_t get_sel() const = 0;
+   uint64_t get_chan() const {return m_chan;}
+   bool get_rel() const {return m_rel;}
+   bool get_neg() const {return m_neg;}
+   bool get_abs() const {return m_abs;}
 
 private:
 
    Type m_type;
+   uint16_t m_chan;
    bool m_abs;
    bool m_rel;
    bool m_neg;
@@ -66,21 +72,16 @@ public:
         GPRValue(uint16_t sel, uint16_t chan,
                  bool abs, bool rel, bool neg);
 
-        int get_chan() const { return m_chan;}
+        uint64_t get_sel() const override;
 private:
         uint16_t m_sel;
-        uint16_t m_chan;
-
 };
 
 class LiteralValue: public Value
 {
 public:
         LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
-private:
-        uint16_t m_chan;
-
-
+        uint64_t get_sel() const override;
 };
 
 class InlineConstValue: public Value
@@ -88,6 +89,7 @@ class InlineConstValue: public Value
 public:
         InlineConstValue(int value,
                          bool abs, bool rel, bool neg);
+        uint64_t get_sel() const override;
 private:
         AluInlineConstants m_value;
 };
@@ -97,6 +99,7 @@ class ConstValue: public Value
 public:
         ConstValue(uint16_t sel, uint16_t chan,
                    bool abs, bool rel, bool neg);
+        uint64_t get_sel() const override;
 private:
         uint16_t m_index;
         uint16_t m_kcache_bank;

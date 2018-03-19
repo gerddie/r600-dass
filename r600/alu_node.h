@@ -78,19 +78,30 @@ public:
         AluNode(uint16_t opcode,
                 PValue src0, PValue src1,
                 const GPRValue& dst, EIndexMode index_mode,
-                EBankSwizzle bank_swizzle,
+                EBankSwizzle bank_swizzle, EPredSelect pred_select,
                 AluOpFlags flags);
 
         int get_dst_chan() const;
         bool last_instr() const;
+
+        uint64_t get_bytecode() const;
+protected:
+        bool get_src0_abs() const;
+        bool get_src1_abs() const;
+        bool test_flag(FlagsShifts f) const;
+
 private:
+        virtual void encode(uint64_t& bc) const = 0;
+        uint64_t shared_flags() const;
+
         uint16_t m_opcode;
         PValue m_src0;
         PValue m_src1;
         GPRValue m_dst;
         EIndexMode m_index_mode;
-        AluOpFlags m_flags;
         EBankSwizzle m_bank_swizzle;
+        EPredSelect m_pred_select;
+        AluOpFlags m_flags;
 };
 
 using PAluNode = std::shared_ptr<AluNode>;
@@ -100,9 +111,11 @@ public:
         AluNodeOp2(uint16_t opcode,
                    PValue src0, PValue src1, const GPRValue& dst,
                    EIndexMode index_mode, EBankSwizzle bank_swizzle,
-                   EOutputModify output_modify,
+                   EOutputModify output_modify, EPredSelect pred_select,
                    AluOpFlags flags);
 private:
+        void encode(uint64_t& bc) const override;
+
         EOutputModify m_output_modify;
 };
 
@@ -111,9 +124,10 @@ public:
         AluNodeOp3(uint16_t opcode,
                    PValue src0, PValue src1, PValue src2,
                    const GPRValue& dst, EIndexMode index_mode,
-                   EBankSwizzle bank_swizzle,
+                   EBankSwizzle bank_swizzle, EPredSelect pred_select,
                    AluOpFlags flags);
 private:
+        void encode(uint64_t& bc) const override;
         PValue m_src2;
 };
 
