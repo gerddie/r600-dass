@@ -18,84 +18,37 @@
  *
  */
 
+#include <r600/bc_test.h>
 #include <r600/cf_node.h>
 #include <gtest/gtest.h>
 
-using namespace r600; 
+using namespace r600;
 
-/* Below tests strife to check whether the bits are properly arranged in the
- * byte code. Doing this is a pre-requisit for testing the disassembler part
- * properly.
- */
-::testing::AssertionResult SameBitmap(const std::vector<uint8_t>& spacing,
-                                      const char* m_expr,
-                                      const char* n_expr,
-                                      uint64_t m,
-                                      uint64_t n) {
-  if (m == n)
-    return ::testing::AssertionSuccess();
-
-  std::ostringstream msg;
-  msg << "Expected:" << m_expr << " == " << n_expr << "\n got\n"
-      << " -" << std::setbase(16) << std::setw(16) << std::setfill('0') << m << "\n"
-      << " +" << std::setw(16) << n << "\n"
-      << " delta: w1: ";
-  uint64_t delta = m ^ n;
-  int tabs = 0;
-  for (int i = 63; i >= 0; --i) {
-     msg << ((delta & (1ul << i)) ? '1' : '0');
-     if (i == spacing[tabs]) {
-        msg << " ";
-        ++tabs;
-     }
-     if (i == 32)
-         msg << "\n        w0: ";
-  }
-
-  return ::testing::AssertionFailure() << msg.str();
-}
-
-class BytecodeCFTest: public testing::Test {
-protected:
-   void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      GTEST_ASSERT_(SameBitmap(spacing, s_data, s_expect, data, expect),
-                    GTEST_NONFATAL_FAILURE_);
-   }
-   void set_spacing(const std::vector<uint8_t>& s) {
-      spacing = s;
-   }
-private:
-   std::vector<uint8_t> spacing;
-};
-
-class BytecodeCFNativeTest: public BytecodeCFTest {
+class BytecodeCFNativeTest: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 54, 53, 52, 48, 42, 40, 35, 32, 27, 24});
    }
 };
 
-class BytecodeCFAluTest: public BytecodeCFTest {
+class BytecodeCFAluTest: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 58, 57, 50, 42, 34, 32, 30, 26, 22});
    }
 };
 
-class BytecodeCFGlobalWaveSync: public BytecodeCFTest {
+class BytecodeCFGlobalWaveSync: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 54, 53, 52, 48, 42, 40, 35, 32,
                    30, 28, 26, 25, 21, 16, 10});
    }
 };
 
-class BytecodeCFMemRat: public BytecodeCFTest {
+class BytecodeCFMemRat: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 54, 53, 52, 48, 44, 32,
                    30, 23, 22, 15, 13, 11, 10, 4});
    }
 };
-
-#define TEST_EQ(X, Y) check(#X, #Y, X, Y)
 
 TEST_F(BytecodeCFNativeTest, BytecodeCreationNative)
 {
@@ -626,7 +579,7 @@ TEST_F(BytecodeCFMemRat, memrat_rountrip)
       TEST_EQ(cf_rat_node(x).get_bytecode_byte(0), x);
 }
 
-class BytecodeCFMemRing: public BytecodeCFTest {
+class BytecodeCFMemRing: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 54, 53, 52, 48, 44, 32,
                    30, 23, 22, 15, 13, 12});
@@ -814,7 +767,7 @@ TEST_F(BytecodeCFMemRing, CFMemRingRoundTripTest)
       TEST_EQ(cf_mem_ring_node(x).get_bytecode_byte(0), x);
 }
 
-class BytecodeCFMemExport: public BytecodeCFTest {
+class BytecodeCFMemExport: public BytecodeTest {
    void SetUp() {
       set_spacing({63, 62, 54, 53, 52, 48, 44, 41, 38, 35, 32,
                    30, 23, 22, 15, 13, 12});

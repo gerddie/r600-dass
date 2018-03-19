@@ -20,6 +20,8 @@
 
 #include "r600/value.h"
 
+#include <iostream>
+
 namespace r600 {
 
 using std::unique_ptr;
@@ -101,15 +103,14 @@ ConstValue::ConstValue(uint16_t sel, uint16_t chan,
                        bool abs, bool rel, bool neg):
    Value(Value::kconst, chan, abs, rel, neg),
    m_index(sel & 0x1f),
-   m_kcache_bank(((sel >> 5) & 1) |  ((sel >> 7) & 1))
+   m_kcache_bank(((sel >> 5) & 1) |  ((sel >> 7) & 2))
 {
 }
 
 uint64_t ConstValue::get_sel() const
 {
-   return m_index |
-         ((m_kcache_bank & 1) << 5) |
-         ((m_kcache_bank & 2) << 7);
+   const int bank_base[4] = {128, 160, 256, 288};
+   return m_index + bank_base[m_kcache_bank];
 }
 
 }

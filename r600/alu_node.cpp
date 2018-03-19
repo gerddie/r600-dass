@@ -56,7 +56,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
    uint16_t src0_chan = (bc >> 10) & 3;
    uint16_t src1_chan = (bc >> 23) & 3;
 
-   auto index_mode = static_cast<EIndexMode>((bc >> 26) & 3);
+   auto index_mode = static_cast<EIndexMode>((bc >> 26) & 7);
 
    EPredSelect pred_sel = static_cast<EPredSelect>((bc >> 29) & 3);
    if (bc & last_instr_bit)
@@ -65,8 +65,8 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
    bool src0_abs = 0;
    bool src1_abs = 0;
 
-   auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 50) & 3);
-   uint16_t dst_sel = (bc >> 21) & 0x3f;
+   auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 50) & 7);
+   uint16_t dst_sel = (bc >> 53) & 0x7f;
    bool dst_rel = bc & dst_rel_bit;
 
    if (bc & clamp_bit)
@@ -184,13 +184,16 @@ uint64_t AluNode::get_bytecode() const
    if (m_src1->get_neg())
       bc |= src1_neg_bit;
 
-   bc |= m_dst.get_sel() << 21;
+   bc |= m_dst.get_sel() << 53;
    bc |= m_dst.get_chan() << 61;
    if (m_dst.get_rel())
       bc |= dst_rel_bit;
 
    if (m_flags.test(do_clamp))
       bc |= clamp_bit;
+
+   if (m_flags.test(is_last_instr))
+      bc |= last_instr_bit;
 
    bc |= static_cast<uint64_t>(m_bank_swizzle) << 50;
    bc |= static_cast<uint64_t>(m_index_mode) << 26;
@@ -253,7 +256,8 @@ void AluNodeOp3::encode(uint64_t& bc) const
 }
 
 AluGroup::AluGroup():
-   m_ops(5)
+   m_ops(5),
+   m_nlinterals(0)
 {
 }
 
@@ -282,11 +286,26 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
    } while (!node->last_instr());
 
    for (int lp = 0; lp < 2; ++lp)
-      if (lflags.test(0) || lflags.test(1)) {
-         m_literals[lp] = *bc & 0xffffffff;
-         m_literals[lp+1] = (*bc >> 32 ) & 0xffffffff;
+      if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
+         m_nlinterals++;
+         m_literals[2*lp] = *bc & 0xffffffff;
+         m_literals[2*lp+1] = (*bc >> 32 ) & 0xffffffff;
          ++bc;
       }
    return bc;
 }
+
+void AluGroup::encode(std::vector<uint64_t>& bc) const
+{
+   for (const auto& op: m_ops) {
+      if (op)
+         bc.push_back(op->get_bytecode());
+   }
+   for (int i = 0; i < m_nlinterals; ++i) {
+      uint64_t l =(static_cast<uint64_t>(m_literals[2*i+1]) << 32) |
+            m_literals[2*i+1];
+      bc.push_back(l);
+   }
+}
+
 }

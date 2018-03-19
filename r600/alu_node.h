@@ -137,9 +137,10 @@ public:
 
    std::vector<uint64_t>::const_iterator
    decode(std::vector<uint64_t>::const_iterator bc);
-
+   void encode(std::vector<uint64_t>& bc) const;
 private:
    std::vector<PAluNode> m_ops;
+   int m_nlinterals;
    uint32_t m_literals[4];
 };
 
