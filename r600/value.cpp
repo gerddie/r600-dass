@@ -21,6 +21,7 @@
 #include "r600/value.h"
 
 #include <iostream>
+#include <iomanip>
 #include <cassert>
 
 namespace r600 {
@@ -64,8 +65,12 @@ uint64_t Value::encode_for(ValueOpEncoding encoding) const
 uint64_t Value::encode_for_alu_op2_src0() const
 {
    uint64_t bc = encode_for_alu_op3_src0();
-   if (m_abs)
+   if (m_abs) {
+      std::cerr  << "set src0 abs bit " << std::setbase(16) <<
+                    src0_abs_bit << " in " << bc;
       bc |= src0_abs_bit;
+      std::cerr  << " now " << bc << std::endl;
+   }
    return bc;
 }
 
@@ -104,7 +109,7 @@ uint64_t Value::encode_for_alu_op3_src2() const
       bc |= src2_rel_bit;
    if (m_neg)
       bc |= src2_neg_bit;
-   return (get_sel() << 32) | (get_chan() << 42);
+   return bc | (get_sel() << 32) | (get_chan() << 42);
 }
 
 uint64_t Value::encode_for_alu_op_dst() const
@@ -130,9 +135,10 @@ PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
       return PValue(new LiteralValue(chan, abs, rel, neg));
    }
 
-   if (sel < 255)
+   if (sel > 218 && sel < 256)
       return PValue(new InlineConstValue(sel, abs, rel, neg));
 
+   assert("unknown src_sel value");
    return Pointer();
 }
 

@@ -29,11 +29,7 @@ using std::vector;
 class BytecodeAluOp2ATest: public BytecodeTest {
    void SetUp();
 protected:
-   vector<PValue> vgpr;
-   vector<PValue> vlit;
-   vector<PValue> vinline;
-   vector<PValue> vkconst;
-   vector<GPRValue> vdst;
+   Value::LiteralFlags li;
 };
 
 
@@ -43,14 +39,6 @@ void BytecodeAluOp2ATest::SetUp()
    Value::LiteralFlags literal_index;
    set_spacing({63, 61, 60, 53, 50, 45, 44, 42, 41, 32,
                 31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
-
-   vgpr.push_back(Value::create(120, 0, 0, 0, 0, literal_index));
-   vgpr.push_back(Value::create(12,  1, 1, 0, 0, literal_index));
-   vgpr.push_back(Value::create(2,   2, 0, 1, 0, literal_index));
-   vgpr.push_back(Value::create(23,  3, 0, 0, 1, literal_index));
-
-   //vlit.push_back(Value::create());
-
 
 }
 
@@ -64,12 +52,85 @@ TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
    }
 }
 
-TEST_F(BytecodeAluOp2ATest, TestAllGpr)
+TEST_F(BytecodeAluOp2ATest, TestValueType)
 {
-   Value::LiteralFlags literal_index;
-   PValue v0gpr(Value::create(120, 3, 0, 0, 0, literal_index));
-   PValue v1gpr(Value::create(120, 3, 0, 0, 0, literal_index));
+   auto v = Value::create(0, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::gpr);
 
+   v = Value::create(127, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::gpr);
 
+   v = Value::create(128, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::kconst);
+
+   v = Value::create(160, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::kconst);
+
+   v = Value::create(191, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::kconst);
+
+   v = Value::create(256, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::kconst);
+
+   v = Value::create(319, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::kconst);
+
+   v = Value::create(219, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::cinline);
+
+   v = Value::create(255, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::cinline);
+
+   v = Value::create(253, 0, 0, 0, 0, li);
+   EXPECT_EQ(v->get_type(), Value::literal);
 }
 
+TEST_F(BytecodeAluOp2ATest, TestValueSrc0Sel)
+{
+   for (int s = 0; s < 9; ++s) {
+      auto v =Value::create(1 << s, 0, 0, 0, 0, li);
+      TEST_EQ(v->encode_for(alu_op2_src0), 1ul << s);
+      TEST_EQ(v->encode_for(alu_op2_src1), 1ul << (s+13));
+      TEST_EQ(v->encode_for(alu_op3_src2), 1ul << (s+32));
+      if (s < 7)
+         TEST_EQ(v->encode_for(alu_op_dst), 1ul << (s+53));
+   }
+}
+
+TEST_F(BytecodeAluOp2ATest, TestValueSrc0Chan)
+{
+
+   for (int c = 0; c < 2; ++c) {
+      auto v =Value::create(0, 1 << c, 0, 0, 0, li);
+
+      TEST_EQ(v->encode_for(alu_op2_src0), 1ul << (c+10));
+      TEST_EQ(v->encode_for(alu_op2_src1), 1ul << (c+23));
+      TEST_EQ(v->encode_for(alu_op3_src2), 1ul << (c+42));
+      TEST_EQ(v->encode_for(alu_op_dst), 1ul << (c+61));
+   }
+}
+
+TEST_F(BytecodeAluOp2ATest, TestValueSrc0Abs)
+{
+    auto vabs =Value::create(0, 0, 1, 0, 0, li);
+    TEST_EQ(vabs->encode_for(alu_op2_src0), src0_abs_bit);
+    TEST_EQ(vabs->encode_for(alu_op2_src1), src1_abs_bit);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestValueSrc0Neg)
+{
+   auto vneg =Value::create(0, 0, 0, 0, 1, li);
+   TEST_EQ(vneg->encode_for(alu_op2_src0), src0_neg_bit);
+   TEST_EQ(vneg->encode_for(alu_op2_src1), src1_neg_bit);
+   TEST_EQ(vneg->encode_for(alu_op3_src2), src2_neg_bit);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestValueSrc0Rel)
+{
+   auto vrel =Value::create(0, 0, 0, 1, 0, li);
+   TEST_EQ(vrel->encode_for(alu_op2_src0), src0_rel_bit);
+   TEST_EQ(vrel->encode_for(alu_op2_src1), src1_rel_bit);
+   TEST_EQ(vrel->encode_for(alu_op3_src2), src2_rel_bit);
+   TEST_EQ(vrel->encode_for(alu_op_dst), dst_rel_bit);
+
+}
