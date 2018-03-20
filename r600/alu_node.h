@@ -86,9 +86,9 @@ public:
 
         uint64_t get_bytecode() const;
 protected:
-        bool get_src0_abs() const;
-        bool get_src1_abs() const;
         bool test_flag(FlagsShifts f) const;
+        const Value& src0() const;
+        const Value& src1() const;
 
 private:
         virtual void encode(uint64_t& bc) const = 0;

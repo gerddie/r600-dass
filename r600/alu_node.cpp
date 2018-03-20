@@ -26,19 +26,10 @@
 namespace r600 {
 using std::runtime_error;
 
-const uint64_t src0_rel_bit = 1ul << 9;
-const uint64_t src1_rel_bit = 1ul << 22;
-const uint64_t src2_rel_bit = 1ul << 41;
-const uint64_t src0_neg_bit = 1ul << 12;
-const uint64_t src1_neg_bit = 1ul << 25;
-const uint64_t src2_neg_bit = 1ul << 44;
 const uint64_t last_instr_bit = 1ul << 31;
-const uint64_t src0_abs_bit = 1ul << 32;
-const uint64_t src1_abs_bit = 1ul << 33;
 const uint64_t up_exec_mask_bit = 1ul << 34;
 const uint64_t up_pred_bit = 1ul << 35;
 const uint64_t write_mask_bit = 1ul << 36;
-const uint64_t dst_rel_bit = 1ul << 60;
 const uint64_t clamp_bit = 1ul << 63;
 
 AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
@@ -149,15 +140,6 @@ bool AluNode::last_instr() const
    return m_flags.test(is_last_instr);
 }
 
-bool AluNode::get_src0_abs() const
-{
-   return m_src0->get_abs();
-}
-bool AluNode::get_src1_abs() const
-{
-   return m_src1->get_abs();
-}
-
 bool AluNode::test_flag(FlagsShifts f) const
 {
    return m_flags.test(f);
@@ -168,26 +150,7 @@ uint64_t AluNode::get_bytecode() const
    uint64_t bc;
 
    bc = static_cast<uint64_t>(m_opcode) << 39;
-   bc |= m_src0->get_sel();
-   bc |= m_src0->get_chan() << 10;
-
-   if (m_src0->get_rel())
-      bc |= src0_rel_bit;
-   if (m_src0->get_neg())
-      bc |= src0_neg_bit;
-
-   bc |= m_src1->get_sel() << 13;
-   bc |= m_src1->get_chan() << 23;
-
-   if (m_src1->get_rel())
-      bc |= src1_rel_bit;
-   if (m_src1->get_neg())
-      bc |= src1_neg_bit;
-
-   bc |= m_dst.get_sel() << 53;
-   bc |= m_dst.get_chan() << 61;
-   if (m_dst.get_rel())
-      bc |= dst_rel_bit;
+   bc |= m_dst.encode_for(alu_op_dst);
 
    if (m_flags.test(do_clamp))
       bc |= clamp_bit;
@@ -202,6 +165,15 @@ uint64_t AluNode::get_bytecode() const
    encode(bc);
    return bc;
 }
+const Value& AluNode::src0() const
+{
+   return *m_src0;
+}
+
+const Value& AluNode::src1() const
+{
+   return *m_src1;
+}
 
 AluNodeOp2::AluNodeOp2(uint16_t opcode,
                        PValue src0, PValue src1, const GPRValue& dst,
@@ -215,11 +187,8 @@ AluNodeOp2::AluNodeOp2(uint16_t opcode,
 
 void AluNodeOp2::encode(uint64_t& bc) const
 {
-   if (get_src0_abs())
-      bc |= src0_abs_bit;
-
-   if (get_src1_abs())
-      bc |= src1_abs_bit;
+   bc |= src0().encode_for(alu_op2_src0);
+   bc |= src1().encode_for(alu_op2_src1);
 
    if (test_flag(do_update_exec_mask))
       bc |= up_exec_mask_bit;
@@ -247,12 +216,9 @@ AluNodeOp3::AluNodeOp3(uint16_t opcode,
 
 void AluNodeOp3::encode(uint64_t& bc) const
 {
-   bc |= m_src2->get_sel() << 32;
-   bc |= m_src2->get_chan() << 42;
-   if (m_src2->get_rel())
-      bc |= src2_rel_bit;
-   if (m_src2->get_neg())
-      bc |= src2_neg_bit;
+   bc |= src0().encode_for(alu_op3_src0);
+   bc |= src1().encode_for(alu_op3_src1);
+   bc |= m_src2->encode_for(alu_op3_src2);
 }
 
 AluGroup::AluGroup():

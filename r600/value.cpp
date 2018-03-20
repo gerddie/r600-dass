@@ -21,6 +21,7 @@
 #include "r600/value.h"
 
 #include <iostream>
+#include <cassert>
 
 namespace r600 {
 
@@ -43,6 +44,76 @@ Value::Value(Type type, uint16_t chan, bool abs, bool rel, bool neg):
 Value::Type Value::get_type() const
 {
    return m_type;
+}
+
+uint64_t Value::encode_for(ValueOpEncoding encoding) const
+{
+   switch (encoding) {
+   case alu_op2_src0: return encode_for_alu_op2_src0();
+   case alu_op2_src1: return encode_for_alu_op2_src1();
+   case alu_op3_src0: return encode_for_alu_op3_src0();
+   case alu_op3_src1: return encode_for_alu_op3_src1();
+   case alu_op3_src2: return encode_for_alu_op3_src2();
+   case alu_op_dst: return encode_for_alu_op_dst();
+   default:
+      assert(0 && "unknown ALU register target");
+   }
+   return 0;
+}
+
+uint64_t Value::encode_for_alu_op2_src0() const
+{
+   uint64_t bc = encode_for_alu_op3_src0();
+   if (m_abs)
+      bc |= src0_abs_bit;
+   return bc;
+}
+
+uint64_t Value::encode_for_alu_op2_src1() const
+{
+   uint64_t bc = encode_for_alu_op3_src1();
+   if (m_abs)
+      bc |= src1_abs_bit;
+   return bc;
+}
+
+uint64_t Value::encode_for_alu_op3_src0() const
+{
+   uint64_t bc = 0;
+   if (m_rel)
+      bc |= src0_rel_bit;
+   if (m_neg)
+      bc |= src0_neg_bit;
+   return bc | get_sel() | (get_chan() << 10);
+}
+
+uint64_t Value::encode_for_alu_op3_src1() const
+{
+   uint64_t bc = 0;
+   if (m_rel)
+      bc |= src1_rel_bit;
+   if (m_neg)
+      bc |= src1_neg_bit;
+   return bc | (get_sel() << 13) | (get_chan() << 23);
+}
+
+uint64_t Value::encode_for_alu_op3_src2() const
+{
+   uint64_t bc = 0;
+   if (m_rel)
+      bc |= src2_rel_bit;
+   if (m_neg)
+      bc |= src2_neg_bit;
+   return (get_sel() << 32) | (get_chan() << 42);
+}
+
+uint64_t Value::encode_for_alu_op_dst() const
+{
+   assert(m_type == gpr);
+   uint64_t bc = (get_sel() << 53) | (get_chan() << 61);
+   if (m_rel)
+      bc |= dst_rel_bit;
+   return bc;
 }
 
 PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
@@ -112,5 +183,15 @@ uint64_t ConstValue::get_sel() const
    const int bank_base[4] = {128, 160, 256, 288};
    return m_index + bank_base[m_kcache_bank];
 }
+
+const uint64_t src0_rel_bit = 1ul << 9;
+const uint64_t src1_rel_bit = 1ul << 22;
+const uint64_t src2_rel_bit = 1ul << 41;
+const uint64_t src0_neg_bit = 1ul << 12;
+const uint64_t src1_neg_bit = 1ul << 25;
+const uint64_t src2_neg_bit = 1ul << 44;
+const uint64_t src0_abs_bit = 1ul << 32;
+const uint64_t src1_abs_bit = 1ul << 33;
+const uint64_t dst_rel_bit = 1ul << 60;
 
 }

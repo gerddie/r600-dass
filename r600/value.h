@@ -28,6 +28,26 @@
 
 namespace r600 {
 
+enum ValueOpEncoding {
+   alu_op2_src0,
+   alu_op2_src1,
+   alu_op3_src0,
+   alu_op3_src1,
+   alu_op3_src2,
+   alu_op_dst,
+   alu_unknown
+};
+
+extern const uint64_t src0_rel_bit;
+extern const uint64_t src1_rel_bit;
+extern const uint64_t src2_rel_bit;
+extern const uint64_t src0_neg_bit;
+extern const uint64_t src1_neg_bit;
+extern const uint64_t src2_neg_bit;
+extern const uint64_t src0_abs_bit;
+extern const uint64_t src1_abs_bit;
+extern const uint64_t dst_rel_bit;
+
 class Value
 {
 public:
@@ -57,7 +77,18 @@ public:
    bool get_neg() const {return m_neg;}
    bool get_abs() const {return m_abs;}
 
+   uint64_t encode_for(ValueOpEncoding encoding) const;
+
 private:
+
+   uint64_t encode_for_alu_op2_src0() const;
+   uint64_t encode_for_alu_op2_src1() const;
+   uint64_t encode_for_alu_op3_src0() const;
+   uint64_t encode_for_alu_op3_src1() const;
+   uint64_t encode_for_alu_op3_src2() const;
+   uint64_t encode_for_alu_op_dst() const;
+
+
 
    Type m_type;
    uint16_t m_chan;
