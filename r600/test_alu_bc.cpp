@@ -146,7 +146,7 @@ TEST_F(BytecodeAluOp2ATest, TestValuePS)
    TEST_EQ(vop2_alu_src_kcache3 ->encode_for(alu_op2_src0), 0x0000000100001f3ful);
    TEST_EQ(vop2_alu_src_kcache3 ->encode_for(alu_op2_src1), 0x0000000203e7e000ul);
 
-   auto alu_src2_kcache3 =Value::create(319, 3, 0, 1, 0, li);
+   auto alu_src2_kcache3 =Value::create(319, 3, 0, 1, 1, li);
    TEST_EQ(alu_src2_kcache3->encode_for(alu_op3_src2), 0x00001f3f00000000ul);
 
    auto dst = Value::create(127, 3, 0, 1, 0, li);
