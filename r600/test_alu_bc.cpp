@@ -152,6 +152,4 @@ TEST_F(BytecodeAluOp2ATest, TestValuePS)
    auto dst = Value::create(127, 3, 0, 1, 0, li);
    TEST_EQ(dst->encode_for(alu_op_dst), 0x7fe0000000000000ul);
 
-
-
 }
