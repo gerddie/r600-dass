@@ -6,7 +6,8 @@ SET(SRC
    value.cpp)
 
 SET(HEADERS
-   alu_node.h   
+   alu_node.h
+   alu_defines.h
    cf_node.h
    defines.h
    disassembler.h

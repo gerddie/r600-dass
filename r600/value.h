@@ -21,7 +21,7 @@
 #ifndef R600VALUE_H
 #define R600VALUE_H
 
-#include <r600/defines.h>
+#include <r600/alu_defines.h>
 #include <cstdint>
 #include <memory>
 #include <bitset>
@@ -31,6 +31,8 @@ namespace r600 {
 class Value
 {
 public:
+   using Pointer=std::shared_ptr<Value>;
+
    enum Type {
       gpr,
       kconst,
@@ -44,9 +46,9 @@ public:
    Value();
    Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
 
-   static Value *create(uint16_t sel, uint16_t chan,
-                        bool abs, bool rel, bool neg,
-                        LiteralFlags& literal_index);
+   static Pointer create(uint16_t sel, uint16_t chan,
+                         bool abs, bool rel, bool neg,
+                         LiteralFlags& literal_index);
 
    Type get_type() const;
    virtual uint64_t get_sel() const = 0;
@@ -64,7 +66,7 @@ private:
    bool m_neg;
 };
 
-using PValue=std::shared_ptr<Value>;
+using PValue=Value::Pointer;
 
 class GPRValue : public Value
 {

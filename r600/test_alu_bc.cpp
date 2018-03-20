@@ -28,13 +28,30 @@ using std::vector;
 
 class BytecodeAluOp2ATest: public BytecodeTest {
    void SetUp();
+protected:
+   vector<PValue> vgpr;
+   vector<PValue> vlit;
+   vector<PValue> vinline;
+   vector<PValue> vkconst;
+   vector<GPRValue> vdst;
 };
 
 
 void BytecodeAluOp2ATest::SetUp()
 {
+
+   Value::LiteralFlags literal_index;
    set_spacing({63, 61, 60, 53, 50, 45, 44, 42, 41, 32,
                 31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
+
+   vgpr.push_back(Value::create(120, 0, 0, 0, 0, literal_index));
+   vgpr.push_back(Value::create(12,  1, 1, 0, 0, literal_index));
+   vgpr.push_back(Value::create(2,   2, 0, 1, 0, literal_index));
+   vgpr.push_back(Value::create(23,  3, 0, 0, 1, literal_index));
+
+   //vlit.push_back(Value::create());
+
+
 }
 
 TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
@@ -45,5 +62,14 @@ TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
       auto alu_node = AluNode::decode(bc, literal_flags);
       TEST_EQ(alu_node->get_bytecode(), bc);
    }
+}
+
+TEST_F(BytecodeAluOp2ATest, TestAllGpr)
+{
+   Value::LiteralFlags literal_index;
+   PValue v0gpr(Value::create(120, 3, 0, 0, 0, literal_index));
+   PValue v1gpr(Value::create(120, 3, 0, 0, 0, literal_index));
+
+
 }
 

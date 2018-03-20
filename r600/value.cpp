@@ -25,7 +25,7 @@
 namespace r600 {
 
 using std::unique_ptr;
-using std::make_unique;
+using std::make_shared;
 
 Value::Value()
 {
@@ -45,24 +45,24 @@ Value::Type Value::get_type() const
    return m_type;
 }
 
-Value *Value::create(uint16_t sel, uint16_t chan, bool abs,
+PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
                      bool rel, bool neg, LiteralFlags &literal_index)
 {
    if (sel < 128)
-      return new GPRValue(sel, chan, abs, rel, neg);
+      return PValue(new GPRValue(sel, chan, abs, rel, neg));
 
    if ((sel < 192) || (sel >=256 && sel < 320))
-      return new ConstValue(sel, chan, abs, rel, neg);
+      return PValue(new ConstValue(sel, chan, abs, rel, neg));
 
    if (sel == ALU_SRC_LITERAL) {
       literal_index.set(chan);
-      return new LiteralValue(chan, abs, rel, neg);
+      return PValue(new LiteralValue(chan, abs, rel, neg));
    }
 
    if (sel < 255)
-      return new InlineConstValue(sel, abs, rel, neg);
+      return PValue(new InlineConstValue(sel, abs, rel, neg));
 
-   return nullptr;
+   return Pointer();
 }
 
 GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):

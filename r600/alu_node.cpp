@@ -100,17 +100,17 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
       uint16_t src2_chan = (bc >> 42) & 3;
       bool src2_rel = bc & src2_rel_bit;
       bool src2_neg = bc & src2_neg_bit;
-      src2.reset(Value::create(src2_sel, src2_chan, 0,
-                               src2_rel, src2_neg, literal_index));
+      src2 = Value::create(src2_sel, src2_chan, 0,
+                           src2_rel, src2_neg, literal_index);
 
       opcode = (bc >> 45) & 0x1f;
    }
 
-   PValue src0(Value::create(src0_sel, src0_chan, src0_abs,
-                                        src0_rel, src0_neg, literal_index));
+   PValue src0 = Value::create(src0_sel, src0_chan, src0_abs,
+                               src0_rel, src0_neg, literal_index);
 
-   PValue src1(Value::create(src1_sel, src1_chan, src1_abs,
-                                        src1_rel, src1_neg, literal_index));
+   PValue src1 = Value::create(src1_sel, src1_chan, src1_abs,
+                               src1_rel, src1_neg, literal_index);
 
    GPRValue dst(dst_sel, dst_chan, 0, dst_rel, 0);
 
