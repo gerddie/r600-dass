@@ -120,8 +120,7 @@ public:
 class InlineConstValue: public Value
 {
 public:
-        InlineConstValue(int value,
-                         bool abs, bool rel, bool neg);
+        InlineConstValue(int value, int chan, bool abs, bool neg);
         uint64_t get_sel() const override;
 private:
         AluInlineConstants m_value;

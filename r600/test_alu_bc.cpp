@@ -134,3 +134,21 @@ TEST_F(BytecodeAluOp2ATest, TestValueSrc0Rel)
    TEST_EQ(vrel->encode_for(alu_op_dst), dst_rel_bit);
 
 }
+
+TEST_F(BytecodeAluOp2ATest, TestValuePS)
+{
+   auto vop2_alu_src_ps =Value::create(255, 0, 0, 0, 1, li);
+   TEST_EQ(vop2_alu_src_ps->encode_for(alu_op2_src0), 0x00000000000010fful);
+   TEST_EQ(vop2_alu_src_ps->encode_for(alu_op2_src1), 0x00000000021fe000ul);
+   TEST_EQ(vop2_alu_src_ps->encode_for(alu_op3_src2), 0x000010ff00000000ul);
+
+   auto vop2_alu_src_kcache3 =Value::create(319, 3, 1, 1, 1, li);
+   TEST_EQ(vop2_alu_src_kcache3 ->encode_for(alu_op2_src0), 0x0000000100001f3ful);
+   TEST_EQ(vop2_alu_src_kcache3 ->encode_for(alu_op2_src1), 0x0000000203e7e000ul);
+
+   auto alu_src2_kcache3 =Value::create(319, 3, 0, 1, 1, li);
+   TEST_EQ(alu_src2_kcache3->encode_for(alu_op3_src2), 0x00001f3f00000000ul);
+
+
+
+}

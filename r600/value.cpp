@@ -64,22 +64,14 @@ uint64_t Value::encode_for(ValueOpEncoding encoding) const
 
 uint64_t Value::encode_for_alu_op2_src0() const
 {
-   uint64_t bc = encode_for_alu_op3_src0();
-   if (m_abs) {
-      std::cerr  << "set src0 abs bit " << std::setbase(16) <<
-                    src0_abs_bit << " in " << bc;
-      bc |= src0_abs_bit;
-      std::cerr  << " now " << bc << std::endl;
-   }
-   return bc;
+   uint64_t bc = m_abs ? src0_abs_bit : 0;
+   return bc | encode_for_alu_op3_src0();
 }
 
 uint64_t Value::encode_for_alu_op2_src1() const
 {
-   uint64_t bc = encode_for_alu_op3_src1();
-   if (m_abs)
-      bc |= src1_abs_bit;
-   return bc;
+   uint64_t bc = m_abs ? src1_abs_bit : 0;
+   return bc | encode_for_alu_op3_src1();
 }
 
 uint64_t Value::encode_for_alu_op3_src0() const
@@ -135,8 +127,11 @@ PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
       return PValue(new LiteralValue(chan, abs, rel, neg));
    }
 
-   if (sel > 218 && sel < 256)
-      return PValue(new InlineConstValue(sel, abs, rel, neg));
+   if (sel > 218 && sel < 256) {
+      if (rel)
+         std::cerr << "rel bit on inline constant ignored";
+      return PValue(new InlineConstValue(sel, chan, abs, neg));
+   }
 
    assert("unknown src_sel value");
    return Pointer();
@@ -164,9 +159,8 @@ uint64_t LiteralValue::get_sel() const
    return ALU_SRC_LITERAL;
 }
 
-InlineConstValue::InlineConstValue(int value,
-                                   bool abs, bool rel, bool neg):
-   Value(Value::cinline, 0, abs, rel, neg),
+InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
+   Value(Value::cinline, chan, abs, 0, neg),
    m_value(static_cast<AluInlineConstants>(value))
 {
 }
