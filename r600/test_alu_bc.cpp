@@ -30,16 +30,20 @@ class BytecodeAluOp2ATest: public BytecodeTest {
    void SetUp();
 protected:
    Value::LiteralFlags li;
+   PValue src;
+   GPRValue dst;
+   AluOpFlags empty_flags;
+
 };
 
 
 void BytecodeAluOp2ATest::SetUp()
 {
-
-   Value::LiteralFlags literal_index;
    set_spacing({63, 61, 60, 53, 50, 45, 44, 42, 41, 32,
                 31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
 
+   src = Value::create(0, 0, 0, 0, 0, li);
+   dst = GPRValue(0,0,0,0,0);
 }
 
 TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
@@ -151,4 +155,56 @@ TEST_F(BytecodeAluOp2ATest, TestValuePS)
 
    auto dst = Value::create(127, 3, 0, 1, 0, li);
    TEST_EQ(dst->encode_for(alu_op_dst), 0x7fe0000000000000ul);
+}
+
+
+TEST_F(BytecodeAluOp2ATest, TestOp2IndexModeBits)
+{
+   std::set<AluNode::EIndexMode> im = {
+      AluNode::idx_ar_x, AluNode::idx_loop,
+      AluNode::idx_global, AluNode::idx_global_ar_x
+   };
+
+   for(auto i: im) {
+      AluNodeOp2 n(0, src, src, dst, i, AluNode::alu_vec_012, AluNode::omod_off,
+                   AluNode::pred_sel_off, empty_flags);
+      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 26);
+   }
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2PredSelBits)
+{
+   std::set<AluNode::EPredSelect> ps = {
+      AluNode::pred_sel_off, AluNode::pred_sel_zero,
+      AluNode::pred_sel_one
+   };
+
+   for(auto i: ps) {
+      AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                   AluNode::omod_off, i, empty_flags);
+      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 29);
+   }
+}
+
+
+TEST_F(BytecodeAluOp2ATest, TestOp2BankSwizzleBits)
+{
+   std::set<AluNode::EBankSwizzle> bs = {
+      AluNode::alu_vec_012,
+      AluNode::sq_alu_scl_201,
+      AluNode::alu_vec_021,
+      AluNode::sq_alu_scl_122,
+      AluNode::alu_vec_120,
+      AluNode::sq_alu_scl_212,
+      AluNode::alu_vec_102,
+      AluNode::sq_alu_scl_221,
+      AluNode::alu_vec_201,
+      AluNode::alu_vec_210
+   };
+
+   for(auto i: bs) {
+      AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, i,
+                   AluNode::omod_off, AluNode::pred_sel_off, empty_flags);
+      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 50);
+   }
 }

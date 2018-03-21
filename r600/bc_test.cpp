@@ -38,12 +38,15 @@ namespace r600 {
                                       const char* m_expr,
                                       const char* n_expr,
                                       uint64_t m,
-                                      uint64_t n) {
+                                      uint64_t n,
+                                      const char* filename,
+                                      int linenr) {
   if (m == n)
     return ::testing::AssertionSuccess();
 
   std::ostringstream msg;
-  msg << "Expected:" << m_expr << " == " << n_expr << "\n got\n"
+  msg << filename << ":" << linenr
+      << "\n Expected:" << m_expr << " == " << n_expr << "\n got\n"
       << " -" << std::setbase(16) << std::setw(16) << std::setfill('0') << m << "\n"
       << " +" << std::setw(16) << n << "\n"
       << " delta: w1: ";

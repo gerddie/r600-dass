@@ -102,39 +102,46 @@ using PValue=Value::Pointer;
 class GPRValue : public Value
 {
 public:
-        GPRValue(uint16_t sel, uint16_t chan,
-                 bool abs, bool rel, bool neg);
+   GPRValue() = default;
+   GPRValue(GPRValue&& orig) = default;
+   GPRValue(const GPRValue& orig) = default;
 
-        uint64_t get_sel() const override;
+   GPRValue(uint16_t sel, uint16_t chan,
+            bool abs, bool rel, bool neg);
+
+   GPRValue& operator = (const GPRValue& orig) = default;
+   GPRValue& operator = (GPRValue&& orig) = default;
+
+   uint64_t get_sel() const override;
 private:
-        uint16_t m_sel;
+   uint16_t m_sel;
 };
 
 class LiteralValue: public Value
 {
 public:
-        LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
-        uint64_t get_sel() const override;
+   LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
+   uint64_t get_sel() const override;
 };
 
 class InlineConstValue: public Value
 {
 public:
-        InlineConstValue(int value, int chan, bool abs, bool neg);
-        uint64_t get_sel() const override;
+   InlineConstValue(int value, int chan, bool abs, bool neg);
+   uint64_t get_sel() const override;
 private:
-        AluInlineConstants m_value;
+   AluInlineConstants m_value;
 };
 
 class ConstValue: public Value
 {
 public:
-        ConstValue(uint16_t sel, uint16_t chan,
-                   bool abs, bool rel, bool neg);
-        uint64_t get_sel() const override;
+   ConstValue(uint16_t sel, uint16_t chan,
+              bool abs, bool rel, bool neg);
+   uint64_t get_sel() const override;
 private:
-        uint16_t m_index;
-        uint16_t m_kcache_bank;
+   uint16_t m_index;
+   uint16_t m_kcache_bank;
 };
 
 }

@@ -31,104 +31,107 @@ using AluOpFlags=std::bitset<16>;
 
 class AluNode {
 public:
-        enum EIndexMode {
-                idx_ar_x,
-                idx_loop,
-                idx_global,
-                idx_global_ar_x
-        };
+   enum EIndexMode {
+      idx_ar_x,
+      idx_loop,
+      idx_global,
+      idx_global_ar_x,
+      idx_unknown
+   };
 
-        enum EPredSelect {
-                pred_sel_off = 0,
-                pred_sel_reserved,
-                pred_sel_zero,
-                pred_sel_one
-        };
+   enum EPredSelect {
+      pred_sel_off = 0,
+      pred_sel_reserved,
+      pred_sel_zero,
+      pred_sel_one
+   };
 
-        enum EOutputModify {
-                omod_off,
-                omod_mul_2,
-                omod_mul_4,
-                omod_div_2,
-        };
+   enum EOutputModify {
+      omod_off,
+      omod_mul_2,
+      omod_mul_4,
+      omod_div_2,
+      omod_unknown
+   };
 
-        enum EBankSwizzle {
-                alu_vec_012 = 0,
-                sq_alu_scl_201 = 0,
-                alu_vec_021 = 1,
-                sq_alu_scl_122 = 1,
-                alu_vec_120 = 2,
-                sq_alu_scl_212 = 2,
-                alu_vec_102 = 3,
-                aq_alu_scl_221 = 3,
-                alu_vec_201 = 4,
-                alu_vec_210 = 5
-        };
+   enum EBankSwizzle {
+      alu_vec_012 = 0,
+      sq_alu_scl_201 = 0,
+      alu_vec_021 = 1,
+      sq_alu_scl_122 = 1,
+      alu_vec_120 = 2,
+      sq_alu_scl_212 = 2,
+      alu_vec_102 = 3,
+      sq_alu_scl_221 = 3,
+      alu_vec_201 = 4,
+      alu_vec_210 = 5,
+      alu_vec_unknown = 6
+   };
 
-        enum FlagsShifts {
-           is_last_instr,
-           do_clamp,
-           do_write,
-           do_update_exec_mask,
-           do_update_pred
-        };
+   enum FlagsShifts {
+      is_last_instr,
+      do_clamp,
+      do_write,
+      do_update_exec_mask,
+      do_update_pred
+   };
 
-        static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
+   static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
 
-        AluNode(uint16_t opcode,
-                PValue src0, PValue src1,
-                const GPRValue& dst, EIndexMode index_mode,
-                EBankSwizzle bank_swizzle, EPredSelect pred_select,
-                AluOpFlags flags);
+   AluNode(uint16_t opcode,
+           PValue src0, PValue src1,
+           const GPRValue& dst, EIndexMode index_mode,
+           EBankSwizzle bank_swizzle, EPredSelect pred_select,
+           AluOpFlags flags);
 
-        int get_dst_chan() const;
-        bool last_instr() const;
+   int get_dst_chan() const;
+   bool last_instr() const;
 
-        uint64_t get_bytecode() const;
+   uint64_t get_bytecode() const;
 protected:
-        bool test_flag(FlagsShifts f) const;
-        const Value& src0() const;
-        const Value& src1() const;
+   bool test_flag(FlagsShifts f) const;
+   const Value& src0() const;
+   const Value& src1() const;
 
 private:
-        virtual void encode(uint64_t& bc) const = 0;
-        uint64_t shared_flags() const;
+   virtual void encode(uint64_t& bc) const = 0;
+   uint64_t shared_flags() const;
 
-        uint16_t m_opcode;
-        PValue m_src0;
-        PValue m_src1;
-        GPRValue m_dst;
-        EIndexMode m_index_mode;
-        EBankSwizzle m_bank_swizzle;
-        EPredSelect m_pred_select;
-        AluOpFlags m_flags;
+   uint16_t m_opcode;
+   PValue m_src0;
+   PValue m_src1;
+   GPRValue m_dst;
+   EIndexMode m_index_mode;
+   EBankSwizzle m_bank_swizzle;
+   EPredSelect m_pred_select;
+   AluOpFlags m_flags;
 };
 
 using PAluNode = std::shared_ptr<AluNode>;
 
 class AluNodeOp2: public AluNode {
 public:
-        AluNodeOp2(uint16_t opcode,
-                   PValue src0, PValue src1, const GPRValue& dst,
-                   EIndexMode index_mode, EBankSwizzle bank_swizzle,
-                   EOutputModify output_modify, EPredSelect pred_select,
-                   AluOpFlags flags);
+   AluNodeOp2(uint16_t opcode,
+              PValue src0, PValue src1, const GPRValue& dst,
+              EIndexMode index_mode, EBankSwizzle bank_swizzle,
+              EOutputModify output_modify, EPredSelect pred_select,
+              AluOpFlags flags);
 private:
-        void encode(uint64_t& bc) const override;
+   void encode(uint64_t& bc) const override;
 
-        EOutputModify m_output_modify;
+   EOutputModify m_output_modify;
 };
 
 class AluNodeOp3: public AluNode {
 public:
-        AluNodeOp3(uint16_t opcode,
-                   PValue src0, PValue src1, PValue src2,
-                   const GPRValue& dst, EIndexMode index_mode,
-                   EBankSwizzle bank_swizzle, EPredSelect pred_select,
-                   AluOpFlags flags);
+   AluNodeOp3(uint16_t opcode,
+              PValue src0, PValue src1, PValue src2,
+              const GPRValue& dst, EIndexMode index_mode,
+              EBankSwizzle bank_swizzle, EPredSelect pred_select,
+              AluOpFlags flags);
 private:
-        void encode(uint64_t& bc) const override;
-        PValue m_src2;
+   void encode(uint64_t& bc) const override;
+   PValue m_src2;
 };
 
 class AluGroup {

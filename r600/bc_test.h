@@ -36,13 +36,17 @@ namespace r600 {
                                       const char* m_expr,
                                       const char* n_expr,
                                       uint64_t m,
-                                      uint64_t n);
+                                      uint64_t n,
+                                      const char* filename,
+                                      int linenr);
 
 class BytecodeTest: public testing::Test {
 protected:
    void check(const char *s_data, const char *s_expect,
-              uint64_t data, uint64_t expect) const {
-      GTEST_ASSERT_(SameBitmap(spacing, s_data, s_expect, data, expect),
+              uint64_t data, uint64_t expect,
+              const char* filename, int linenr) const {
+      GTEST_ASSERT_(SameBitmap(spacing, s_data, s_expect, data, expect,
+                               filename, linenr),
                     GTEST_NONFATAL_FAILURE_);
    }
    void set_spacing(const std::vector<uint8_t>& s) {
@@ -52,7 +56,7 @@ private:
    std::vector<uint8_t> spacing;
 };
 
-#define TEST_EQ(X, Y) check(#X, #Y, X, Y)
+#define TEST_EQ(X, Y) check(#X, #Y, X, Y, __FILE__, __LINE__)
 
 }
 

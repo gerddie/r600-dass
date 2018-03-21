@@ -197,7 +197,7 @@ void AluNodeOp2::encode(uint64_t& bc) const
       bc |= up_pred_bit;
 
    if (test_flag(do_write))
-       bc |= write_mask_bit;
+      bc |= write_mask_bit;
 
    bc |= static_cast<uint64_t>(m_output_modify) << 37;
 }
