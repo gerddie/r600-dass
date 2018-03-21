@@ -30,19 +30,19 @@ namespace r600 {
 using AluOpFlags=std::bitset<16>;
 
 struct AluOP {
-   constexpr int x = 1;
-   constexpr int y = 2;
-   constexpr int z = 4;
-   constexpr int w = 8;
-   constexpr int v = 15;
-   constexpr int t = 16;
-   constexpr int a = 31;
+   static constexpr int x = 1;
+   static constexpr int y = 2;
+   static constexpr int z = 4;
+   static constexpr int w = 8;
+   static constexpr int v = 15;
+   static constexpr int t = 16;
+   static constexpr int a = 31;
    int opcode: 10;
    int nsrc: 2;
    int unit_mask: 5;
 };
 
-const AluOP alu_ops[];
+extern const AluOP alu_ops[];
 
 class AluNode {
 public:
