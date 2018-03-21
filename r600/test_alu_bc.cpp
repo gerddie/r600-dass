@@ -33,7 +33,6 @@ protected:
    PValue src;
    GPRValue dst;
    AluOpFlags empty_flags;
-
 };
 
 
@@ -207,4 +206,55 @@ TEST_F(BytecodeAluOp2ATest, TestOp2BankSwizzleBits)
                    AluNode::omod_off, AluNode::pred_sel_off, empty_flags);
       TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 50);
    }
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2FlagsLastInstrBits)
+{
+
+   AluOpFlags flags;
+   flags.set(AluNode::is_last_instr);
+   AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::omod_off, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 31);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2FlagsClampBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::do_clamp);
+   AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::omod_off, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 63);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2FlagsWriteBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::do_write);
+   AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::omod_off, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 36);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdateExecMaskBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::do_update_exec_mask);
+   AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::omod_off, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 34);
+}
+
+TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdatePredBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::do_update_pred);
+   AluNodeOp2 n(0, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::omod_off, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 35);
 }
