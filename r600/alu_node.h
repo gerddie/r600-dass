@@ -41,13 +41,14 @@ struct AluOp {
    static constexpr int t = 16;
    static constexpr int a = 31;
 
-   AluOp(int ns, int um):
-      nsrc(ns), unit_mask(um)
-   {
+   AluOp(int ns, int um, const char *n):
+      nsrc(ns), unit_mask(um), name(n)
+  {
    }
 
    int nsrc: 2;
    int unit_mask: 5;
+   const char *name;
 };
 
 extern const std::map<EAluOp, AluOp> alu_ops;
