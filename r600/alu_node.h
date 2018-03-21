@@ -29,6 +29,21 @@ namespace r600 {
 
 using AluOpFlags=std::bitset<16>;
 
+struct AluOP {
+   constexpr int x = 1;
+   constexpr int y = 2;
+   constexpr int z = 4;
+   constexpr int w = 8;
+   constexpr int v = 15;
+   constexpr int t = 16;
+   constexpr int a = 31;
+   int opcode: 10;
+   int nsrc: 2;
+   int unit_mask: 5;
+};
+
+const AluOP alu_ops[];
+
 class AluNode {
 public:
    enum EIndexMode {
@@ -91,6 +106,8 @@ protected:
    bool test_flag(FlagsShifts f) const;
    const Value& src0() const;
    const Value& src1() const;
+   int nopsources() const;
+
 
 private:
    virtual void encode(uint64_t& bc) const = 0;
@@ -111,10 +128,11 @@ using PAluNode = std::shared_ptr<AluNode>;
 class AluNodeOp2: public AluNode {
 public:
    AluNodeOp2(uint16_t opcode, const GPRValue& dst,
-              PValue src0, PValue src1,
-              EIndexMode index_mode, EBankSwizzle bank_swizzle,
-              EOutputModify output_modify, EPredSelect pred_select,
-              AluOpFlags flags);
+              PValue src0, PValue src1, AluOpFlags flags,
+              EIndexMode index_mode = idx_ar_x,
+              EBankSwizzle bank_swizzle = alu_vec_012,
+              EOutputModify output_modify = omod_off,
+              EPredSelect pred_select = pred_sel_off);
 private:
    void encode(uint64_t& bc) const override;
 
@@ -125,8 +143,10 @@ class AluNodeOp3: public AluNode {
 public:
    AluNodeOp3(uint16_t opcode, const GPRValue& dst,
               PValue src0, PValue src1, PValue src2,
-              EIndexMode index_mode, EBankSwizzle bank_swizzle,
-              EPredSelect pred_select, AluOpFlags flags);
+              AluOpFlags flags,
+              EIndexMode index_mode = idx_ar_x,
+              EBankSwizzle bank_swizzle = alu_vec_012,
+              EPredSelect pred_select = pred_sel_off);
 private:
    void encode(uint64_t& bc) const override;
    PValue m_src2;
