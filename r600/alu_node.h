@@ -23,13 +23,16 @@
 
 #include <r600/node.h>
 #include <r600/value.h>
+#include <r600/alu_defines.h>
 #include <bitset>
+
+#include <map>
 
 namespace r600 {
 
 using AluOpFlags=std::bitset<16>;
 
-struct AluOP {
+struct AluOp {
    static constexpr int x = 1;
    static constexpr int y = 2;
    static constexpr int z = 4;
@@ -37,12 +40,17 @@ struct AluOP {
    static constexpr int v = 15;
    static constexpr int t = 16;
    static constexpr int a = 31;
-   int opcode: 10;
+
+   AluOp(int ns, int um):
+      nsrc(ns), unit_mask(um)
+   {
+   }
+
    int nsrc: 2;
    int unit_mask: 5;
 };
 
-extern const AluOP alu_ops[];
+extern const std::map<EAluOp, AluOp> alu_ops;
 
 class AluNode {
 public:

@@ -24,7 +24,7 @@
 
 /* ALU op2 instructions 17:7 top three bits alwayss zero. */
 
-enum EAluOp2 {
+enum EAluOp {
         OP2_ADD = 0,
         OP2_MUL = 1,
         OP2_MUL_IEEE = 2,
@@ -200,37 +200,33 @@ enum EAluOp2 {
         OP2_LDS_2A = 223,
         OP2_INTERP_LOAD_P0 = 224,
         OP2_INTERP_LOAD_P10 = 125,
-        OP2_INTERP_LOAD_P20 = 126
-};
-
-/* ALU op2 instructions 17:13 top three bits alwayss zero. */
-
-enum EAluOp3 {
-        OP3_INST_BFE_UINT = 4,
-        OP3_INST_BFE_INT = 5,
-        OP3_INST_BFI_INT = 6,
-        OP3_INST_FMA = 7,
-        OP3_INST_CNDNE_64 = 9,
-        OP3_INST_FMA_64 = 10,
-        OP3_INST_LERP_UINT = 11,
-        OP3_INST_BIT_ALIGN_INT = 12,
-        OP3_INST_BYTE_ALIGN_INT = 13,
-        OP3_INST_SAD_ACCUM_UINT = 14,
-        OP3_INST_SAD_ACCUM_HI_UINT = 15,
-        OP3_INST_MULADD_UINT24 = 16,
-        OP3_INST_LDS_IDX_OP = 17,
-        OP3_INST_MULADD = 20,
-        OP3_INST_MULADD_M2 = 21,
-        OP3_INST_MULADD_M4 = 22,
-        OP3_INST_MULADD_D2 = 23,
-        OP3_INST_MULADD_IEEE = 24,
-        OP3_INST_CNDE = 25,
-        OP3_INST_CNDGT = 26,
-        OP3_INST_CNDGE = 27,
-        OP3_INST_CNDE_INT = 28,
-        OP3_INST_CNDGT_INT = 29,
-        OP3_INST_CNDGE_INT = 30,
-        OP3_INST_MUL_LIT = 31,
+        OP2_INTERP_LOAD_P20 = 126,
+        // op 3 all left shift 6
+        OP3_INST_BFE_UINT = 4<< 6, 
+        OP3_INST_BFE_INT = 5<< 6, 
+        OP3_INST_BFI_INT = 6<< 6, 
+        OP3_INST_FMA = 7<< 6, 
+        OP3_INST_CNDNE_64 = 9<< 6, 
+        OP3_INST_FMA_64 = 10<< 6, 
+        OP3_INST_LERP_UINT = 11<< 6, 
+        OP3_INST_BIT_ALIGN_INT = 12<< 6, 
+        OP3_INST_BYTE_ALIGN_INT = 13<< 6, 
+        OP3_INST_SAD_ACCUM_UINT = 14<< 6, 
+        OP3_INST_SAD_ACCUM_HI_UINT = 15<< 6, 
+        OP3_INST_MULADD_UINT24 = 16<< 6, 
+        OP3_INST_LDS_IDX_OP = 17<< 6, 
+        OP3_INST_MULADD = 20<< 6, 
+        OP3_INST_MULADD_M2 = 21<< 6, 
+        OP3_INST_MULADD_M4 = 22<< 6, 
+        OP3_INST_MULADD_D2 = 23<< 6, 
+        OP3_INST_MULADD_IEEE = 24<< 6, 
+        OP3_INST_CNDE = 25<< 6, 
+        OP3_INST_CNDGT = 26<< 6, 
+        OP3_INST_CNDGE = 27<< 6, 
+        OP3_INST_CNDE_INT = 28<< 6, 
+        OP3_INST_CNDGT_INT = 29<< 6, 
+        OP3_INST_CNDGE_INT = 30<< 6, 
+        OP3_INST_MUL_LIT = 31<< 6
 };
 
 enum AluInlineConstants  {
