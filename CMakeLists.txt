@@ -76,6 +76,7 @@ find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
 find_package(GTest)
 
 if (NOT GTEST_FOUND)
+        SET(BUILD_SHARED_LIBS TRUE)
         ADD_SUBDIRECTORY(/usr/src/gtest gtest)
         SET(GTEST_LIBRARY gtest)
         SET(GTEST_MAIN_LIBRARY gtest_main)
