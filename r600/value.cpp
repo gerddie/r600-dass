@@ -29,7 +29,12 @@ namespace r600 {
 using std::unique_ptr;
 using std::make_shared;
 
-Value::Value()
+Value::Value():
+   m_type(gpr),
+   m_chan(0),
+   m_abs(false),
+   m_rel(false),
+   m_neg(false)
 {
 }
 

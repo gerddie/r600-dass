@@ -26,23 +26,41 @@
 using namespace r600;
 using std::vector;
 
-class BytecodeAluOp2ATest: public BytecodeTest {
-   void SetUp();
+class BytecodeAluOpTest: public BytecodeTest {
 protected:
+   void CreateRegisters();
    Value::LiteralFlags li;
    PValue src;
    GPRValue dst;
    AluOpFlags empty_flags;
 };
 
+void BytecodeAluOpTest::CreateRegisters()
+{
+   src = Value::create(0, 0, 0, 0, 0, li);
+   dst = GPRValue(0,0,0,0,0);
+}
+
+class BytecodeAluOp2ATest: public BytecodeAluOpTest {
+   void SetUp();
+};
+
+class BytecodeAluOp3ATest: public BytecodeAluOpTest {
+   void SetUp();
+};
 
 void BytecodeAluOp2ATest::SetUp()
 {
+   CreateRegisters();
+   set_spacing({63, 61, 60, 53, 50, 40, 38, 37, 36, 35, 34, 33, 32,
+                31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
+}
+
+void BytecodeAluOp3ATest::SetUp()
+{
+   CreateRegisters();
    set_spacing({63, 61, 60, 53, 50, 45, 44, 42, 41, 32,
                 31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
-
-   src = Value::create(0, 0, 0, 0, 0, li);
-   dst = GPRValue(0,0,0,0,0);
 }
 
 TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
@@ -257,4 +275,61 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdatePredBits)
                 AluNode::omod_off, AluNode::pred_sel_off, flags);
 
    TEST_EQ(n.get_bytecode(), 1ul << 35);
+}
+
+TEST_F(BytecodeAluOp3ATest, TestOp3FlagsLastInstrBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::is_last_instr);
+   AluNodeOp3 n(0, src, src, src, dst, AluNode::idx_ar_x, AluNode::alu_vec_012,
+                AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 31);
+}
+
+TEST_F(BytecodeAluOp3ATest, TestOp3FlagsClampBits)
+{
+   AluOpFlags flags;
+   flags.set(AluNode::do_clamp);
+   AluNodeOp3 n(0, src, src, src, dst, AluNode::idx_ar_x,
+                AluNode::alu_vec_012, AluNode::pred_sel_off, flags);
+
+   TEST_EQ(n.get_bytecode(), 1ul << 63);
+}
+
+TEST_F(BytecodeAluOp3ATest, TestOp3PredSelBits)
+{
+   std::set<AluNode::EPredSelect> ps = {
+      AluNode::pred_sel_off, AluNode::pred_sel_zero,
+      AluNode::pred_sel_one
+   };
+
+   for(auto i: ps) {
+      AluNodeOp3 n(0, src, src, src, dst, AluNode::idx_ar_x,
+                   AluNode::alu_vec_012, i, empty_flags);
+      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 29);
+   }
+}
+
+
+TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
+{
+   std::set<AluNode::EBankSwizzle> bs = {
+      AluNode::alu_vec_012,
+      AluNode::sq_alu_scl_201,
+      AluNode::alu_vec_021,
+      AluNode::sq_alu_scl_122,
+      AluNode::alu_vec_120,
+      AluNode::sq_alu_scl_212,
+      AluNode::alu_vec_102,
+      AluNode::sq_alu_scl_221,
+      AluNode::alu_vec_201,
+      AluNode::alu_vec_210
+   };
+
+   for(auto i: bs) {
+      AluNodeOp3 n(0, src, src, src, dst, AluNode::idx_ar_x, i,
+                   AluNode::pred_sel_off, empty_flags);
+      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 50);
+   }
 }

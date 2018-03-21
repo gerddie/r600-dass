@@ -21,7 +21,7 @@
 #include <r600/alu_node.h>
 
 #include <stdexcept>
-
+#include <cassert>
 
 namespace r600 {
 using std::runtime_error;
@@ -167,11 +167,13 @@ uint64_t AluNode::get_bytecode() const
 }
 const Value& AluNode::src0() const
 {
+   assert(m_src0);
    return *m_src0;
 }
 
 const Value& AluNode::src1() const
 {
+   assert(m_src1);
    return *m_src1;
 }
 
