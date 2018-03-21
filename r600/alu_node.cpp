@@ -467,7 +467,7 @@ const std::map<EAluOp, AluOp> alu_ops = {
    {OP3_INST_SAD_ACCUM_UINT ,AluOp(3, AluOp::v,"INST_SAD_ACCUM_UINT")},
    {OP3_INST_SAD_ACCUM_HI_UINT ,AluOp(3, AluOp::v,"INST_SAD_ACCUM_HI_UINT")},
    {OP3_INST_MULADD_UINT24  ,AluOp(3, AluOp::v,"INST_MULADD_UINT24")},
-   {OP3_INST_LDS_IDX_OP     ,AluOp(3, AluOp::v,"INST_LDS_IDX_OP")},
+   {OP3_INST_LDS_IDX_OP     ,AluOp(3, AluOp::x,"INST_LDS_IDX_OP")},
    {OP3_INST_MULADD         ,AluOp(3, AluOp::a,"INST_MULADD")},
    {OP3_INST_MULADD_M2      ,AluOp(3, AluOp::a,"INST_MULADD_M2")},
    {OP3_INST_MULADD_M4      ,AluOp(3, AluOp::a,"INST_MULADD_M4")},
