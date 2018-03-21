@@ -106,19 +106,18 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
    GPRValue dst(dst_sel, dst_chan, 0, dst_rel, 0);
 
    if (is_op2) {
-      return new AluNodeOp2(opcode, src0, src1, dst,
+      return new AluNodeOp2(opcode, dst, src0, src1,
                             index_mode, bank_swizzle, omod, pred_sel, flags);
    } else {
-      return new AluNodeOp3(opcode << 6, src0, src1, src2,
-                            dst, index_mode, bank_swizzle, pred_sel, flags);
+      return new AluNodeOp3(opcode << 6, dst, src0, src1, src2,
+                            index_mode, bank_swizzle, pred_sel, flags);
    }
 }
 
-AluNode::AluNode(uint16_t opcode,
+AluNode::AluNode(uint16_t opcode, const GPRValue& dst,
                  PValue src0, PValue src1,
-                 const GPRValue& dst, EIndexMode index_mode,
-                 EBankSwizzle bank_swizzle, EPredSelect pred_select,
-                 AluOpFlags flags):
+                 EIndexMode index_mode, EBankSwizzle bank_swizzle,
+                 EPredSelect pred_select, AluOpFlags flags):
    m_opcode(opcode),
    m_src0(src0),
    m_src1(src1),
@@ -177,12 +176,12 @@ const Value& AluNode::src1() const
    return *m_src1;
 }
 
-AluNodeOp2::AluNodeOp2(uint16_t opcode,
-                       PValue src0, PValue src1, const GPRValue& dst,
+AluNodeOp2::AluNodeOp2(uint16_t opcode, const GPRValue& dst,
+                       PValue src0, PValue src1,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EOutputModify output_modify, EPredSelect pred_select,
                        AluOpFlags flags):
-   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle, pred_select, flags),
+   AluNode(opcode, dst, src0, src1, index_mode, bank_swizzle, pred_select, flags),
    m_output_modify(output_modify)
 {
 }
@@ -204,12 +203,11 @@ void AluNodeOp2::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_output_modify) << 37;
 }
 
-AluNodeOp3::AluNodeOp3(uint16_t opcode,
+AluNodeOp3::AluNodeOp3(uint16_t opcode, const GPRValue &dst,
                        PValue src0, PValue  src1, PValue  src2,
-                       const GPRValue &dst, EIndexMode index_mode,
-                       EBankSwizzle bank_swizzle, EPredSelect pred_select,
-                       AluOpFlags flags):
-   AluNode(opcode, src0, src1, dst, index_mode, bank_swizzle,
+                       EIndexMode index_mode, EBankSwizzle bank_swizzle,
+                       EPredSelect pred_select, AluOpFlags flags):
+   AluNode(opcode, dst, src0, src1, index_mode, bank_swizzle,
            pred_select, flags),
    m_src2(src2)
 {

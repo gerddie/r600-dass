@@ -78,9 +78,8 @@ public:
 
    static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
 
-   AluNode(uint16_t opcode,
-           PValue src0, PValue src1,
-           const GPRValue& dst, EIndexMode index_mode,
+   AluNode(uint16_t opcode, const GPRValue& dst,
+           PValue src0, PValue src1, EIndexMode index_mode,
            EBankSwizzle bank_swizzle, EPredSelect pred_select,
            AluOpFlags flags);
 
@@ -111,8 +110,8 @@ using PAluNode = std::shared_ptr<AluNode>;
 
 class AluNodeOp2: public AluNode {
 public:
-   AluNodeOp2(uint16_t opcode,
-              PValue src0, PValue src1, const GPRValue& dst,
+   AluNodeOp2(uint16_t opcode, const GPRValue& dst,
+              PValue src0, PValue src1,
               EIndexMode index_mode, EBankSwizzle bank_swizzle,
               EOutputModify output_modify, EPredSelect pred_select,
               AluOpFlags flags);
@@ -124,11 +123,10 @@ private:
 
 class AluNodeOp3: public AluNode {
 public:
-   AluNodeOp3(uint16_t opcode,
+   AluNodeOp3(uint16_t opcode, const GPRValue& dst,
               PValue src0, PValue src1, PValue src2,
-              const GPRValue& dst, EIndexMode index_mode,
-              EBankSwizzle bank_swizzle, EPredSelect pred_select,
-              AluOpFlags flags);
+              EIndexMode index_mode, EBankSwizzle bank_swizzle,
+              EPredSelect pred_select, AluOpFlags flags);
 private:
    void encode(uint64_t& bc) const override;
    PValue m_src2;
