@@ -22,6 +22,7 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <iomanip>
 #include <cassert>
 
 namespace r600 {
@@ -272,8 +273,9 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_offset & 2) << 43;
    bc |= static_cast<uint64_t>(m_offset & 4) << 57;
    bc |= static_cast<uint64_t>(m_offset & 8) << 60;
-   bc |= static_cast<uint64_t>(m_offset & 0x30) << 8;
-}
+   bc |= static_cast<uint64_t>(m_offset & 0x10) << 8;
+   bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
+   }
 
 AluGroup::AluGroup():
    m_ops(5),

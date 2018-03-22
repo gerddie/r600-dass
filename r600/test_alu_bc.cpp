@@ -353,10 +353,26 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
 
 TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
 {
-
+   AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, LDS_OP_ADD,
+                     src, src, src, empty_flags, 0, 0,
+                     AluNode::idx_ar_x, AluNode::alu_vec_012);
+   TEST_EQ(n.get_bytecode(), 0x0002200000000000ul);
 }
 
 TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
 {
+   uint64_t expect[6] = {
+      0x0402200000000000ul,
+      0x0002300000000000ul,
+      0x0802200000000000ul,
+      0x8002200000000000ul,
+      0x0002200000001000ul,
+      0x0002200002000000ul
+   };
 
+   for (int ofs = 0; ofs < 6; ++ofs) {
+      AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, LDS_OP_ADD,
+                        src, src, src, empty_flags, 1 << ofs);
+      TEST_EQ(n.get_bytecode(), expect[ofs]);
+   }
 }
