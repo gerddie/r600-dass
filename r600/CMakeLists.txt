@@ -1,4 +1,5 @@
 SET(SRC
+   alu_defines.cpp
    alu_node.cpp
    cf_node.cpp
    disassembler.cpp

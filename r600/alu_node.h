@@ -30,29 +30,6 @@
 
 namespace r600 {
 
-using AluOpFlags=std::bitset<16>;
-
-struct AluOp {
-   static constexpr int x = 1;
-   static constexpr int y = 2;
-   static constexpr int z = 4;
-   static constexpr int w = 8;
-   static constexpr int v = 15;
-   static constexpr int t = 16;
-   static constexpr int a = 31;
-
-   AluOp(int ns, int um, const char *n):
-      nsrc(ns), unit_mask(um), name(n)
-  {
-   }
-
-   int nsrc: 4;
-   int unit_mask: 5;
-   const char *name;
-};
-
-extern const std::map<EAluOp, AluOp> alu_ops;
-
 class AluNode {
 public:
    enum EIndexMode {
