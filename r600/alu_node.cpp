@@ -34,7 +34,7 @@ const uint64_t up_pred_bit = 1ul << 35;
 const uint64_t write_mask_bit = 1ul << 36;
 const uint64_t clamp_bit = 1ul << 63;
 
-AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
+AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
 {
    AluOpFlags flags;
 
@@ -62,15 +62,15 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
 
       if (opcode != OP3_INST_LDS_IDX_OP) {
 
-         auto src0 = Value::create(bc, alu_op3_src0, &literal_index);
-         auto src1 = Value::create(bc, alu_op3_src1, &literal_index);
-         auto src2 = Value::create(bc, alu_op3_src2, &literal_index);
+         auto src0 = Value::create(bc, alu_op3_src0, literal_index);
+         auto src1 = Value::create(bc, alu_op3_src1, literal_index);
+         auto src2 = Value::create(bc, alu_op3_src2, literal_index);
          return new AluNodeOp3(opcode, dst, src0, src1, src2, flags,
                                index_mode, bank_swizzle, pred_sel);
       } else {
-         auto src0 = Value::create(bc, alu_lds_src0, &literal_index);
-         auto src1 = Value::create(bc, alu_lds_src1, &literal_index);
-         auto src2 = Value::create(bc, alu_lds_src2, &literal_index);
+         auto src0 = Value::create(bc, alu_lds_src0, literal_index);
+         auto src1 = Value::create(bc, alu_lds_src1, literal_index);
+         auto src2 = Value::create(bc, alu_lds_src2, literal_index);
 
          auto  lds_op = static_cast<ELSDIndexOp>((bc >> 53) & 0x3f);
          int dst_chan = (bc >> 61) & 0x3;
@@ -79,7 +79,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
                       ((bc >> 60) & 8) |
                       ((bc >> 43) & 2) |
                       ((bc >> 8) & 16) |
-                      ((bc >> 8) & 32);
+                      ((bc >> 20) & 32);
 
          return new AluNodeLDSIdxOP(opcode, lds_op,
                                     src0, src1, src2, flags,
@@ -99,8 +99,8 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
       if (bc & up_pred_bit)
          flags.set(do_update_pred);
 
-      auto src0 = Value::create(bc, alu_op2_src0, &literal_index);
-      auto src1 = Value::create(bc, alu_op2_src1, &literal_index);
+      auto src0 = Value::create(bc, alu_op2_src0, literal_index);
+      auto src1 = Value::create(bc, alu_op2_src1, literal_index);
       return new AluNodeOp2(opcode, dst, src0, src1, flags,
                             index_mode, bank_swizzle, omod, pred_sel);
    }
@@ -293,7 +293,7 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
    do {
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
-      node.reset(AluNode::decode(*bc, lflags));
+      node.reset(AluNode::decode(*bc, &lflags));
       int chan = node->get_dst_chan();
       if (m_ops[chan]) {
          if (m_ops[4])

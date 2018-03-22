@@ -100,7 +100,7 @@ public:
       do_update_pred
    };
 
-   static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
+   static AluNode *decode(uint64_t bc, Value::LiteralFlags *literal_index);
 
    AluNode(uint16_t opcode, PValue src0, PValue src1,
            EIndexMode index_mode, EBankSwizzle bank_swizzle,

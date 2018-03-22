@@ -82,7 +82,7 @@ TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
       if (i == 48)
          bc |= 1ul << 47;
 
-      auto alu_node = AluNode::decode(bc, literal_flags);
+      auto alu_node = AluNode::decode(bc, &literal_flags);
       TEST_EQ(alu_node->get_bytecode(), bc);
    }
 }
@@ -374,5 +374,22 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
       AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, LDS_OP_ADD,
                         src, src, src, empty_flags, 1 << ofs);
       TEST_EQ(n.get_bytecode(), expect[ofs]);
+   }
+}
+
+TEST_F(BytecodeAluLDSIdxOpTest, TestOffsetRoundtrip)
+{
+   uint64_t expect[6] = {
+      0x0402200000000000ul,
+      0x0002300000000000ul,
+      0x0802200000000000ul,
+      0x8002200000000000ul,
+      0x0002200000001000ul,
+      0x0002200002000000ul
+   };
+
+   for (int ofs = 0; ofs < 6; ++ofs) {
+      auto n = AluNode::decode(expect[ofs], nullptr);
+      TEST_EQ(n->get_bytecode(), expect[ofs]);
    }
 }
