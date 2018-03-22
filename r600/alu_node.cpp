@@ -21,6 +21,7 @@
 #include <r600/alu_node.h>
 
 #include <stdexcept>
+#include <iostream>
 #include <cassert>
 
 namespace r600 {
@@ -35,46 +36,58 @@ const uint64_t clamp_bit = 1ul << 63;
 AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
 {
    AluOpFlags flags;
-   std::shared_ptr<Value> src2;
-   // decode word 0:
-   uint16_t src0_sel = bc & 0x1ff;
-   uint16_t src1_sel = (bc >> 13) & 0x1ff;
-   bool src0_rel = bc & src0_rel_bit;
-   bool src1_rel = bc & src1_rel_bit;
-   bool src0_neg = bc & src0_neg_bit;
-   bool src1_neg = bc & src1_neg_bit;
 
-   uint16_t src0_chan = (bc >> 10) & 3;
-   uint16_t src1_chan = (bc >> 23) & 3;
 
+   /* Decode common parts */
    auto index_mode = static_cast<EIndexMode>((bc >> 26) & 7);
-
-   EPredSelect pred_sel = static_cast<EPredSelect>((bc >> 29) & 3);
-   if (bc & last_instr_bit)
-      flags.set(is_last_instr);
-
-   bool src0_abs = 0;
-   bool src1_abs = 0;
-
    auto bank_swizzle = static_cast<EBankSwizzle>((bc >> 50) & 7);
-   uint16_t dst_sel = (bc >> 53) & 0x7f;
-   bool dst_rel = bc & dst_rel_bit;
+   auto pred_sel = static_cast<EPredSelect>((bc >> 29) & 3);
 
    if (bc & clamp_bit)
       flags.set(1 << do_clamp);
 
-   uint16_t dst_chan = (bc >> 61) & 3;
-   uint16_t opcode = 0;
-   EOutputModify omod = omod_off;
+   if (bc & last_instr_bit)
+      flags.set(is_last_instr);
 
-   bool is_op2 = (bc & (7ul << 47)) == 0;
-   if (is_op2) {
-      /* op2 */
-      opcode = (bc >> 39) & 0x7ff;
-      omod = static_cast<EOutputModify>((bc >> 37) & 3);
+   uint16_t opcode = (bc >> 39) & 0x7ff;
 
-      src0_abs = bc & src0_abs_bit;
-      src1_abs = bc & src1_abs_bit;
+   auto pdst = Value::create(bc, alu_op_dst, nullptr);
+   GPRValue dst = dynamic_cast<GPRValue&>(*pdst);
+
+   // op3?
+   if (opcode & 0x700) {
+      // opcode 3 uses the 5 upper bits of the opcode field
+      opcode &= 0x7c0;
+
+      if (opcode != OP3_INST_LDS_IDX_OP) {
+
+         auto src0 = Value::create(bc, alu_op3_src0, &literal_index);
+         auto src1 = Value::create(bc, alu_op3_src1, &literal_index);
+         auto src2 = Value::create(bc, alu_op3_src2, &literal_index);
+         return new AluNodeOp3(opcode, dst, src0, src1, src2, flags,
+                               index_mode, bank_swizzle, pred_sel);
+      } else {
+         auto src0 = Value::create(bc, alu_lds_src0, &literal_index);
+         auto src1 = Value::create(bc, alu_lds_src1, &literal_index);
+         auto src2 = Value::create(bc, alu_lds_src2, &literal_index);
+
+         auto  lds_op = static_cast<ELSDIndexOp>((bc >> 53) & 0x3f);
+         int dst_chan = (bc >> 61) & 0x3;
+         int offset = ((bc >> 58) & 1) |
+                      ((bc >> 57) & 4) |
+                      ((bc >> 60) & 8) |
+                      ((bc >> 43) & 2) |
+                      ((bc >> 8) & 16) |
+                      ((bc >> 8) & 32);
+
+         return new AluNodeLDSIdxOP(opcode, lds_op,
+                                    src0, src1, src2, flags,
+                                    offset, dst_chan, index_mode,
+                                    bank_swizzle);
+      }
+
+   } else {
+      auto omod = static_cast<EOutputModify>((bc >> 37) & 3);
 
       if (bc & write_mask_bit)
          flags.set(do_write);
@@ -85,53 +98,29 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags &literal_index)
       if (bc & up_pred_bit)
          flags.set(do_update_pred);
 
-
-   } else {
-      uint16_t src2_sel = (bc >> 32) & 0x1ff;
-      uint16_t src2_chan = (bc >> 42) & 3;
-      bool src2_rel = bc & src2_rel_bit;
-      bool src2_neg = bc & src2_neg_bit;
-      src2 = Value::create(src2_sel, src2_chan, 0,
-                           src2_rel, src2_neg, literal_index);
-
-      opcode = (bc >> 45) & 0x1f;
-   }
-
-   PValue src0 = Value::create(src0_sel, src0_chan, src0_abs,
-                               src0_rel, src0_neg, literal_index);
-
-   PValue src1 = Value::create(src1_sel, src1_chan, src1_abs,
-                               src1_rel, src1_neg, literal_index);
-
-   GPRValue dst(dst_sel, dst_chan, 0, dst_rel, 0);
-
-   if (is_op2) {
+      auto src0 = Value::create(bc, alu_op2_src0, &literal_index);
+      auto src1 = Value::create(bc, alu_op2_src1, &literal_index);
       return new AluNodeOp2(opcode, dst, src0, src1, flags,
                             index_mode, bank_swizzle, omod, pred_sel);
-   } else {
-      return new AluNodeOp3(opcode << 6, dst, src0, src1, src2, flags,
-                            index_mode, bank_swizzle, pred_sel);
    }
 }
 
-AluNode::AluNode(uint16_t opcode, const GPRValue& dst,
-                 PValue src0, PValue src1,
+AluNode::AluNode(uint16_t opcode, PValue src0, PValue src1,
                  EIndexMode index_mode, EBankSwizzle bank_swizzle,
-                 EPredSelect pred_select, AluOpFlags flags):
-   m_opcode(opcode),
+                 AluOpFlags flags, int dst_chan):
+   m_opcode(static_cast<EAluOp>(opcode)),
    m_src0(src0),
    m_src1(src1),
-   m_dst(dst),
    m_index_mode(index_mode),
    m_bank_swizzle(bank_swizzle),
-   m_pred_select(pred_select),
-   m_flags(flags)
+   m_flags(flags),
+   m_dst_chan(dst_chan)
 {
 }
 
 int AluNode::get_dst_chan() const
 {
-   return m_dst.get_chan();
+   return m_dst_chan;
 }
 
 bool AluNode::last_instr() const
@@ -149,7 +138,7 @@ uint64_t AluNode::get_bytecode() const
    uint64_t bc;
 
    bc = static_cast<uint64_t>(m_opcode) << 39;
-   bc |= m_dst.encode_for(alu_op_dst);
+
 
    if (m_flags.test(do_clamp))
       bc |= clamp_bit;
@@ -159,7 +148,6 @@ uint64_t AluNode::get_bytecode() const
 
    bc |= static_cast<uint64_t>(m_bank_swizzle) << 50;
    bc |= static_cast<uint64_t>(m_index_mode) << 26;
-   bc |= static_cast<uint64_t>(m_pred_select) << 29;
 
    encode(bc);
    return bc;
@@ -178,22 +166,52 @@ const Value& AluNode::src1() const
 
 int AluNode::nopsources() const
 {
-   assert(0 && "not yet implemented");
+   auto k = alu_ops.find(m_opcode);
+   if (k != alu_ops.end()) {
+      return k->second.nsrc;
+   } else {
+      return -1;
+   }
+}
+
+AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst,
+                               PValue src0, PValue src1, EIndexMode index_mode,
+                               EBankSwizzle bank_swizzle, EPredSelect pred_select,
+                               AluOpFlags flags):
+   AluNode(opcode, src0, src1, index_mode, bank_swizzle,
+           flags, dst.get_chan()),
+   m_dst(dst),
+   m_pred_select(pred_select)
+{
+}
+
+void AluNodeWithDst::encode_dst_and_pred(uint64_t& bc) const
+{
+   bc |= m_dst.encode_for(alu_op_dst);
+   bc |= static_cast<uint64_t>(m_pred_select) << 29;
 }
 
 AluNodeOp2::AluNodeOp2(uint16_t opcode, const GPRValue& dst,
                        PValue src0, PValue src1, AluOpFlags flags,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EOutputModify output_modify, EPredSelect pred_select):
-   AluNode(opcode, dst, src0, src1, index_mode, bank_swizzle, pred_select, flags),
+   AluNodeWithDst(opcode, dst, src0, src1, index_mode,
+                  bank_swizzle, pred_select, flags),
    m_output_modify(output_modify)
 {
 }
 
 void AluNodeOp2::encode(uint64_t& bc) const
 {
-   bc |= src0().encode_for(alu_op2_src0);
-   bc |= src1().encode_for(alu_op2_src1);
+   encode_dst_and_pred(bc);
+
+   auto nsrc = nopsources();
+
+   if (nsrc > 0)
+      bc |= src0().encode_for(alu_op2_src0);
+   if (nsrc > 1)
+      bc |= src1().encode_for(alu_op2_src1);
+
 
    if (test_flag(do_update_exec_mask))
       bc |= up_exec_mask_bit;
@@ -211,18 +229,50 @@ AluNodeOp3::AluNodeOp3(uint16_t opcode, const GPRValue &dst,
                        PValue src0, PValue  src1, PValue  src2, AluOpFlags flags,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EPredSelect pred_select):
-   AluNode(opcode, dst, src0, src1, index_mode, bank_swizzle,
-           pred_select, flags),
+   AluNodeWithDst(opcode, dst, src0, src1, index_mode,
+                  bank_swizzle, pred_select, flags),
    m_src2(src2)
 {
-
 }
 
 void AluNodeOp3::encode(uint64_t& bc) const
 {
+   assert(nopsources() == 3);
+   encode_dst_and_pred(bc);
+
    bc |= src0().encode_for(alu_op3_src0);
    bc |= src1().encode_for(alu_op3_src1);
    bc |= m_src2->encode_for(alu_op3_src2);
+}
+
+AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
+                                 PValue src0, PValue src1,
+                                 PValue src2, AluOpFlags flags,
+                                 int offset, int dst_chan,
+                                 EIndexMode index_mode,
+                                 EBankSwizzle bank_swizzle):
+   AluNode(opcode, src0, src1, index_mode, bank_swizzle, flags,
+           dst_chan),
+   m_lds_op(lds_op),
+   m_offset(offset),
+   m_src2(src2)
+{
+}
+
+void AluNodeLDSIdxOP::encode(uint64_t& bc) const
+{
+   /* needs to check actual numbers of ussed registers */
+   bc |= src0().encode_for(alu_op3_src0);
+   bc |= src1().encode_for(alu_op3_src1);
+   bc |= m_src2->encode_for(alu_op3_src2);
+
+   bc |= static_cast<uint64_t>(m_lds_op) << 53;
+   bc |= static_cast<uint64_t>(get_dst_chan()) << 61;
+   bc |= static_cast<uint64_t>(m_offset & 1) << 58;
+   bc |= static_cast<uint64_t>(m_offset & 2) << 43;
+   bc |= static_cast<uint64_t>(m_offset & 4) << 57;
+   bc |= static_cast<uint64_t>(m_offset & 8) << 60;
+   bc |= static_cast<uint64_t>(m_offset & 0x30) << 8;
 }
 
 AluGroup::AluGroup():

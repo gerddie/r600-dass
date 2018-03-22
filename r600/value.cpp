@@ -52,6 +52,16 @@ Value::Type Value::get_type() const
    return m_type;
 }
 
+void Value::set_abs(bool flag)
+{
+   m_abs = flag;
+}
+
+void Value::set_neg(bool flag)
+{
+   m_neg = flag;
+}
+
 uint64_t Value::encode_for(ValueOpEncoding encoding) const
 {
    switch (encoding) {
@@ -119,7 +129,7 @@ uint64_t Value::encode_for_alu_op_dst() const
 }
 
 PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
-                     bool rel, bool neg, LiteralFlags &literal_index)
+                     bool rel, bool neg, LiteralFlags *literal_index)
 {
    if (sel < 128)
       return PValue(new GPRValue(sel, chan, abs, rel, neg));
@@ -128,7 +138,8 @@ PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
       return PValue(new ConstValue(sel, chan, abs, rel, neg));
 
    if (sel == ALU_SRC_LITERAL) {
-      literal_index.set(chan);
+      assert(literal_index);
+      literal_index->set(chan);
       return PValue(new LiteralValue(chan, abs, rel, neg));
    }
 
@@ -140,6 +151,97 @@ PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
 
    assert("unknown src_sel value");
    return Pointer();
+}
+
+PValue Value::create(uint64_t bc, ValueOpEncoding encoding, LiteralFlags *li)
+{
+   switch (encoding) {
+   case alu_op2_src0: return decode_from_alu_op2_src0(bc, li);
+   case alu_op2_src1: return decode_from_alu_op2_src1(bc, li);
+   case alu_op3_src0: return decode_from_alu_op3_src0(bc, li);
+   case alu_op3_src1: return decode_from_alu_op3_src1(bc, li);
+   case alu_op3_src2: return decode_from_alu_op3_src2(bc, li);
+   case alu_lds_src0: return decode_from_alu_lds_src0(bc, li);
+   case alu_lds_src1: return decode_from_alu_lds_src1(bc, li);
+   case alu_lds_src2: return decode_from_alu_lds_src2(bc, li);
+
+   case alu_op_dst: return decode_from_alu_op_dst(bc);
+   default:
+      return Pointer();
+   }
+}
+
+PValue Value::decode_from_alu_op2_src0(uint64_t bc, LiteralFlags *li)
+{
+   PValue result = decode_from_alu_op3_src0(bc, li);
+   if (bc & src0_abs_bit)
+      result->set_abs(true);
+   return result;
+}
+
+PValue Value::decode_from_alu_op2_src1(uint64_t bc, LiteralFlags *li)
+{
+   PValue result = decode_from_alu_op3_src1(bc, li);
+   if (bc & src1_abs_bit)
+      result->set_abs(true);
+   return result;
+}
+
+PValue Value::decode_from_alu_op3_src0(uint64_t bc, LiteralFlags *li)
+{
+   auto value = decode_from_alu_lds_src0(bc, li);
+   if (bc & src0_neg_bit)
+      value->set_neg(true);
+   return value;
+}
+
+PValue Value::decode_from_alu_op3_src1(uint64_t bc, LiteralFlags *li)
+{
+   auto value = decode_from_alu_lds_src1(bc, li);
+   if (bc & src1_neg_bit)
+      value->set_neg(true);
+   return value;
+}
+
+PValue Value::decode_from_alu_op3_src2(uint64_t bc, LiteralFlags *li)
+{
+   auto value = decode_from_alu_lds_src2(bc, li);
+   if (bc & src2_neg_bit)
+      value->set_neg(true);
+   return value;
+}
+
+PValue Value::decode_from_alu_lds_src0(uint64_t bc, LiteralFlags *li)
+{
+   int sel = bc & 0x1ff;
+   int chan = (bc >> 10) & 3;
+   bool rel = bc & src0_rel_bit;
+   return create(sel, chan, false, rel, false, li);
+}
+
+PValue Value::decode_from_alu_lds_src1(uint64_t bc, LiteralFlags *li)
+{
+   int sel = (bc>> 13) & 0x1ff;
+   int chan = (bc >> 23) & 3;
+   bool rel = bc & src1_rel_bit;
+   return create(sel, chan, false, rel, false, li);
+}
+
+PValue Value::decode_from_alu_lds_src2(uint64_t bc, LiteralFlags *li)
+{
+   uint16_t sel = (bc >> 32) & 0x1ff;
+   uint16_t chan = (bc >> 42) & 3;
+   bool rel = bc & src2_rel_bit;
+   return create(sel, chan, false, rel, false, li);
+}
+
+
+PValue Value::decode_from_alu_op_dst(uint64_t bc)
+{
+   uint16_t sel = (bc >> 53) & 0x7f;
+   bool rel = bc & dst_rel_bit;
+   uint16_t chan = (bc >> 61) & 3;
+   return create(sel, chan, false, rel, false, nullptr);
 }
 
 GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):

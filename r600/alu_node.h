@@ -46,7 +46,7 @@ struct AluOp {
   {
    }
 
-   int nsrc: 2;
+   int nsrc: 4;
    int unit_mask: 5;
    const char *name;
 };
@@ -102,10 +102,9 @@ public:
 
    static AluNode *decode(uint64_t bc, Value::LiteralFlags& literal_index);
 
-   AluNode(uint16_t opcode, const GPRValue& dst,
-           PValue src0, PValue src1, EIndexMode index_mode,
-           EBankSwizzle bank_swizzle, EPredSelect pred_select,
-           AluOpFlags flags);
+   AluNode(uint16_t opcode, PValue src0, PValue src1,
+           EIndexMode index_mode, EBankSwizzle bank_swizzle,
+           AluOpFlags flags, int dst_chan);
 
    int get_dst_chan() const;
    bool last_instr() const;
@@ -122,19 +121,30 @@ private:
    virtual void encode(uint64_t& bc) const = 0;
    uint64_t shared_flags() const;
 
-   uint16_t m_opcode;
+   EAluOp m_opcode;
    PValue m_src0;
    PValue m_src1;
-   GPRValue m_dst;
    EIndexMode m_index_mode;
    EBankSwizzle m_bank_swizzle;
-   EPredSelect m_pred_select;
    AluOpFlags m_flags;
+   int m_dst_chan;
 };
 
 using PAluNode = std::shared_ptr<AluNode>;
 
-class AluNodeOp2: public AluNode {
+class AluNodeWithDst: public AluNode {
+protected:
+   AluNodeWithDst(uint16_t opcode, const GPRValue& dst,
+                  PValue src0, PValue src1, EIndexMode index_mode,
+                  EBankSwizzle bank_swizzle, EPredSelect pred_select,
+                  AluOpFlags flags);
+   void encode_dst_and_pred(uint64_t& bc) const;
+private:
+   GPRValue m_dst;
+   EPredSelect m_pred_select;
+};
+
+class AluNodeOp2: public AluNodeWithDst {
 public:
    AluNodeOp2(uint16_t opcode, const GPRValue& dst,
               PValue src0, PValue src1, AluOpFlags flags,
@@ -148,7 +158,7 @@ private:
    EOutputModify m_output_modify;
 };
 
-class AluNodeOp3: public AluNode {
+class AluNodeOp3: public AluNodeWithDst {
 public:
    AluNodeOp3(uint16_t opcode, const GPRValue& dst,
               PValue src0, PValue src1, PValue src2,
@@ -158,6 +168,21 @@ public:
               EPredSelect pred_select = pred_sel_off);
 private:
    void encode(uint64_t& bc) const override;
+   PValue m_src2;
+};
+
+class AluNodeLDSIdxOP: public AluNode {
+public:
+   AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
+                   PValue src0, PValue src1,
+                   PValue src2, AluOpFlags flags,
+                   int offset = 0, int dst_chan = 0,
+                   EIndexMode index_mode = idx_ar_x,
+                   EBankSwizzle bank_swizzle = alu_vec_012);
+private:
+   void encode(uint64_t& bc) const override;
+   ELSDIndexOp m_lds_op;
+   int m_offset;
    PValue m_src2;
 };
 
