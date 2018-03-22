@@ -49,6 +49,10 @@ class BytecodeAluOp3ATest: public BytecodeAluOpTest {
    void SetUp();
 };
 
+class BytecodeAluLDSIdxOpTest: public BytecodeAluOpTest {
+   void SetUp();
+};
+
 void BytecodeAluOp2ATest::SetUp()
 {
    CreateRegisters();
@@ -61,6 +65,13 @@ void BytecodeAluOp3ATest::SetUp()
    CreateRegisters();
    set_spacing({63, 61, 60, 53, 50, 45, 44, 42, 41, 32,
                 31, 29, 26, 25, 23, 22, 13, 12, 10, 9});
+}
+
+void  BytecodeAluLDSIdxOpTest::SetUp()
+{
+   CreateRegisters();
+   set_spacing({63, 62, 60, 59, 53, 50, 45, 44, 42, 41, 32,
+                31,  26, 25, 23, 22, 13, 12, 10, 9});
 }
 
 TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
@@ -338,4 +349,14 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
       TEST_EQ(n.get_bytecode(), (static_cast<uint64_t>(i) << 50)
               | (1ul << 47));
    }
+}
+
+TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
+{
+
+}
+
+TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
+{
+
 }
