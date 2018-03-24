@@ -61,13 +61,13 @@ public:
       kconst,
       literal,
       cinline,
+      lds_direct,
       unknown
    };
 
    using LiteralFlags=std::bitset<4>;
 
    Value();
-   Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
 
    static Pointer create(uint16_t sel, uint16_t chan,
                          bool abs, bool rel, bool neg,
@@ -86,6 +86,10 @@ public:
    void set_neg(bool flag);
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
+
+protected:
+
+   Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
 
 private:
 
@@ -117,8 +121,7 @@ private:
 
 using PValue=Value::Pointer;
 
-class GPRValue : public Value
-{
+class GPRValue : public Value {
 public:
    GPRValue() = default;
    GPRValue(GPRValue&& orig) = default;
@@ -130,29 +133,41 @@ public:
    GPRValue& operator = (const GPRValue& orig) = default;
    GPRValue& operator = (GPRValue&& orig) = default;
 
-   uint64_t get_sel() const override;
+   uint64_t get_sel() const override final;
 private:
    uint16_t m_sel;
 };
 
-class LiteralValue: public Value
-{
+class LiteralValue: public Value {
 public:
    LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
-   uint64_t get_sel() const override;
+   uint64_t get_sel() const override final;
 };
 
-class InlineConstValue: public Value
-{
-public:
-   InlineConstValue(int value, int chan, bool abs, bool neg);
-   uint64_t get_sel() const override;
+class SpecialValue: public Value {
+protected:
+   SpecialValue(Type type, int value, int chan, bool abs, bool neg);
+   uint64_t get_sel() const override final;
 private:
    AluInlineConstants m_value;
 };
 
-class ConstValue: public Value
-{
+class InlineConstValue: public SpecialValue {
+public:
+   InlineConstValue(int value, int chan, bool abs, bool neg);
+private:
+   AluInlineConstants m_value;
+};
+
+class LDSDirectValue: public SpecialValue {
+public:
+   LDSDirectValue(int value, int chan, bool abs, bool neg);
+private:
+   AluInlineConstants m_value;
+};
+
+
+class ConstValue: public Value {
 public:
    ConstValue(uint16_t sel, uint16_t chan,
               bool abs, bool rel, bool neg);

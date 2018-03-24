@@ -143,6 +143,13 @@ PValue Value::create(uint16_t sel, uint16_t chan, bool abs,
       return PValue(new LiteralValue(chan, abs, rel, neg));
    }
 
+   if (sel == ALU_SRC_LDS_DIRECT_A || sel == ALU_SRC_LDS_DIRECT_B) {
+      assert(literal_index);
+      literal_index->set(0);
+      literal_index->set(1);
+      return PValue(new LDSDirectValue(sel, chan, abs, neg));
+   }
+
    if (sel > 218 && sel < 256) {
       if (rel)
          std::cerr << "rel bit on inline constant ignored";
@@ -266,15 +273,27 @@ uint64_t LiteralValue::get_sel() const
    return ALU_SRC_LITERAL;
 }
 
-InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
-   Value(Value::cinline, chan, abs, 0, neg),
+SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
+   Value(type, chan, abs, 0, neg),
    m_value(static_cast<AluInlineConstants>(value))
+{
+
+}
+
+uint64_t SpecialValue::get_sel() const
+{
+   return m_value;
+}
+
+InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
+   SpecialValue(Value::cinline, value, chan, abs, neg)
 {
 }
 
-uint64_t InlineConstValue::get_sel() const
+LDSDirectValue::LDSDirectValue(int value, int chan, bool abs, bool neg):
+   SpecialValue(Value::lds_direct, value, chan, abs, neg),
+   m_value(static_cast<AluInlineConstants>(value))
 {
-   return m_value;
 }
 
 ConstValue::ConstValue(uint16_t sel, uint16_t chan,
