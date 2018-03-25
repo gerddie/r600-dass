@@ -134,6 +134,44 @@ bool AluNode::test_flag(FlagsShifts f) const
    return m_flags.test(f);
 }
 
+bool AluNode::slot_supported(int flag) const
+{
+   auto op = alu_ops.find(m_opcode);
+   if (op != alu_ops.end())
+      return op->second.can_channel(1 << flag);
+   throw runtime_error("Unknown op");
+}
+
+void AluNode::set_literal_info(uint32_t *literals)
+{
+   if (m_src0)
+      m_src0->set_literal_info(literals);
+
+   if (m_src1)
+      m_src1->set_literal_info(literals);
+
+   set_spec_literal_info(literals);
+}
+
+void AluNode::set_spec_literal_info(uint32_t *literals)
+{
+}
+
+void AluNode::allocate_literal(LiteralBuffer& lb) const
+{
+   if (m_src0)
+      m_src0->allocate_literal(lb);
+
+   if (m_src1)
+      m_src1->allocate_literal(lb);
+
+   allocate_spec_literal(lb);
+}
+
+void AluNode::allocate_spec_literal(LiteralBuffer& lb) const
+{
+}
+
 uint64_t AluNode::get_bytecode() const
 {
    uint64_t bc;
@@ -246,6 +284,18 @@ void AluNodeOp3::encode(uint64_t& bc) const
    bc |= m_src2->encode_for(alu_op3_src2);
 }
 
+void AluNodeOp3::set_spec_literal_info(uint32_t *literals)
+{
+   assert(m_src2);
+   m_src2->set_literal_info(literals);
+}
+
+void AluNodeOp3::allocate_spec_literal(LiteralBuffer& lb) const
+{
+   assert(m_src2);
+   m_src2->allocate_literal(lb);
+}
+
 AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
                                  PValue src0, PValue src1,
                                  PValue src2, AluOpFlags flags,
@@ -275,11 +325,23 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_offset & 8) << 60;
    bc |= static_cast<uint64_t>(m_offset & 0x10) << 8;
    bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
-   }
+}
+
+void AluNodeLDSIdxOP::set_spec_literal_info(uint32_t *literals)
+{
+   assert(m_src2);
+   m_src2->set_literal_info(literals);
+}
+
+void AluNodeLDSIdxOP::allocate_spec_literal(LiteralBuffer& lb) const
+{
+   assert(m_src2);
+   m_src2->allocate_literal(lb);
+}
+
 
 AluGroup::AluGroup():
-   m_ops(5),
-   m_nlinterals(0)
+   m_ops(5)
 {
 }
 
@@ -293,42 +355,57 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
    do {
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
-      node.reset(AluNode::decode(*bc, &lflags));
+      node.reset(AluNode::decode(*bc++, &lflags));
       int chan = node->get_dst_chan();
-      if (m_ops[chan]) {
-         if (m_ops[4])
-            throw runtime_error("Alu group wants to use same slot more than "
-                                "once and trans is already occupied");
-         m_ops[4] = node;
-         group_should_finish = true;
-      } else {
-         m_ops[chan] = node;
+      if (!m_ops[chan]) {
+         if (node->slot_supported(chan)) {
+            m_ops[chan] = node;
+            continue;
+         }
       }
-      ++bc;
+      /* Node could not be put into xyzw channel, try t */
+      if (m_ops[4])
+            throw runtime_error("Alu group scheduls a channel more than "
+                                "once and trans is already occupied");
+      if (node->slot_supported(AluOp::t))
+         m_ops[4] = node;
+      else {
+         throw runtime_error("Alu group schedules an instruction into "
+                             "trans that is not allowed there");
+      }
+      group_should_finish = true;
    } while (!node->last_instr());
 
-   for (int lp = 0; lp < 2; ++lp)
+   uint32_t literals[4];
+
+   for (int lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
-         m_nlinterals++;
-         m_literals[2*lp] = *bc & 0xffffffff;
-         m_literals[2*lp+1] = (*bc >> 32 ) & 0xffffffff;
+         literals[2*lp] = *bc & 0xffffffff;
+         literals[2*lp+1] = (*bc >> 32 ) & 0xffffffff;
          ++bc;
       }
+   }
+
+   for (auto op: m_ops) {
+      if (op)
+         op->set_literal_info(literals);
+   }
+
    return bc;
 }
 
 void AluGroup::encode(std::vector<uint64_t>& bc) const
 {
-   for (const auto& op: m_ops) {
-      if (op)
-         bc.push_back(op->get_bytecode());
-   }
-   for (int i = 0; i < m_nlinterals; ++i) {
-      uint64_t l =(static_cast<uint64_t>(m_literals[2*i+1]) << 32) |
-            m_literals[2*i+1];
-      bc.push_back(l);
-   }
-}
+   std::vector<uint64_t> group;
+   LiteralBuffer literal_bufffer;
 
+   for (const auto& op: m_ops) {
+      if (op) {
+         group.push_back(op->get_bytecode());
+         op->allocate_literal(literal_bufffer);
+      }
+   }
+   // Add code to store literals
+}
 
 }

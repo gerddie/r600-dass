@@ -248,6 +248,10 @@ struct AluOp {
    {
    }
 
+   bool can_channel(int flags) const {
+      return flags & unit_mask;
+   }
+
    int nsrc: 4;
    int unit_mask: 5;
    const char *name;

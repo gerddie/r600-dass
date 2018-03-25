@@ -86,15 +86,21 @@ public:
    int get_dst_chan() const;
    bool last_instr() const;
 
+   bool slot_supported(int flag) const;
    uint64_t get_bytecode() const;
+
+   void set_literal_info(uint32_t *literals);
+   void allocate_literal(LiteralBuffer& lb) const;
+
 protected:
    bool test_flag(FlagsShifts f) const;
    const Value& src0() const;
    const Value& src1() const;
    int nopsources() const;
 
-
 private:
+   virtual void allocate_spec_literal(LiteralBuffer& lb) const;
+   virtual void set_spec_literal_info(uint32_t *literals);
    virtual void encode(uint64_t& bc) const = 0;
    uint64_t shared_flags() const;
 
@@ -144,6 +150,8 @@ public:
               EBankSwizzle bank_swizzle = alu_vec_012,
               EPredSelect pred_select = pred_sel_off);
 private:
+   void set_spec_literal_info(uint32_t *literals) override final;
+   void allocate_spec_literal(LiteralBuffer& lb) const override final;
    void encode(uint64_t& bc) const override;
    PValue m_src2;
 };
@@ -157,6 +165,8 @@ public:
                    EIndexMode index_mode = idx_ar_x,
                    EBankSwizzle bank_swizzle = alu_vec_012);
 private:
+   void set_spec_literal_info(uint32_t *literals) override final;
+   void allocate_spec_literal(LiteralBuffer& lb) const override final;
    void encode(uint64_t& bc) const override;
    ELSDIndexOp m_lds_op;
    int m_offset;
@@ -172,8 +182,6 @@ public:
    void encode(std::vector<uint64_t>& bc) const;
 private:
    std::vector<PAluNode> m_ops;
-   int m_nlinterals;
-   uint32_t m_literals[4];
 };
 
 }

@@ -24,6 +24,7 @@
 #include <r600/alu_defines.h>
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include <bitset>
 
 namespace r600 {
@@ -51,8 +52,11 @@ extern const uint64_t src0_abs_bit;
 extern const uint64_t src1_abs_bit;
 extern const uint64_t dst_rel_bit;
 
-class Value
-{
+class LiteralBuffer {
+
+};
+
+class Value {
 public:
    using Pointer=std::shared_ptr<Value>;
 
@@ -87,6 +91,8 @@ public:
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
 
+   virtual void set_literal_info(const uint32_t *literals);
+   virtual void allocate_literal(LiteralBuffer& lb) const;
 protected:
 
    Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
@@ -142,6 +148,9 @@ class LiteralValue: public Value {
 public:
    LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
    uint64_t get_sel() const override final;
+   void set_literal_info(const uint32_t *literals) override final;
+private:
+   uint32_t m_value;
 };
 
 class SpecialValue: public Value {
@@ -162,10 +171,22 @@ private:
 class LDSDirectValue: public SpecialValue {
 public:
    LDSDirectValue(int value, int chan, bool abs, bool neg);
+   void set_literal_info(const uint32_t *literals) override final;
 private:
-   AluInlineConstants m_value;
-};
 
+   AluInlineConstants m_value;
+   struct DirectAccess {
+      DirectAccess();
+      DirectAccess(uint32_t l);
+      int offset;
+      int stride;
+      bool thread_rel;
+   };
+
+   std::vector<DirectAccess> m_addr;
+   bool m_direct_read_32;
+
+};
 
 class ConstValue: public Value {
 public:

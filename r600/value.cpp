@@ -178,6 +178,16 @@ PValue Value::create(uint64_t bc, ValueOpEncoding encoding, LiteralFlags *li)
    }
 }
 
+void Value::set_literal_info(const uint32_t *literals)
+{
+   (void)literals;
+}
+
+void Value::allocate_literal(LiteralBuffer& lb) const
+{
+
+}
+
 PValue Value::decode_from_alu_op2_src0(uint64_t bc, LiteralFlags *li)
 {
    PValue result = decode_from_alu_op3_src0(bc, li);
@@ -264,7 +274,8 @@ uint64_t GPRValue::get_sel() const
 
 LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
-   Value(Value::literal, chan, abs, rel, neg)
+   Value(Value::literal, chan, abs, rel, neg),
+   m_value(0)
 {
 }
 
@@ -273,11 +284,15 @@ uint64_t LiteralValue::get_sel() const
    return ALU_SRC_LITERAL;
 }
 
+void LiteralValue::set_literal_info(const uint32_t *literals)
+{
+   m_value = literals[get_chan()];
+}
+
 SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
    Value(type, chan, abs, 0, neg),
    m_value(static_cast<AluInlineConstants>(value))
 {
-
 }
 
 uint64_t SpecialValue::get_sel() const
@@ -292,9 +307,34 @@ InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
 
 LDSDirectValue::LDSDirectValue(int value, int chan, bool abs, bool neg):
    SpecialValue(Value::lds_direct, value, chan, abs, neg),
-   m_value(static_cast<AluInlineConstants>(value))
+   m_value(static_cast<AluInlineConstants>(value)),
+   m_addr(2),
+   m_direct_read_32(false)
 {
 }
+
+LDSDirectValue::DirectAccess::DirectAccess():
+   offset(0),
+   stride(0),
+   thread_rel(0)
+{
+}
+
+LDSDirectValue::DirectAccess::DirectAccess(uint32_t l):
+   offset(l & 0x1FFF),
+   stride((l >> 13) & 0x7f),
+   thread_rel(l & (1 << 22))
+{
+}
+
+void LDSDirectValue::set_literal_info(const uint32_t *literals)
+{
+   for (int i = 0; i < 2; ++i)
+      m_addr[i] = DirectAccess(literals[i]);
+
+   m_direct_read_32 = literals[1] & 0x8000000;
+}
+
 
 ConstValue::ConstValue(uint16_t sel, uint16_t chan,
                        bool abs, bool rel, bool neg):
