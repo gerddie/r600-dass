@@ -80,12 +80,12 @@ public:
    static Pointer create(uint64_t bc, ValueOpEncoding encoding,
                          LiteralFlags *literal_index);
 
-   Type get_type() const;
-   virtual uint64_t get_sel() const = 0;
-   uint64_t get_chan() const {return m_chan;}
-   bool get_rel() const {return m_rel;}
-   bool get_neg() const {return m_neg;}
-   bool get_abs() const {return m_abs;}
+   Type type() const;
+   virtual uint64_t sel() const = 0;
+   uint64_t chan() const {return m_chan;}
+   bool rel() const {return m_rel;}
+   bool neg() const {return m_neg;}
+   bool abs() const {return m_abs;}
    void set_abs(bool flag);
    void set_neg(bool flag);
 
@@ -139,7 +139,7 @@ public:
    GPRValue& operator = (const GPRValue& orig) = default;
    GPRValue& operator = (GPRValue&& orig) = default;
 
-   uint64_t get_sel() const override final;
+   uint64_t sel() const override final;
 private:
    uint16_t m_sel;
 };
@@ -147,7 +147,7 @@ private:
 class LiteralValue: public Value {
 public:
    LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
-   uint64_t get_sel() const override final;
+   uint64_t sel() const override final;
    void set_literal_info(const uint32_t *literals) override final;
 private:
    uint32_t m_value;
@@ -156,7 +156,7 @@ private:
 class SpecialValue: public Value {
 protected:
    SpecialValue(Type type, int value, int chan, bool abs, bool neg);
-   uint64_t get_sel() const override final;
+   uint64_t sel() const override final;
 private:
    AluInlineConstants m_value;
 };
@@ -192,7 +192,7 @@ class ConstValue: public Value {
 public:
    ConstValue(uint16_t sel, uint16_t chan,
               bool abs, bool rel, bool neg);
-   uint64_t get_sel() const override;
+   uint64_t sel() const override;
 private:
    uint16_t m_index;
    uint16_t m_kcache_bank;

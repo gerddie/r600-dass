@@ -83,41 +83,41 @@ TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
          bc |= 1ul << 47;
 
       auto alu_node = AluNode::decode(bc, &literal_flags);
-      TEST_EQ(alu_node->get_bytecode(), bc);
+      TEST_EQ(alu_node->bytecode(), bc);
    }
 }
 
 TEST_F(BytecodeAluOp2ATest, TestValueType)
 {
    auto v = Value::create(0, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::gpr);
+   EXPECT_EQ(v->type(), Value::gpr);
 
    v = Value::create(127, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::gpr);
+   EXPECT_EQ(v->type(), Value::gpr);
 
    v = Value::create(128, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::kconst);
+   EXPECT_EQ(v->type(), Value::kconst);
 
    v = Value::create(160, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::kconst);
+   EXPECT_EQ(v->type(), Value::kconst);
 
    v = Value::create(191, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::kconst);
+   EXPECT_EQ(v->type(), Value::kconst);
 
    v = Value::create(256, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::kconst);
+   EXPECT_EQ(v->type(), Value::kconst);
 
    v = Value::create(319, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::kconst);
+   EXPECT_EQ(v->type(), Value::kconst);
 
    v = Value::create(219, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::cinline);
+   EXPECT_EQ(v->type(), Value::cinline);
 
    v = Value::create(255, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::cinline);
+   EXPECT_EQ(v->type(), Value::cinline);
 
    v = Value::create(253, 0, 0, 0, 0, &li);
-   EXPECT_EQ(v->get_type(), Value::literal);
+   EXPECT_EQ(v->type(), Value::literal);
 }
 
 TEST_F(BytecodeAluOp2ATest, TestValueSrc0Sel)
@@ -200,7 +200,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2IndexModeBits)
       AluNodeOp2 n(0, dst, src, src, empty_flags, i,
                    AluNode::alu_vec_012, AluNode::omod_off,
                    AluNode::pred_sel_off);
-      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 26);
+      TEST_EQ(n.bytecode(), static_cast<uint64_t>(i) << 26);
    }
 }
 
@@ -215,7 +215,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2PredSelBits)
       AluNodeOp2 n(0, dst, src, src, empty_flags,
                    AluNode::idx_ar_x, AluNode::alu_vec_012,
                    AluNode::omod_off, i);
-      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 29);
+      TEST_EQ(n.bytecode(), static_cast<uint64_t>(i) << 29);
    }
 }
 
@@ -238,7 +238,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2BankSwizzleBits)
    for(auto i: bs) {
       AluNodeOp2 n(0, dst, src, src, empty_flags, AluNode::idx_ar_x, i,
                    AluNode::omod_off, AluNode::pred_sel_off);
-      TEST_EQ(n.get_bytecode(), static_cast<uint64_t>(i) << 50);
+      TEST_EQ(n.bytecode(), static_cast<uint64_t>(i) << 50);
    }
 }
 
@@ -250,7 +250,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsLastInstrBits)
    AluNodeOp2 n(0, dst, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::omod_off, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), 1ul << 31);
+   TEST_EQ(n.bytecode(), 1ul << 31);
 }
 
 TEST_F(BytecodeAluOp2ATest, TestOp2FlagsClampBits)
@@ -260,7 +260,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsClampBits)
    AluNodeOp2 n(0, dst, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::omod_off, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), 1ul << 63);
+   TEST_EQ(n.bytecode(), 1ul << 63);
 }
 
 TEST_F(BytecodeAluOp2ATest, TestOp2FlagsWriteBits)
@@ -270,7 +270,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsWriteBits)
    AluNodeOp2 n(0, dst, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::omod_off, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), 1ul << 36);
+   TEST_EQ(n.bytecode(), 1ul << 36);
 }
 
 TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdateExecMaskBits)
@@ -280,7 +280,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdateExecMaskBits)
    AluNodeOp2 n(0, dst, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::omod_off, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), 1ul << 34);
+   TEST_EQ(n.bytecode(), 1ul << 34);
 }
 
 TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdatePredBits)
@@ -290,7 +290,7 @@ TEST_F(BytecodeAluOp2ATest, TestOp2FlagsUpdatePredBits)
    AluNodeOp2 n(0, dst, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::omod_off, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), 1ul << 35);
+   TEST_EQ(n.bytecode(), 1ul << 35);
 }
 
 TEST_F(BytecodeAluOp3ATest, TestOp3FlagsLastInstrBits)
@@ -300,7 +300,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsLastInstrBits)
    AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), (1ul << 31) | (1ul << 47));
+   TEST_EQ(n.bytecode(), (1ul << 31) | (1ul << 47));
 }
 
 TEST_F(BytecodeAluOp3ATest, TestOp3FlagsClampBits)
@@ -310,7 +310,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsClampBits)
    AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x,
                 AluNode::alu_vec_012, AluNode::pred_sel_off);
 
-   TEST_EQ(n.get_bytecode(), (1ul << 63) | (1ul << 47));
+   TEST_EQ(n.bytecode(), (1ul << 63) | (1ul << 47));
 }
 
 TEST_F(BytecodeAluOp3ATest, TestOp3PredSelBits)
@@ -323,7 +323,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3PredSelBits)
    for(auto i: ps) {
       AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x,
                    AluNode::alu_vec_012, i);
-      TEST_EQ(n.get_bytecode(), (static_cast<uint64_t>(i) << 29) | (1ul << 47));
+      TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 29) | (1ul << 47));
    }
 }
 
@@ -346,7 +346,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
    for(auto i: bs) {
       AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x, i,
                    AluNode::pred_sel_off);
-      TEST_EQ(n.get_bytecode(), (static_cast<uint64_t>(i) << 50)
+      TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 50)
               | (1ul << 47));
    }
 }
@@ -367,7 +367,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
       AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, p.first,
                         src, src, src, empty_flags, 0, 0,
                         AluNode::idx_ar_x, AluNode::alu_vec_012);
-      TEST_EQ(n.get_bytecode(), p.second);
+      TEST_EQ(n.bytecode(), p.second);
    }
 }
 
@@ -385,7 +385,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
    for (int ofs = 0; ofs < 6; ++ofs) {
       AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, LDS_OP_ADD,
                         src, src, src, empty_flags, 1 << ofs);
-      TEST_EQ(n.get_bytecode(), expect[ofs]);
+      TEST_EQ(n.bytecode(), expect[ofs]);
    }
 }
 
@@ -402,6 +402,6 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffsetRoundtrip)
 
    for (int ofs = 0; ofs < 6; ++ofs) {
       auto n = AluNode::decode(expect[ofs], nullptr);
-      TEST_EQ(n->get_bytecode(), expect[ofs]);
+      TEST_EQ(n->bytecode(), expect[ofs]);
    }
 }

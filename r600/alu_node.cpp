@@ -117,7 +117,7 @@ AluNode::AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizz
    m_src.resize(3);
 }
 
-int AluNode::get_dst_chan() const
+int AluNode::dst_chan() const
 {
    return m_dst_chan;
 }
@@ -170,7 +170,7 @@ void AluNode::allocate_spec_literal(LiteralBuffer& lb) const
 {
 }
 
-uint64_t AluNode::get_bytecode() const
+uint64_t AluNode::bytecode() const
 {
    uint64_t bc;
 
@@ -220,7 +220,7 @@ int AluNode::nopsources() const
 AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst, EIndexMode index_mode,
                                EBankSwizzle bank_swizzle, EPredSelect pred_select,
                                AluOpFlags flags):
-   AluNode(opcode, index_mode, bank_swizzle, flags, dst.get_chan()),
+   AluNode(opcode, index_mode, bank_swizzle, flags, dst.chan()),
    m_dst(dst),
    m_pred_select(pred_select)
 {
@@ -323,7 +323,7 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= src(2).encode_for(alu_op3_src2);
 
    bc |= static_cast<uint64_t>(m_lds_op) << 53;
-   bc |= static_cast<uint64_t>(get_dst_chan()) << 61;
+   bc |= static_cast<uint64_t>(dst_chan()) << 61;
    bc |= static_cast<uint64_t>(m_offset & 1) << 58;
    bc |= static_cast<uint64_t>(m_offset & 2) << 43;
    bc |= static_cast<uint64_t>(m_offset & 4) << 57;
@@ -342,7 +342,6 @@ void AluNodeLDSIdxOP::allocate_spec_literal(LiteralBuffer& lb) const
    src(2).allocate_literal(lb);
 }
 
-
 AluGroup::AluGroup():
    m_ops(5)
 {
@@ -359,7 +358,7 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
       node.reset(AluNode::decode(*bc++, &lflags));
-      int chan = node->get_dst_chan();
+      int chan = node->dst_chan();
       if (!m_ops[chan]) {
          if (node->slot_supported(chan)) {
             m_ops[chan] = node;
@@ -404,7 +403,7 @@ void AluGroup::encode(std::vector<uint64_t>& bc) const
 
    for (const auto& op: m_ops) {
       if (op) {
-         group.push_back(op->get_bytecode());
+         group.push_back(op->bytecode());
          op->allocate_literal(literal_bufffer);
       }
    }

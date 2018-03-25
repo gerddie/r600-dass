@@ -47,7 +47,7 @@ Value::Value(Type type, uint16_t chan, bool abs, bool rel, bool neg):
 {
 }
 
-Value::Type Value::get_type() const
+Value::Type Value::type() const
 {
    return m_type;
 }
@@ -96,7 +96,7 @@ uint64_t Value::encode_for_alu_op3_src0() const
       bc |= src0_rel_bit;
    if (m_neg)
       bc |= src0_neg_bit;
-   return bc | get_sel() | (get_chan() << 10);
+   return bc | sel() | (chan() << 10);
 }
 
 uint64_t Value::encode_for_alu_op3_src1() const
@@ -106,7 +106,7 @@ uint64_t Value::encode_for_alu_op3_src1() const
       bc |= src1_rel_bit;
    if (m_neg)
       bc |= src1_neg_bit;
-   return bc | (get_sel() << 13) | (get_chan() << 23);
+   return bc | (sel() << 13) | (chan() << 23);
 }
 
 uint64_t Value::encode_for_alu_op3_src2() const
@@ -116,13 +116,13 @@ uint64_t Value::encode_for_alu_op3_src2() const
       bc |= src2_rel_bit;
    if (m_neg)
       bc |= src2_neg_bit;
-   return bc | (get_sel() << 32) | (get_chan() << 42);
+   return bc | (sel() << 32) | (chan() << 42);
 }
 
 uint64_t Value::encode_for_alu_op_dst() const
 {
    assert(m_type == gpr);
-   uint64_t bc = (get_sel() << 53) | (get_chan() << 61);
+   uint64_t bc = (sel() << 53) | (chan() << 61);
    if (m_rel)
       bc |= dst_rel_bit;
    return bc;
@@ -267,7 +267,7 @@ GPRValue::GPRValue(uint16_t sel, uint16_t chan, bool abs, bool rel, bool neg):
 {
 }
 
-uint64_t GPRValue::get_sel() const
+uint64_t GPRValue::sel() const
 {
    return m_sel;
 }
@@ -279,14 +279,14 @@ LiteralValue::LiteralValue(uint16_t chan,
 {
 }
 
-uint64_t LiteralValue::get_sel() const
+uint64_t LiteralValue::sel() const
 {
    return ALU_SRC_LITERAL;
 }
 
 void LiteralValue::set_literal_info(const uint32_t *literals)
 {
-   m_value = literals[get_chan()];
+   m_value = literals[chan()];
 }
 
 SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
@@ -295,7 +295,7 @@ SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
 {
 }
 
-uint64_t SpecialValue::get_sel() const
+uint64_t SpecialValue::sel() const
 {
    return m_value;
 }
@@ -344,7 +344,7 @@ ConstValue::ConstValue(uint16_t sel, uint16_t chan,
 {
 }
 
-uint64_t ConstValue::get_sel() const
+uint64_t ConstValue::sel() const
 {
    const int bank_base[4] = {128, 160, 256, 288};
    return m_index + bank_base[m_kcache_bank];

@@ -82,11 +82,11 @@ public:
    AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
            AluOpFlags flags, int dst_chan);
 
-   int get_dst_chan() const;
+   int dst_chan() const;
    bool last_instr() const;
 
    bool slot_supported(int flag) const;
-   uint64_t get_bytecode() const;
+   uint64_t bytecode() const;
 
    void set_literal_info(uint32_t *literals);
    void allocate_literal(LiteralBuffer& lb) const;
