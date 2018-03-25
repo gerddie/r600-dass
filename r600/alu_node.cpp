@@ -106,17 +106,15 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
    }
 }
 
-AluNode::AluNode(uint16_t opcode, PValue src0, PValue src1,
-                 EIndexMode index_mode, EBankSwizzle bank_swizzle,
+AluNode::AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
                  AluOpFlags flags, int dst_chan):
    m_opcode(static_cast<EAluOp>(opcode)),
-   m_src0(src0),
-   m_src1(src1),
    m_index_mode(index_mode),
    m_bank_swizzle(bank_swizzle),
    m_flags(flags),
    m_dst_chan(dst_chan)
 {
+   m_src.resize(3);
 }
 
 int AluNode::get_dst_chan() const
@@ -144,11 +142,11 @@ bool AluNode::slot_supported(int flag) const
 
 void AluNode::set_literal_info(uint32_t *literals)
 {
-   if (m_src0)
-      m_src0->set_literal_info(literals);
+   if (m_src[0])
+      m_src[0]->set_literal_info(literals);
 
-   if (m_src1)
-      m_src1->set_literal_info(literals);
+   if (m_src[1])
+      m_src[1]->set_literal_info(literals);
 
    set_spec_literal_info(literals);
 }
@@ -159,11 +157,11 @@ void AluNode::set_spec_literal_info(uint32_t *literals)
 
 void AluNode::allocate_literal(LiteralBuffer& lb) const
 {
-   if (m_src0)
-      m_src0->allocate_literal(lb);
+   if (m_src[0])
+      m_src[0]->allocate_literal(lb);
 
-   if (m_src1)
-      m_src1->allocate_literal(lb);
+   if (m_src[1])
+      m_src[1]->allocate_literal(lb);
 
    allocate_spec_literal(lb);
 }
@@ -191,16 +189,22 @@ uint64_t AluNode::get_bytecode() const
    encode(bc);
    return bc;
 }
-const Value& AluNode::src0() const
+const Value& AluNode::src(unsigned idx) const
 {
-   assert(m_src0);
-   return *m_src0;
+   assert(idx < m_src.size());
+   return *m_src[idx];
 }
 
-const Value& AluNode::src1() const
+Value& AluNode::src(unsigned idx)
 {
-   assert(m_src1);
-   return *m_src1;
+   assert(idx < m_src.size());
+   return *m_src[idx];
+}
+
+void AluNode::set_src(unsigned idx, PValue v)
+{
+   assert(idx < m_src.size());
+   m_src[idx]= v;
 }
 
 int AluNode::nopsources() const
@@ -213,12 +217,10 @@ int AluNode::nopsources() const
    }
 }
 
-AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst,
-                               PValue src0, PValue src1, EIndexMode index_mode,
+AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst, EIndexMode index_mode,
                                EBankSwizzle bank_swizzle, EPredSelect pred_select,
                                AluOpFlags flags):
-   AluNode(opcode, src0, src1, index_mode, bank_swizzle,
-           flags, dst.get_chan()),
+   AluNode(opcode, index_mode, bank_swizzle, flags, dst.get_chan()),
    m_dst(dst),
    m_pred_select(pred_select)
 {
@@ -234,10 +236,12 @@ AluNodeOp2::AluNodeOp2(uint16_t opcode, const GPRValue& dst,
                        PValue src0, PValue src1, AluOpFlags flags,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EOutputModify output_modify, EPredSelect pred_select):
-   AluNodeWithDst(opcode, dst, src0, src1, index_mode,
-                  bank_swizzle, pred_select, flags),
+   AluNodeWithDst(opcode, dst, index_mode, bank_swizzle, pred_select, flags),
    m_output_modify(output_modify)
 {
+
+   set_src(0, src0);
+   set_src(1, src1);
 }
 
 void AluNodeOp2::encode(uint64_t& bc) const
@@ -247,9 +251,9 @@ void AluNodeOp2::encode(uint64_t& bc) const
    auto nsrc = nopsources();
 
    if (nsrc > 0)
-      bc |= src0().encode_for(alu_op2_src0);
+      bc |= src(0).encode_for(alu_op2_src0);
    if (nsrc > 1)
-      bc |= src1().encode_for(alu_op2_src1);
+      bc |= src(1).encode_for(alu_op2_src1);
 
 
    if (test_flag(do_update_exec_mask))
@@ -268,10 +272,11 @@ AluNodeOp3::AluNodeOp3(uint16_t opcode, const GPRValue &dst,
                        PValue src0, PValue  src1, PValue  src2, AluOpFlags flags,
                        EIndexMode index_mode, EBankSwizzle bank_swizzle,
                        EPredSelect pred_select):
-   AluNodeWithDst(opcode, dst, src0, src1, index_mode,
-                  bank_swizzle, pred_select, flags),
-   m_src2(src2)
+   AluNodeWithDst(opcode, dst, index_mode, bank_swizzle, pred_select, flags)
 {
+   set_src(0, src0);
+   set_src(1, src1);
+   set_src(2, src2);
 }
 
 void AluNodeOp3::encode(uint64_t& bc) const
@@ -279,21 +284,19 @@ void AluNodeOp3::encode(uint64_t& bc) const
    assert(nopsources() == 3);
    encode_dst_and_pred(bc);
 
-   bc |= src0().encode_for(alu_op3_src0);
-   bc |= src1().encode_for(alu_op3_src1);
-   bc |= m_src2->encode_for(alu_op3_src2);
+   bc |= src(0).encode_for(alu_op3_src0);
+   bc |= src(1).encode_for(alu_op3_src1);
+   bc |= src(2).encode_for(alu_op3_src2);
 }
 
 void AluNodeOp3::set_spec_literal_info(uint32_t *literals)
 {
-   assert(m_src2);
-   m_src2->set_literal_info(literals);
+   src(2).set_literal_info(literals);
 }
 
 void AluNodeOp3::allocate_spec_literal(LiteralBuffer& lb) const
 {
-   assert(m_src2);
-   m_src2->allocate_literal(lb);
+   src(2).allocate_literal(lb);
 }
 
 AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
@@ -302,20 +305,22 @@ AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
                                  int offset, int dst_chan,
                                  EIndexMode index_mode,
                                  EBankSwizzle bank_swizzle):
-   AluNode(opcode, src0, src1, index_mode, bank_swizzle, flags,
+   AluNode(opcode, index_mode, bank_swizzle, flags,
            dst_chan),
    m_lds_op(lds_op),
-   m_offset(offset),
-   m_src2(src2)
+   m_offset(offset)
 {
+   set_src(0, src0);
+   set_src(1, src1);
+   set_src(2, src2);
 }
 
 void AluNodeLDSIdxOP::encode(uint64_t& bc) const
 {
    /* needs to check actual numbers of ussed registers */
-   bc |= src0().encode_for(alu_op3_src0);
-   bc |= src1().encode_for(alu_op3_src1);
-   bc |= m_src2->encode_for(alu_op3_src2);
+   bc |= src(0).encode_for(alu_op3_src0);
+   bc |= src(1).encode_for(alu_op3_src1);
+   bc |= src(2).encode_for(alu_op3_src2);
 
    bc |= static_cast<uint64_t>(m_lds_op) << 53;
    bc |= static_cast<uint64_t>(get_dst_chan()) << 61;
@@ -329,14 +334,12 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
 
 void AluNodeLDSIdxOP::set_spec_literal_info(uint32_t *literals)
 {
-   assert(m_src2);
-   m_src2->set_literal_info(literals);
+   src(2).set_literal_info(literals);
 }
 
 void AluNodeLDSIdxOP::allocate_spec_literal(LiteralBuffer& lb) const
 {
-   assert(m_src2);
-   m_src2->allocate_literal(lb);
+   src(2).allocate_literal(lb);
 }
 
 

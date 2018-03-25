@@ -79,8 +79,7 @@ public:
 
    static AluNode *decode(uint64_t bc, Value::LiteralFlags *literal_index);
 
-   AluNode(uint16_t opcode, PValue src0, PValue src1,
-           EIndexMode index_mode, EBankSwizzle bank_swizzle,
+   AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
            AluOpFlags flags, int dst_chan);
 
    int get_dst_chan() const;
@@ -94,8 +93,9 @@ public:
 
 protected:
    bool test_flag(FlagsShifts f) const;
-   const Value& src0() const;
-   const Value& src1() const;
+   const Value& src(unsigned idx) const;
+   Value& src(unsigned idx);
+   void set_src(unsigned idx, PValue v);
    int nopsources() const;
 
 private:
@@ -105,8 +105,7 @@ private:
    uint64_t shared_flags() const;
 
    EAluOp m_opcode;
-   PValue m_src0;
-   PValue m_src1;
+   std::vector<PValue> m_src;
    EIndexMode m_index_mode;
    EBankSwizzle m_bank_swizzle;
    AluOpFlags m_flags;
@@ -118,7 +117,7 @@ using PAluNode = std::shared_ptr<AluNode>;
 class AluNodeWithDst: public AluNode {
 protected:
    AluNodeWithDst(uint16_t opcode, const GPRValue& dst,
-                  PValue src0, PValue src1, EIndexMode index_mode,
+                  EIndexMode index_mode,
                   EBankSwizzle bank_swizzle, EPredSelect pred_select,
                   AluOpFlags flags);
    void encode_dst_and_pred(uint64_t& bc) const;
@@ -153,7 +152,6 @@ private:
    void set_spec_literal_info(uint32_t *literals) override final;
    void allocate_spec_literal(LiteralBuffer& lb) const override final;
    void encode(uint64_t& bc) const override;
-   PValue m_src2;
 };
 
 class AluNodeLDSIdxOP: public AluNode {
@@ -170,7 +168,6 @@ private:
    void encode(uint64_t& bc) const override;
    ELSDIndexOp m_lds_op;
    int m_offset;
-   PValue m_src2;
 };
 
 class AluGroup {
