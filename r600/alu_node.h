@@ -88,8 +88,10 @@ public:
    bool slot_supported(int flag) const;
    uint64_t bytecode() const;
 
-   void set_literal_info(uint32_t *literals);
+   void set_literal_info(uint64_t *literals);
    void allocate_literal(LiteralBuffer& lb) const;
+
+   void collect_values_with_literals(std::vector<PValue>& values) const;
 
 protected:
    bool test_flag(FlagsShifts f) const;
@@ -100,7 +102,7 @@ protected:
 
 private:
    virtual void allocate_spec_literal(LiteralBuffer& lb) const;
-   virtual void set_spec_literal_info(uint32_t *literals);
+   virtual void set_spec_literal_info(uint64_t *literals);
    virtual void encode(uint64_t& bc) const = 0;
    uint64_t shared_flags() const;
 
@@ -149,8 +151,7 @@ public:
               EBankSwizzle bank_swizzle = alu_vec_012,
               EPredSelect pred_select = pred_sel_off);
 private:
-   void set_spec_literal_info(uint32_t *literals) override final;
-   void allocate_spec_literal(LiteralBuffer& lb) const override final;
+   void set_spec_literal_info(uint64_t *literals) override final;
    void encode(uint64_t& bc) const override;
 };
 
@@ -163,9 +164,8 @@ public:
                    EIndexMode index_mode = idx_ar_x,
                    EBankSwizzle bank_swizzle = alu_vec_012);
 private:
-   void set_spec_literal_info(uint32_t *literals) override final;
-   void allocate_spec_literal(LiteralBuffer& lb) const override final;
-   void encode(uint64_t& bc) const override;
+   void set_spec_literal_info(uint64_t *literals) override final;
+      void encode(uint64_t& bc) const override;
    ELSDIndexOp m_lds_op;
    int m_offset;
 };
@@ -176,7 +176,7 @@ public:
 
    std::vector<uint64_t>::const_iterator
    decode(std::vector<uint64_t>::const_iterator bc);
-   void encode(std::vector<uint64_t>& bc) const;
+   bool encode(std::vector<uint64_t>& bc) const;
 private:
    std::vector<PAluNode> m_ops;
 };

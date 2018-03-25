@@ -27,6 +27,7 @@
 
 namespace r600 {
 using std::runtime_error;
+using std::vector;
 
 const uint64_t last_instr_bit = 1ul << 31;
 const uint64_t up_exec_mask_bit = 1ul << 34;
@@ -140,7 +141,7 @@ bool AluNode::slot_supported(int flag) const
    throw runtime_error("Unknown op");
 }
 
-void AluNode::set_literal_info(uint32_t *literals)
+void AluNode::set_literal_info(uint64_t *literals)
 {
    if (m_src[0])
       m_src[0]->set_literal_info(literals);
@@ -151,7 +152,7 @@ void AluNode::set_literal_info(uint32_t *literals)
    set_spec_literal_info(literals);
 }
 
-void AluNode::set_spec_literal_info(uint32_t *literals)
+void AluNode::set_spec_literal_info(uint64_t *literals)
 {
 }
 
@@ -214,6 +215,16 @@ int AluNode::nopsources() const
       return k->second.nsrc;
    } else {
       return -1;
+   }
+}
+
+void AluNode::collect_values_with_literals(std::vector<PValue>& values) const
+{
+   for (auto v: m_src) {
+      if (v &&
+          ((v->type() == Value::literal) ||
+           (v->type() == Value::lds_direct)))
+         values.push_back(v);
    }
 }
 
@@ -289,14 +300,9 @@ void AluNodeOp3::encode(uint64_t& bc) const
    bc |= src(2).encode_for(alu_op3_src2);
 }
 
-void AluNodeOp3::set_spec_literal_info(uint32_t *literals)
+void AluNodeOp3::set_spec_literal_info(uint64_t *literals)
 {
    src(2).set_literal_info(literals);
-}
-
-void AluNodeOp3::allocate_spec_literal(LiteralBuffer& lb) const
-{
-   src(2).allocate_literal(lb);
 }
 
 AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
@@ -332,14 +338,9 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
 }
 
-void AluNodeLDSIdxOP::set_spec_literal_info(uint32_t *literals)
+void AluNodeLDSIdxOP::set_spec_literal_info(uint64_t *literals)
 {
    src(2).set_literal_info(literals);
-}
-
-void AluNodeLDSIdxOP::allocate_spec_literal(LiteralBuffer& lb) const
-{
-   src(2).allocate_literal(lb);
 }
 
 AluGroup::AluGroup():
@@ -378,12 +379,11 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
       group_should_finish = true;
    } while (!node->last_instr());
 
-   uint32_t literals[4];
+   uint64_t literals[2];
 
    for (int lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
-         literals[2*lp] = *bc & 0xffffffff;
-         literals[2*lp+1] = (*bc >> 32 ) & 0xffffffff;
+         literals[lp] = *bc;
          ++bc;
       }
    }
@@ -396,18 +396,59 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
    return bc;
 }
 
-void AluGroup::encode(std::vector<uint64_t>& bc) const
+bool AluGroup::encode(std::vector<uint64_t>& bc) const
 {
-   std::vector<uint64_t> group;
-   LiteralBuffer literal_bufffer;
+   vector<PValue> values;
+   for (const auto& op: m_ops) {
+      if (op)
+         op->collect_values_with_literals(values);
+   }
 
+   bool has_lds_direct_address = false;
+   uint64_t literals[2];
+   int offset = 0;
+
+   for (auto v :values) {
+      if (v->type() == Value::lds_direct) {
+         auto ldsdv = static_cast<const LDSDirectValue&>(*v);
+         uint64_t l = ldsdv.address_bytecode();
+         if (!has_lds_direct_address) {
+            literals[0] = l;
+         } else if (literals[0] != l) {
+            return false;
+         }
+         offset = 2;
+      }
+   }
+
+   for (auto v :values) {
+      if (v->type() == Value::literal) {
+         auto literal = static_cast<LiteralValue&>(*v);
+         uint64_t l = literal.value();
+
+         if (offset < 4) {
+            literals[offset >> 1] =  l << (32 * (offset & 1));
+            literal.set_chan(offset);
+            ++offset;
+         } else
+            return false;
+      }
+   }
+
+   std::vector<uint64_t> group;
    for (const auto& op: m_ops) {
       if (op) {
          group.push_back(op->bytecode());
-         op->allocate_literal(literal_bufffer);
       }
    }
-   // Add code to store literals
+
+   for (int i = 0; i < (offset >> 1); ++i) {
+      group.push_back(literals[i]);
+   }
+
+   std::copy(group.begin(), group.end(),
+             std::back_inserter<vector<uint64_t>>(bc));
+   return true;
 }
 
 }

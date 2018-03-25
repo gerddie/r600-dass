@@ -62,6 +62,11 @@ void Value::set_neg(bool flag)
    m_neg = flag;
 }
 
+void Value::set_chan(uint64_t chan)
+{
+   m_chan = chan;
+}
+
 uint64_t Value::encode_for(ValueOpEncoding encoding) const
 {
    switch (encoding) {
@@ -178,7 +183,7 @@ PValue Value::create(uint64_t bc, ValueOpEncoding encoding, LiteralFlags *li)
    }
 }
 
-void Value::set_literal_info(const uint32_t *literals)
+void Value::set_literal_info(const uint64_t *literals)
 {
    (void)literals;
 }
@@ -284,9 +289,14 @@ uint64_t LiteralValue::sel() const
    return ALU_SRC_LITERAL;
 }
 
-void LiteralValue::set_literal_info(const uint32_t *literals)
+uint32_t LiteralValue::value() const
 {
-   m_value = literals[chan()];
+   return m_value;
+}
+
+void LiteralValue::set_literal_info(const uint64_t *literals)
+{
+   m_value = (literals[chan()>>1] >> (32 * chan())) & 0xffffffff;
 }
 
 SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
@@ -308,31 +318,46 @@ InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
 LDSDirectValue::LDSDirectValue(int value, int chan, bool abs, bool neg):
    SpecialValue(Value::lds_direct, value, chan, abs, neg),
    m_value(static_cast<AluInlineConstants>(value)),
-   m_addr(2),
+   m_offset_a(0),
+   m_stride_a(0),
+   m_thread_rel_a(0),
+   m_offset_b(0),
+   m_stride_b(0),
+   m_thread_rel_b(0),
    m_direct_read_32(false)
 {
 }
 
-LDSDirectValue::DirectAccess::DirectAccess():
-   offset(0),
-   stride(0),
-   thread_rel(0)
+uint64_t LDSDirectValue::address_bytecode() const
 {
+   uint64_t bc = m_offset_a;
+   bc |= static_cast<uint64_t>(m_stride_a) << 13;
+
+   bc |= static_cast<uint64_t>(m_offset_a) << 32;
+   bc |= static_cast<uint64_t>(m_stride_b) << 45;
+
+   if (m_thread_rel_a)
+      bc |= 1 << 22;
+
+   if (m_thread_rel_a)
+      bc |= 1ul << 54;
+
+   if (m_direct_read_32)
+      bc |= 1ul << 63;
+
+   return bc;
 }
 
-LDSDirectValue::DirectAccess::DirectAccess(uint32_t l):
-   offset(l & 0x1FFF),
-   stride((l >> 13) & 0x7f),
-   thread_rel(l & (1 << 22))
+void LDSDirectValue::set_literal_info(const uint64_t *literals)
 {
-}
-
-void LDSDirectValue::set_literal_info(const uint32_t *literals)
-{
-   for (int i = 0; i < 2; ++i)
-      m_addr[i] = DirectAccess(literals[i]);
-
-   m_direct_read_32 = literals[1] & 0x8000000;
+   const uint64_t l = *literals;
+   m_offset_a = l & 0x1FFF;
+   m_stride_a = (l >> 13) & 0x7f;
+   m_thread_rel_a = l & (1 << 22);
+   m_offset_b = (l >> 32) & 0x1FFF;
+   m_stride_b = (l >> 45) & 0x1FFF;
+   m_thread_rel_b = l  & (1ul << 54);
+   m_direct_read_32 = literals[1] & (1ul << 63);
 }
 
 

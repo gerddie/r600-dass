@@ -90,8 +90,9 @@ public:
    void set_neg(bool flag);
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
+   void set_chan(uint64_t chan);
 
-   virtual void set_literal_info(const uint32_t *literals);
+   virtual void set_literal_info(const uint64_t *literals);
    virtual void allocate_literal(LiteralBuffer& lb) const;
 protected:
 
@@ -148,7 +149,8 @@ class LiteralValue: public Value {
 public:
    LiteralValue(uint16_t chan, bool abs, bool rel, bool neg);
    uint64_t sel() const override final;
-   void set_literal_info(const uint32_t *literals) override final;
+   void set_literal_info(const uint64_t *literals) override final;
+   uint32_t value() const;
 private:
    uint32_t m_value;
 };
@@ -171,19 +173,17 @@ private:
 class LDSDirectValue: public SpecialValue {
 public:
    LDSDirectValue(int value, int chan, bool abs, bool neg);
-   void set_literal_info(const uint32_t *literals) override final;
+   void set_literal_info(const uint64_t *literals) override final;
+   uint64_t address_bytecode() const;
+
 private:
-
    AluInlineConstants m_value;
-   struct DirectAccess {
-      DirectAccess();
-      DirectAccess(uint32_t l);
-      int offset;
-      int stride;
-      bool thread_rel;
-   };
-
-   std::vector<DirectAccess> m_addr;
+   int m_offset_a;
+   int m_stride_a;
+   bool m_thread_rel_a;
+   int m_offset_b;
+   int m_stride_b;
+   bool m_thread_rel_b;
    bool m_direct_read_32;
 
 };
