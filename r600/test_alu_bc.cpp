@@ -439,6 +439,12 @@ TEST_F(TestValuePrintout, GPRValue10xAbsNeg)
    run(GPRValue(10, 1, true, false, true), "-|R10.y|");
 }
 
+TEST_F(TestValuePrintout, GPRValue11xRel)
+{
+   run(GPRValue(10, 1, false, true, false), "R[10+AR].y");
+}
+
+
 TEST_F(TestValuePrintout, GPRValue123x)
 {
    run(GPRValue(123, 0, false, false,false), "R123.x");
@@ -451,7 +457,7 @@ TEST_F(TestValuePrintout, GPRValueT0w)
 
 TEST_F(TestValuePrintout, ConstValueKC0_12_indirect_y)
 {
-   run(ConstValue(12, 1, false, true, false), "KC0[AR+12].y");
+   run(ConstValue(12, 1, false, true, false), "KC0[12+AR].y");
 }
 
 TEST_F(TestValuePrintout, LiteralValue0x00004000)

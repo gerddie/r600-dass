@@ -296,11 +296,14 @@ uint64_t GPRValue::sel() const
 void GPRValue::do_print(std::ostream& os) const
 {
    if (m_sel < 124) {
-      os << "R" << m_sel;
+      os << 'R';
       if (rel())
-         os << "[AR]";
+         os << '[';
+      os << m_sel;
+      if (rel())
+         os << "+AR]";
    } else {
-      os << "T" << m_sel - 124;
+      os << 'T' << m_sel - 124;
       if (rel()) {
          os << " ERROR:indirect access to clause-local temporary";
       }
@@ -427,10 +430,10 @@ uint64_t ConstValue::sel() const
 
 void ConstValue::do_print(std::ostream& os) const
 {
-   os << "KC" << m_kcache_bank << "[";
+   os << "KC" << m_kcache_bank << "[" << m_index;
    if (rel())
-      os << "AR+";
-   os << m_index <<"]." << component_names[chan()];
+      os << "+AR";
+   os << "]." << component_names[chan()];
 }
 
 const uint64_t src0_rel_bit = 1ul << 9;
