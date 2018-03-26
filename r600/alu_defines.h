@@ -293,7 +293,8 @@ enum AluInlineConstants  {
    ALU_SRC_0_5 = 252,
    ALU_SRC_LITERAL = 253,
    ALU_SRC_PV = 254,
-   ALU_SRC_PS = 255
+   ALU_SRC_PS = 255,
+   ALU_SRC_UNKNOWN
 };
 
 struct AluInlineConstantDescr {

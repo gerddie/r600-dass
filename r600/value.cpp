@@ -305,7 +305,7 @@ void GPRValue::do_print(std::ostream& os) const
    } else {
       os << 'T' << m_sel - 124;
       if (rel()) {
-         os << " ERROR:indirect access to clause-local temporary";
+         os << "[E:indirect access to clause-local temporary]";
       }
    }
    os << '.' << component_names[chan()];
@@ -362,7 +362,7 @@ void SpecialValue::do_print(std::ostream& os) const
          os << " W: Channel " << component_names[chan()]
             << " ignored";
    } else {
-      os << "Error: unknown inline constant " << m_value;
+      os << "E: unknown inline constant " << m_value;
    }
 }
 

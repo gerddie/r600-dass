@@ -455,6 +455,14 @@ TEST_F(TestValuePrintout, GPRValueT0w)
    run(GPRValue(124, 3, false, false,false), "T0.w");
 }
 
+
+TEST_F(TestValuePrintout, GPRValueT0Array)
+{
+   run(GPRValue(124, 3, false, true, false),
+       "T0[E:indirect access to clause-local temporary].w");
+}
+
+
 TEST_F(TestValuePrintout, ConstValueKC0_12_indirect_y)
 {
    run(ConstValue(12, 1, false, true, false), "KC0[12+AR].y");
@@ -486,9 +494,13 @@ TEST_F(TestValuePrintout, InlineConstPVPS)
    run(InlineConstValue(ALU_SRC_PV, 1, false, false), "PV.y");
    run(InlineConstValue(ALU_SRC_PV, 2, true, false), "|PV.z|");
    run(InlineConstValue(ALU_SRC_PV, 3, false, true), "-PV.w");
-
    run(InlineConstValue(ALU_SRC_PS, 0, false, false), "PS");
+}
 
+TEST_F(TestValuePrintout, InlineConstUnknown)
+{
+   run(InlineConstValue(ALU_SRC_UNKNOWN, 1, false, false),
+       "E: unknown inline constant 256");
 }
 
 
