@@ -521,3 +521,13 @@ TEST_F(ALUByteCodeDissass, Op2)
    EXPECT_EQ(result.str(),
              "  y: SETGE_DX10                      T0.y, T0.y, T1.z");
 }
+
+TEST_F(ALUByteCodeDissass, Op3)
+{
+   uint64_t bc = 0x05a200fe8004e429ul;
+   auto n = AluNode::decode(bc, nullptr);
+   std::ostringstream result;
+   result << *n;
+   EXPECT_EQ(result.str(),
+             "  x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
+}

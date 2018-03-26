@@ -301,10 +301,7 @@ void AluNodeWithDst::print_pred(std::ostream& os) const
 
 void AluNodeWithDst::print_dst(std::ostream& os) const
 {
-   if (test_flag(do_write))
-      os << m_dst << ", ";
-   else
-      os << "____, ";
+   os << m_dst << ", ";
 }
 
 void AluNodeWithDst::encode_dst_and_pred(uint64_t& bc) const
