@@ -405,3 +405,41 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffsetRoundtrip)
       TEST_EQ(n->bytecode(), expect[ofs]);
    }
 }
+
+class TestValuePrintout: public testing::Test {
+
+protected:
+   void run (const Value& v, const std::string& expect);
+};
+
+void TestValuePrintout::run(const Value& v, const std::string& expect)
+{
+   std::ostringstream result;
+   result << v;
+   EXPECT_EQ(result.str(), expect);
+}
+
+TEST_F(TestValuePrintout, GPRValue0z)
+{
+   run(GPRValue(0, 2, false, false,false), "R0.z");
+}
+
+TEST_F(TestValuePrintout, GPRValue123x)
+{
+   run(GPRValue(123, 0, false, false,false), "R123.x");
+}
+
+TEST_F(TestValuePrintout, GPRValueT0w)
+{
+   run(GPRValue(124, 3, false, false,false), "T0.w");
+}
+
+/*
+TEST_F(ALUByteCodeDissass,  )
+{
+
+   uint64_t bc = 0x2f800710010fa47cul;
+   auto n = AluNode::decode(expect[ofs], nullptr);
+   EXPECT_EQ(n->as_string(), "y: SETGE_DX10         T0.y,  T0.y, T1.z   ");
+}
+*/

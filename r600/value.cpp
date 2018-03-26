@@ -29,6 +29,8 @@ namespace r600 {
 using std::unique_ptr;
 using std::make_shared;
 
+const char *Value::component_names = "xyzw01?_";
+
 Value::Value():
    m_type(gpr),
    m_chan(0),
@@ -80,6 +82,20 @@ uint64_t Value::encode_for(ValueOpEncoding encoding) const
       assert(0 && "unknown ALU register target");
    }
    return 0;
+}
+
+void Value::print(std::ostream& os) const
+{
+   if (m_neg)
+      os << "-";
+
+   if (m_abs)
+      os << "|";
+
+   do_print(os);
+
+   if (m_abs)
+      os << "|";
 }
 
 uint64_t Value::encode_for_alu_op2_src0() const
@@ -277,6 +293,21 @@ uint64_t GPRValue::sel() const
    return m_sel;
 }
 
+void GPRValue::do_print(std::ostream& os) const
+{
+   if (m_sel < 124) {
+      os << "R" << m_sel;
+      if (rel())
+         os << "[AR]";
+   } else {
+      os << "T" << m_sel - 124;
+      if (rel()) {
+         os << " ERROR:indirect access to clause-local temporary";
+      }
+   }
+   os << '.' << component_names[chan()];
+}
+
 LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
    Value(Value::literal, chan, abs, rel, neg),
@@ -294,6 +325,13 @@ uint32_t LiteralValue::value() const
    return m_value;
 }
 
+void LiteralValue::do_print(std::ostream& os) const
+{
+   os << "[" << std::setbase(16) << m_value << " "
+      << *reinterpret_cast<const float*>(&m_value) << "].";
+   os << component_names[chan()];
+}
+
 void LiteralValue::set_literal_info(const uint64_t *literals)
 {
    m_value = (literals[chan()>>1] >> (32 * chan())) & 0xffffffff;
@@ -308,6 +346,12 @@ SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):
 uint64_t SpecialValue::sel() const
 {
    return m_value;
+}
+
+void SpecialValue::do_print(std::ostream& os) const
+{
+   os << "[todo: special value " << m_value << "]";
+   os << '.' << component_names[chan()];
 }
 
 InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):
@@ -348,6 +392,13 @@ uint64_t LDSDirectValue::address_bytecode() const
    return bc;
 }
 
+void LDSDirectValue::do_print(std::ostream& os) const
+{
+   os << "[LDS Direct value].";
+   os << component_names[chan()];
+}
+
+
 void LDSDirectValue::set_literal_info(const uint64_t *literals)
 {
    const uint64_t l = *literals;
@@ -359,7 +410,6 @@ void LDSDirectValue::set_literal_info(const uint64_t *literals)
    m_thread_rel_b = l  & (1ul << 54);
    m_direct_read_32 = literals[1] & (1ul << 63);
 }
-
 
 ConstValue::ConstValue(uint16_t sel, uint16_t chan,
                        bool abs, bool rel, bool neg):
@@ -373,6 +423,14 @@ uint64_t ConstValue::sel() const
 {
    const int bank_base[4] = {128, 160, 256, 288};
    return m_index + bank_base[m_kcache_bank];
+}
+
+void ConstValue::do_print(std::ostream& os) const
+{
+   os << "KC" << m_kcache_bank << "[" << m_index <<"]";
+   if (rel())
+      os << "[AR]";
+   os << '.' << component_names[chan()];
 }
 
 const uint64_t src0_rel_bit = 1ul << 9;

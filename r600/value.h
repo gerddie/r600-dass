@@ -69,6 +69,8 @@ public:
       unknown
    };
 
+   static const char *component_names;
+
    using LiteralFlags=std::bitset<4>;
 
    Value();
@@ -91,14 +93,19 @@ public:
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
    void set_chan(uint64_t chan);
+   void print(std::ostream& os) const;
+
 
    virtual void set_literal_info(const uint64_t *literals);
    virtual void allocate_literal(LiteralBuffer& lb) const;
+
+
 protected:
 
    Value(Type type, uint16_t chan, bool abs, bool rel, bool neg);
 
 private:
+   virtual void do_print(std::ostream& os) const = 0;
 
    uint64_t encode_for_alu_op2_src0() const;
    uint64_t encode_for_alu_op2_src1() const;
@@ -142,8 +149,15 @@ public:
 
    uint64_t sel() const override final;
 private:
+   void do_print(std::ostream& os) const override;
    uint16_t m_sel;
 };
+
+inline std::ostream& operator << (std::ostream& os, const Value& v)
+{
+   v.print(os);
+   return os;
+}
 
 class LiteralValue: public Value {
 public:
@@ -152,6 +166,7 @@ public:
    void set_literal_info(const uint64_t *literals) override final;
    uint32_t value() const;
 private:
+   void do_print(std::ostream& os) const override;
    uint32_t m_value;
 };
 
@@ -160,6 +175,7 @@ protected:
    SpecialValue(Type type, int value, int chan, bool abs, bool neg);
    uint64_t sel() const override final;
 private:
+   void do_print(std::ostream& os) const override;
    AluInlineConstants m_value;
 };
 
@@ -177,6 +193,7 @@ public:
    uint64_t address_bytecode() const;
 
 private:
+   void do_print(std::ostream& os) const override;
    AluInlineConstants m_value;
    int m_offset_a;
    int m_stride_a;
@@ -194,6 +211,7 @@ public:
               bool abs, bool rel, bool neg);
    uint64_t sel() const override;
 private:
+   void do_print(std::ostream& os) const override;
    uint16_t m_index;
    uint16_t m_kcache_bank;
 };
