@@ -510,14 +510,14 @@ TEST_F(TestValuePrintout, InlineConstUnknown)
        "E: unknown inline constant 256");
 }
 
+using ALUByteCodeDissass=testing::Test;
 
-
-/*
-TEST_F(ALUByteCodeDissass,  )
+TEST_F(ALUByteCodeDissass, Op2)
 {
-
    uint64_t bc = 0x2f800710010fa47cul;
-   auto n = AluNode::decode(expect[ofs], nullptr);
-   EXPECT_EQ(n->as_string(), "y: SETGE_DX10         T0.y,  T0.y, T1.z   ");
+   auto n = AluNode::decode(bc, nullptr);
+   std::ostringstream result;
+   result << *n;
+   EXPECT_EQ(result.str(),
+             "  y: SETGE_DX10                      T0.y, T0.y, T1.z");
 }
-*/

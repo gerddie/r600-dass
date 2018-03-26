@@ -22,12 +22,15 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include <iomanip>
 #include <cassert>
 
 namespace r600 {
 using std::runtime_error;
 using std::vector;
+using std::ostringstream;
+using std::setw;
 
 const uint64_t last_instr_bit = 1ul << 31;
 const uint64_t up_exec_mask_bit = 1ul << 34;
@@ -171,6 +174,53 @@ void AluNode::allocate_spec_literal(LiteralBuffer& lb) const
 {
 }
 
+void AluNode::print(std::ostream& os) const
+{
+   print_pred(os);
+
+   os << Value::component_names[m_dst_chan] << ": ";
+
+   print_op(os);
+
+   print_dst(os);
+
+   if (nopsources() > 0) {
+      os << *m_src[0];
+      for (int i = 1; i < nopsources(); ++i)
+         os << ", " << *m_src[i];
+   }
+}
+
+void AluNode::print_pred(std::ostream& os) const
+{
+   os << "  ";
+}
+
+void AluNode::print_op(std::ostream& os) const
+{
+   auto o = alu_ops.find(m_opcode);
+   if (o != alu_ops.end()) {
+      ostringstream s;
+      s << o->second.name;
+      if (m_flags.test(do_clamp))
+         s << " (C)";
+      os << setw(32) << std::left  << s.str();
+   } else {
+      os << setw(32) << std::left  << "E: Unknown opcode " << m_opcode;
+   }
+}
+
+void AluNode::print_dst(std::ostream& os) const
+{
+   os << "______";
+}
+
+void AluNode::print_flags(std::ostream& os) const
+{
+   os << (m_flags.test(do_update_exec_mask) ? "M" : " ");
+   os << (m_flags.test(do_update_pred) ? "P" : " ");
+}
+
 uint64_t AluNode::bytecode() const
 {
    uint64_t bc;
@@ -235,6 +285,26 @@ AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst, EIndexMode 
    m_dst(dst),
    m_pred_select(pred_select)
 {
+}
+
+void AluNodeWithDst::print_pred(std::ostream& os) const
+{
+   switch (m_pred_select) {
+   case pred_sel_zero: os << "p ";
+      break;
+   case pred_sel_one: os << "P ";
+      break;
+   default:
+      os << "  ";
+   }
+}
+
+void AluNodeWithDst::print_dst(std::ostream& os) const
+{
+   if (test_flag(do_write))
+      os << m_dst << ", ";
+   else
+      os << "____, ";
 }
 
 void AluNodeWithDst::encode_dst_and_pred(uint64_t& bc) const
@@ -336,6 +406,19 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_offset & 8) << 60;
    bc |= static_cast<uint64_t>(m_offset & 0x10) << 8;
    bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
+}
+
+void AluNodeLDSIdxOP::print_op(std::ostream& os) const
+{
+   auto o = lds_ops.find(m_lds_op);
+   if (o != lds_ops.end()) {
+      ostringstream s;
+      s << o->second.name;
+      s << "OFS:" << m_offset;
+      os << setw(32) << std::left  << s.str();
+   } else {
+      os << setw(32) << std::left  << "E: Unknown LDS opcode " << m_lds_op;
+   }
 }
 
 void AluNodeLDSIdxOP::set_spec_literal_info(uint64_t *literals)

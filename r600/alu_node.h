@@ -93,6 +93,8 @@ public:
 
    void collect_values_with_literals(std::vector<PValue>& values) const;
 
+   void print(std::ostream& os) const;
+
 protected:
    bool test_flag(FlagsShifts f) const;
    const Value& src(unsigned idx) const;
@@ -101,6 +103,11 @@ protected:
    int nopsources() const;
 
 private:
+   void print_flags(std::ostream& os) const;
+   virtual void print_pred(std::ostream& os) const;
+   virtual void print_dst(std::ostream& os) const;
+   virtual void print_op(std::ostream& os) const;
+
    virtual void allocate_spec_literal(LiteralBuffer& lb) const;
    virtual void set_spec_literal_info(uint64_t *literals);
    virtual void encode(uint64_t& bc) const = 0;
@@ -114,6 +121,12 @@ private:
    int m_dst_chan;
 };
 
+inline std::ostream& operator << (std::ostream& os, const AluNode& n)
+{
+   n.print(os);
+   return os;
+}
+
 using PAluNode = std::shared_ptr<AluNode>;
 
 class AluNodeWithDst: public AluNode {
@@ -124,6 +137,9 @@ protected:
                   AluOpFlags flags);
    void encode_dst_and_pred(uint64_t& bc) const;
 private:
+   void print_pred(std::ostream& os) const override;
+   void print_dst(std::ostream& os) const override;
+
    GPRValue m_dst;
    EPredSelect m_pred_select;
 };
@@ -137,6 +153,7 @@ public:
               EOutputModify output_modify = omod_off,
               EPredSelect pred_select = pred_sel_off);
 private:
+
    void encode(uint64_t& bc) const override;
 
    EOutputModify m_output_modify;
@@ -164,8 +181,9 @@ public:
                    EIndexMode index_mode = idx_ar_x,
                    EBankSwizzle bank_swizzle = alu_vec_012);
 private:
+   void print_op(std::ostream& os) const override final;
    void set_spec_literal_info(uint64_t *literals) override final;
-      void encode(uint64_t& bc) const override;
+   void encode(uint64_t& bc) const override;
    ELSDIndexOp m_lds_op;
    int m_offset;
 };
