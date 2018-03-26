@@ -353,8 +353,17 @@ uint64_t SpecialValue::sel() const
 
 void SpecialValue::do_print(std::ostream& os) const
 {
-   os << "[todo: special value " << m_value << "]";
-   os << '.' << component_names[chan()];
+   auto sv_info = alu_src_const.find(m_value);
+   if (sv_info != alu_src_const.end()) {
+      os << sv_info->second.descr;
+      if (sv_info->second.use_chan)
+         os << '.' << component_names[chan()];
+      else if (sv_info->second.use_chan > 0)
+         os << " W: Channel " << component_names[chan()]
+            << " ignored";
+   } else {
+      os << "Error: unknown inline constant " << m_value;
+   }
 }
 
 InlineConstValue::InlineConstValue(int value, int chan, bool abs, bool neg):

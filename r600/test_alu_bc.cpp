@@ -468,6 +468,21 @@ TEST_F(TestValuePrintout, LiteralValue0x00004000)
    run(l, "[0x3f800000 1].x");
 }
 
+TEST_F(TestValuePrintout, InlineConstLDS_OQ)
+{
+   run(InlineConstValue(ALU_SRC_LDS_OQ_A, 0, false, false),
+       "LDS_OQ_A");
+   run(InlineConstValue(ALU_SRC_LDS_OQ_B, 0, false, false),
+       "LDS_OQ_B");
+
+   run(InlineConstValue(ALU_SRC_LDS_OQ_A_POP, 0, false, false),
+       "LDS_OQ_A_POP");
+   run(InlineConstValue(ALU_SRC_LDS_OQ_B_POP, 0, false, false),
+       "LDS_OQ_B_POP");
+
+}
+
+
 
 /*
 TEST_F(ALUByteCodeDissass,  )

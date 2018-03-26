@@ -207,6 +207,43 @@ const std::map<EAluOp, AluOp> alu_ops = {
    {OP3_INST_MUL_LIT        ,AluOp(3, AluOp::t,"INST_MUL_LIT")}
 };
 
+const std::map<AluInlineConstants, AluInlineConstantDescr> alu_src_const = {
+   {ALU_SRC_LDS_OQ_A, {false, "LDS_OQ_A"}},
+   {ALU_SRC_LDS_OQ_B, {false, "LDS_OQ_B"}},
+   {ALU_SRC_LDS_OQ_A_POP, {false, "LDS_OQ_A_POP"}},
+   {ALU_SRC_LDS_OQ_B_POP, {false, "LDS_OQ_B_POP"}},
+   {ALU_SRC_LDS_DIRECT_A, {false, "LDS_DIRECT_A"}},
+   {ALU_SRC_LDS_DIRECT_B, {false, "LDS_DIRECT_B"}},
+   {ALU_SRC_TIME_HI, {false, "TIME_HI"}},
+   {ALU_SRC_TIME_LO, {false, "TIME_LO"}},
+   {ALU_SRC_MASK_HI, {false, "MASK_HI"}},
+   {ALU_SRC_MASK_LO, {false, "MASK_LO"}},
+   {ALU_SRC_HW_WAVE_ID, {false, "HW_WAVE_ID"}},
+   {ALU_SRC_SIMD_ID, {false, "SIMD_ID"}},
+   {ALU_SRC_SE_ID, {false, "SE_ID"}},
+   {ALU_SRC_HW_THREADGRP_ID, {false, "HW_THREADGRP_ID"}},
+   {ALU_SRC_WAVE_ID_IN_GRP, {false, "WAVE_ID_IN_GRP"}},
+   {ALU_SRC_NUM_THREADGRP_WAVES, {false, "NUM_THREADGRP_WAVES"}},
+   {ALU_SRC_HW_ALU_ODD, {false, "HW_ALU_ODD"}},
+   {ALU_SRC_LOOP_IDX, {false, "LOOP_IDX"}},
+   {ALU_SRC_PARAM_BASE_ADDR, {false, "PARAM_BASE_ADDR"}},
+   {ALU_SRC_NEW_PRIM_MASK, {false, "NEW_PRIM_MASK"}},
+   {ALU_SRC_PRIM_MASK_HI, {false, "PRIM_MASK_HI"}},
+   {ALU_SRC_PRIM_MASK_LO, {false, "PRIM_MASK_LO"}},
+   {ALU_SRC_1_DBL_L, {false, "1.0L"}},
+   {ALU_SRC_1_DBL_M, {false, "1.0H"}},
+   {ALU_SRC_0_5_DBL_L, {false, "0.5L"}},
+   {ALU_SRC_0_5_DBL_M, {false, "0.5H"}},
+   {ALU_SRC_0, {false, "0"}},
+   {ALU_SRC_1, {false, "1.0"}},
+   {ALU_SRC_1_INT, {false, "1"}},
+   {ALU_SRC_M_1_INT, {false, "-1"}},
+   {ALU_SRC_0_5, {false, "0.5"}},
+   {ALU_SRC_LITERAL, {true, "ALU_SRC_LITERAL"}},
+   {ALU_SRC_PV, {true, "PV"}},
+   {ALU_SRC_PS, {false, "PS"}}
+};
+
 const std::map<ELSDIndexOp, LDSOp> lds_ops = {
    {LDS_OP_ADD           , {2, "LDS_ADD"}},
    {LDS_OP_SUB           , {2, "LDS_SUB"}},

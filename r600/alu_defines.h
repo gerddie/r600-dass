@@ -296,6 +296,12 @@ enum AluInlineConstants  {
    ALU_SRC_PS = 255
 };
 
+struct AluInlineConstantDescr {
+   bool use_chan;
+   const char *descr;
+};
+
+extern const std::map<AluInlineConstants, AluInlineConstantDescr> alu_src_const;
 
 enum ELSDIndexOp {
    LDS_OP_ADD = 0,
