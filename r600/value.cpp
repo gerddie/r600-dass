@@ -427,10 +427,10 @@ uint64_t ConstValue::sel() const
 
 void ConstValue::do_print(std::ostream& os) const
 {
-   os << "KC" << m_kcache_bank << "[" << m_index <<"]";
+   os << "KC" << m_kcache_bank << "[";
    if (rel())
-      os << "[AR]";
-   os << '.' << component_names[chan()];
+      os << "AR+";
+   os << m_index <<"]." << component_names[chan()];
 }
 
 const uint64_t src0_rel_bit = 1ul << 9;

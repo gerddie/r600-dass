@@ -434,6 +434,12 @@ TEST_F(TestValuePrintout, GPRValueT0w)
    run(GPRValue(124, 3, false, false,false), "T0.w");
 }
 
+TEST_F(TestValuePrintout, ConstValueKC0_12_indirect_y)
+{
+   run(ConstValue(12, 1, false, true, false), "KC0[AR+12].y");
+}
+
+
 /*
 TEST_F(ALUByteCodeDissass,  )
 {
