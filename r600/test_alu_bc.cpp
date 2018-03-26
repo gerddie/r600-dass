@@ -424,6 +424,21 @@ TEST_F(TestValuePrintout, GPRValue0z)
    run(GPRValue(0, 2, false, false,false), "R0.z");
 }
 
+TEST_F(TestValuePrintout, GPRValue2yNeg)
+{
+   run(GPRValue(2, 1, false, false, true), "-R2.y");
+}
+
+TEST_F(TestValuePrintout, GPRValue2yAbs)
+{
+   run(GPRValue(2, 1, true, false, false), "|R2.y|");
+}
+
+TEST_F(TestValuePrintout, GPRValue10xAbsNeg)
+{
+   run(GPRValue(10, 1, true, false, true), "-|R10.y|");
+}
+
 TEST_F(TestValuePrintout, GPRValue123x)
 {
    run(GPRValue(123, 0, false, false,false), "R123.x");
