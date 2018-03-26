@@ -327,7 +327,7 @@ uint32_t LiteralValue::value() const
 
 void LiteralValue::do_print(std::ostream& os) const
 {
-   os << "[" << std::setbase(16) << m_value << " "
+   os << "[0x" << std::setbase(16) << m_value << " "
       << *reinterpret_cast<const float*>(&m_value) << "].";
    os << component_names[chan()];
 }

@@ -439,6 +439,14 @@ TEST_F(TestValuePrintout, ConstValueKC0_12_indirect_y)
    run(ConstValue(12, 1, false, true, false), "KC0[AR+12].y");
 }
 
+TEST_F(TestValuePrintout, LiteralValue0x00004000)
+{
+   uint64_t literals = 0x3f800000;
+   LiteralValue l(0, false, true, false);
+   l.set_literal_info(&literals);
+   run(l, "[0x3f800000 1].x");
+}
+
 
 /*
 TEST_F(ALUByteCodeDissass,  )
