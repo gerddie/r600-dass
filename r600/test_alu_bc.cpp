@@ -479,6 +479,15 @@ TEST_F(TestValuePrintout, InlineConstLDS_OQ)
        "LDS_OQ_A_POP");
    run(InlineConstValue(ALU_SRC_LDS_OQ_B_POP, 0, false, false),
        "LDS_OQ_B_POP");
+}
+
+TEST_F(TestValuePrintout, InlineConstPVPS)
+{
+   run(InlineConstValue(ALU_SRC_PV, 1, false, false), "PV.y");
+   run(InlineConstValue(ALU_SRC_PV, 2, true, false), "|PV.z|");
+   run(InlineConstValue(ALU_SRC_PV, 3, false, true), "-PV.w");
+
+   run(InlineConstValue(ALU_SRC_PS, 0, false, false), "PS");
 
 }
 
