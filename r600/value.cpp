@@ -358,9 +358,9 @@ void SpecialValue::do_print(std::ostream& os) const
       os << sv_info->second.descr;
       if (sv_info->second.use_chan)
          os << '.' << component_names[chan()];
-      else if (sv_info->second.use_chan > 0)
-         os << " W: Channel " << component_names[chan()]
-            << " ignored";
+      else if (chan() > 0)
+         os << "." << component_names[chan()]
+            << " (W: Channel ignored)";
    } else {
       os << "E: unknown inline constant " << m_value;
    }

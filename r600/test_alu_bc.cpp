@@ -497,6 +497,13 @@ TEST_F(TestValuePrintout, InlineConstPVPS)
    run(InlineConstValue(ALU_SRC_PS, 0, false, false), "PS");
 }
 
+TEST_F(TestValuePrintout, InlineConstIgnoreComp)
+{
+   run(InlineConstValue(ALU_SRC_HW_ALU_ODD, 1, false, false),
+       "HW_ALU_ODD.y (W: Channel ignored)");
+}
+
+
 TEST_F(TestValuePrintout, InlineConstUnknown)
 {
    run(InlineConstValue(ALU_SRC_UNKNOWN, 1, false, false),
