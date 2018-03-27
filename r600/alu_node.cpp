@@ -217,12 +217,18 @@ void AluNode::print_pred(std::ostream& os) const
    os << "  ";
 }
 
+void AluNode::print_omod(std::ostream& os) const
+{
+   (void)os;
+}
+
 void AluNode::print_op(std::ostream& os) const
 {
    auto o = alu_ops.find(m_opcode);
    if (o != alu_ops.end()) {
       ostringstream s;
       s << o->second.name;
+      print_omod(s);
       if (m_flags.test(do_clamp))
          s << " (C)";
       os << setw(32) << std::left  << s.str();
@@ -365,6 +371,18 @@ void AluNodeOp2::encode(uint64_t& bc) const
       bc |= write_mask_bit;
 
    bc |= static_cast<uint64_t>(m_output_modify) << 37;
+}
+
+void AluNodeOp2::print_omod(std::ostream& os) const
+{
+   switch (m_output_modify) {
+   case AluNode::omod_off: return;
+   case AluNode::omod_mul_2: os << "*2"; break;
+   case AluNode::omod_mul_4: os << "*4"; break;
+   case AluNode::omod_div_2: os << "/2"; break;
+   default:
+      os << "(omod error)";
+   }
 }
 
 AluNodeOp3::AluNodeOp3(uint16_t opcode, const GPRValue &dst,

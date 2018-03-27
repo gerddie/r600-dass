@@ -537,6 +537,16 @@ TEST_F(ALUByteCodeDissass, Op2PredSet)
        "MP  x: PRED_SETNE_INT                  R43.x, PV.x, 0");
 }
 
+TEST_F(ALUByteCodeDissass, Op2_omod)
+{
+   run(0x01a00030020020f9,
+       "    x: ADD*2                           R13.x, 1.0, -R1.x");
+   run(0x01a00050020020f9,
+       "    x: ADD*4                           R13.x, 1.0, -R1.x");
+   run(0x01a00070020020f9,
+       "    x: ADD/2                           R13.x, 1.0, -R1.x");
+}
+
 
 TEST_F(ALUByteCodeDissass, Op3)
 {
@@ -549,3 +559,4 @@ TEST_F(ALUByteCodeDissass, Op3WithBankSwizzle)
    run(0x01f2080c0100000c,
        "    x: MULADD_UINT24                   R15.x, R12.x, R0.z, R12.z vec_201");
 }
+

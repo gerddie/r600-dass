@@ -107,6 +107,7 @@ private:
    virtual void print_pred(std::ostream& os) const;
    virtual void print_dst(std::ostream& os) const;
    virtual void print_op(std::ostream& os) const;
+   virtual void print_omod(std::ostream& os) const;
    void print_bank_swizzle(std::ostream &os) const;
 
    virtual void allocate_spec_literal(LiteralBuffer& lb) const;
@@ -154,7 +155,7 @@ public:
               EOutputModify output_modify = omod_off,
               EPredSelect pred_select = pred_sel_off);
 private:
-
+   void print_omod(std::ostream& os) const override;
    void encode(uint64_t& bc) const override;
 
    EOutputModify m_output_modify;
