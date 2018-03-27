@@ -531,6 +531,35 @@ TEST_F(ALUByteCodeDissass, Op2)
        "    y: SETGE_DX10                      T0.y, T0.y, T1.z");
 }
 
+TEST_F(ALUByteCodeDissass, Op2IntLiteral)
+{
+   Value::LiteralFlags li;
+   uint64_t literals = 10 | (0xc0000000ul << 32);
+
+   auto src0 = Value::create(ALU_SRC_LITERAL, 0, false, false, false, &li);
+   src0->set_literal_info(&literals);
+
+   auto src2 = Value::create(ALU_SRC_LITERAL, 1, false, false, false, &li);
+   src2->set_literal_info(&literals);
+
+   auto src1 = Value::create(10, 3, false, false, false, nullptr);
+   GPRValue dst(10, 2, false, false, false);
+   AluOpFlags flags;
+   AluNodeOp2 op(OP2_ADD_INT, dst, src0, src1, flags);
+   std::ostringstream s;
+
+   s << op;
+   EXPECT_EQ(s.str(),
+             "    z: ADD_INT                         R10.z, [0xa 10i], R10.w");
+
+   AluNodeOp2 op2(OP2_ADD, dst, src2, src1, flags);
+   std::ostringstream s2;
+   s2 << op2;
+   EXPECT_EQ(s2.str(),
+             "    z: ADD                             R10.z, [0xc0000000 -2f], R10.w");
+}
+
+
 TEST_F(ALUByteCodeDissass, Op2PredSet)
 {
    run(0x0560229c801f00feul,

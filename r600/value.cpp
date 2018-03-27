@@ -386,9 +386,12 @@ void LiteralValue::do_print(std::ostream& os, const PrintFlags& flags) const
    os << "[0x" << std::setbase(16) << m_value << " "
       << std::setbase(10);
 
-   os << (flags.literal_is_float ?
-             *reinterpret_cast<const float*>(&m_value) : m_value)
-      << "]";
+   if (flags.literal_is_float)
+      os << *reinterpret_cast<const float*>(&m_value) << "f";
+   else
+      os << m_value << "i";
+
+   os<< "]";
 }
 
 void LiteralValue::set_literal_info(const uint64_t *literals)

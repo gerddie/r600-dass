@@ -181,14 +181,19 @@ void AluNode::print(std::ostream& os) const
 
    os << Value::component_names[m_dst_chan] << ": ";
 
-   print_op(os);
+   bool uses_float = print_op(os);
 
    print_dst(os);
 
+   Value::PrintFlags flags(m_index_mode, uses_float);
+
    if (nopsources() > 0) {
-      os << *m_src[0];
-      for (int i = 1; i < nopsources(); ++i)
-         os << ", " << *m_src[i];
+      m_src[0]->print(os, flags);
+
+      for (int i = 1; i < nopsources(); ++i) {
+         os << ", ";
+         m_src[i]->print(os, flags);
+      }
    }
 
    print_bank_swizzle(os);
@@ -222,8 +227,9 @@ void AluNode::print_omod(std::ostream& os) const
    (void)os;
 }
 
-void AluNode::print_op(std::ostream& os) const
+bool AluNode::print_op(std::ostream& os) const
 {
+   bool retval = false;
    auto o = alu_ops.find(m_opcode);
    if (o != alu_ops.end()) {
       ostringstream s;
@@ -232,9 +238,11 @@ void AluNode::print_op(std::ostream& os) const
       if (m_flags.test(do_clamp))
          s << " (C)";
       os << setw(32) << std::left  << s.str();
+      retval = o->second.is_float;
    } else {
       os << setw(32) << std::left  << "E: Unknown opcode " << m_opcode;
    }
+   return retval;
 }
 
 void AluNode::print_dst(std::ostream& os) const
@@ -453,7 +461,7 @@ int AluNodeLDSIdxOP::nopsources() const
    return 0;
 }
 
-void AluNodeLDSIdxOP::print_op(std::ostream& os) const
+bool AluNodeLDSIdxOP::print_op(std::ostream& os) const
 {
    auto o = lds_ops.find(m_lds_op);
    if (o != lds_ops.end()) {
@@ -464,6 +472,7 @@ void AluNodeLDSIdxOP::print_op(std::ostream& os) const
    } else {
       os << setw(32) << std::left  << "E: Unknown LDS opcode " << m_lds_op;
    }
+   return true;
 }
 
 void AluNodeLDSIdxOP::set_spec_literal_info(uint64_t *literals)

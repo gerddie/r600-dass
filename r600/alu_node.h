@@ -106,7 +106,7 @@ private:
    void print_flags(std::ostream& os) const;
    virtual void print_pred(std::ostream& os) const;
    virtual void print_dst(std::ostream& os) const;
-   virtual void print_op(std::ostream& os) const;
+   virtual bool print_op(std::ostream& os) const;
    virtual void print_omod(std::ostream& os) const;
    void print_bank_swizzle(std::ostream &os) const;
 
@@ -185,7 +185,7 @@ public:
 protected:
    int nopsources() const override;
 private:
-   void print_op(std::ostream& os) const override final;
+   bool print_op(std::ostream& os) const override final;
    void set_spec_literal_info(uint64_t *literals) override final;
    void encode(uint64_t& bc) const override;
    ELSDIndexOp m_lds_op;

@@ -66,6 +66,10 @@ public:
          literal_is_float(false)
       {
       }
+      PrintFlags(int im, bool f):index_mode(im),
+         literal_is_float(f)
+      {
+      }
       int index_mode;
       bool literal_is_float;
    };
