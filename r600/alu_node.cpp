@@ -191,6 +191,25 @@ void AluNode::print(std::ostream& os) const
          os << ", " << *m_src[i];
    }
 
+   print_bank_swizzle(os);
+
+}
+
+void AluNode::print_bank_swizzle(std::ostream& os) const
+{
+   static const char* bank_swz[] = {
+      "",
+      " vec_021",
+      " vec_120",
+      " vec_102",
+      " vec_201",
+      " vec_210"
+   };
+
+   if (m_bank_swizzle < 6)
+      os << bank_swz[m_bank_swizzle];
+   else
+      os << " vec_err ";
 }
 
 void AluNode::print_pred(std::ostream& os) const

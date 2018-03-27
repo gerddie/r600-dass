@@ -510,37 +510,42 @@ TEST_F(TestValuePrintout, InlineConstUnknown)
        "E: unknown inline constant 256");
 }
 
-using ALUByteCodeDissass=testing::Test;
 
-TEST_F(ALUByteCodeDissass, Op2)
+class ALUByteCodeDissass: public testing::Test {
+protected:
+   void run (uint64_t bc, const char *expect) const;
+};
+
+void ALUByteCodeDissass::run (uint64_t bc, const char *expect) const
 {
-   uint64_t bc = 0x2f800710010fa47cul;
    auto n = AluNode::decode(bc, nullptr);
    std::ostringstream result;
    result << *n;
-   EXPECT_EQ(result.str(),
-             "    y: SETGE_DX10                      T0.y, T0.y, T1.z");
+   EXPECT_EQ(result.str(), expect);
+}
+
+
+TEST_F(ALUByteCodeDissass, Op2)
+{
+   run(0x2f800710010fa47cul,
+       "    y: SETGE_DX10                      T0.y, T0.y, T1.z");
 }
 
 TEST_F(ALUByteCodeDissass, Op2PredSet)
 {
-   uint64_t bc = 0x0560229c801f00feul;
-   auto n = AluNode::decode(bc, nullptr);
-   std::ostringstream result;
-   result << *n;
-   EXPECT_EQ(result.str(),
-             "MP  x: PRED_SETNE_INT                  R43.x, PV.x, 0");
-
+   run(0x0560229c801f00feul,
+       "MP  x: PRED_SETNE_INT                  R43.x, PV.x, 0");
 }
 
 
 TEST_F(ALUByteCodeDissass, Op3)
 {
-   uint64_t bc = 0x05a200fe8004e429ul;
-   auto n = AluNode::decode(bc, nullptr);
-   std::ostringstream result;
-   result << *n;
-   EXPECT_EQ(result.str(),
-             "    x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
+   run(0x05a200fe8004e429ul,
+       "    x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
 }
 
+TEST_F(ALUByteCodeDissass, Op3WithBankSwizzle)
+{
+   run(0x01f2080c0100000c,
+       "    x: MULADD_UINT24                   R15.x, R12.x, R0.z, R12.z vec_201");
+}

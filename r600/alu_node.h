@@ -107,6 +107,7 @@ private:
    virtual void print_pred(std::ostream& os) const;
    virtual void print_dst(std::ostream& os) const;
    virtual void print_op(std::ostream& os) const;
+   void print_bank_swizzle(std::ostream &os) const;
 
    virtual void allocate_spec_literal(LiteralBuffer& lb) const;
    virtual void set_spec_literal_info(uint64_t *literals);
