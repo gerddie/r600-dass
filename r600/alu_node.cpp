@@ -64,7 +64,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
       // opcode 3 uses the 5 upper bits of the opcode field
       opcode &= 0x7c0;
 
-      if (opcode != OP3_INST_LDS_IDX_OP) {
+      if (opcode != OP3_LDS_IDX_OP) {
 
          auto src0 = Value::create(bc, alu_op3_src0, literal_index);
          auto src1 = Value::create(bc, alu_op3_src1, literal_index);

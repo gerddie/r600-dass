@@ -297,7 +297,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsLastInstrBits)
 {
    AluOpFlags flags;
    flags.set(AluNode::is_last_instr);
-   AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
+   AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::pred_sel_off);
 
    TEST_EQ(n.bytecode(), (1ul << 31) | (1ul << 47));
@@ -307,7 +307,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsClampBits)
 {
    AluOpFlags flags;
    flags.set(AluNode::do_clamp);
-   AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x,
+   AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x,
                 AluNode::alu_vec_012, AluNode::pred_sel_off);
 
    TEST_EQ(n.bytecode(), (1ul << 63) | (1ul << 47));
@@ -321,7 +321,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3PredSelBits)
    };
 
    for(auto i: ps) {
-      AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x,
+      AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x,
                    AluNode::alu_vec_012, i);
       TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 29) | (1ul << 47));
    }
@@ -344,7 +344,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
    };
 
    for(auto i: bs) {
-      AluNodeOp3 n(OP3_INST_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x, i,
+      AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x, i,
                    AluNode::pred_sel_off);
       TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 50)
               | (1ul << 47));
@@ -364,7 +364,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
    };
 
    for (auto p : test_pairs) {
-      AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, p.first,
+      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, p.first,
                         src, src, src, empty_flags, 0, 0,
                         AluNode::idx_ar_x, AluNode::alu_vec_012);
       TEST_EQ(n.bytecode(), p.second);
@@ -383,7 +383,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
    };
 
    for (int ofs = 0; ofs < 6; ++ofs) {
-      AluNodeLDSIdxOP n(OP3_INST_LDS_IDX_OP, LDS_OP_ADD,
+      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, LDS_OP_ADD,
                         src, src, src, empty_flags, 1 << ofs);
       TEST_EQ(n.bytecode(), expect[ofs]);
    }

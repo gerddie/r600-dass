@@ -205,31 +205,31 @@ enum EAluOp {
    OP2_INTERP_LOAD_P10 = 125,
    OP2_INTERP_LOAD_P20 = 126,
    // op 3 all left shift 6
-   OP3_INST_BFE_UINT = 4<< 6,
-   OP3_INST_BFE_INT = 5<< 6,
-   OP3_INST_BFI_INT = 6<< 6,
-   OP3_INST_FMA = 7<< 6,
-   OP3_INST_CNDNE_64 = 9<< 6,
-   OP3_INST_FMA_64 = 10<< 6,
-   OP3_INST_LERP_UINT = 11<< 6,
-   OP3_INST_BIT_ALIGN_INT = 12<< 6,
-   OP3_INST_BYTE_ALIGN_INT = 13<< 6,
-   OP3_INST_SAD_ACCUM_UINT = 14<< 6,
-   OP3_INST_SAD_ACCUM_HI_UINT = 15<< 6,
-   OP3_INST_MULADD_UINT24 = 16<< 6,
-   OP3_INST_LDS_IDX_OP = 17<< 6,
-   OP3_INST_MULADD = 20<< 6,
-   OP3_INST_MULADD_M2 = 21<< 6,
-   OP3_INST_MULADD_M4 = 22<< 6,
-   OP3_INST_MULADD_D2 = 23<< 6,
-   OP3_INST_MULADD_IEEE = 24<< 6,
-   OP3_INST_CNDE = 25<< 6,
-   OP3_INST_CNDGT = 26<< 6,
-   OP3_INST_CNDGE = 27<< 6,
-   OP3_INST_CNDE_INT = 28<< 6,
-   OP3_INST_CNDGT_INT = 29<< 6,
-   OP3_INST_CNDGE_INT = 30<< 6,
-   OP3_INST_MUL_LIT = 31<< 6
+   OP3_BFE_UINT = 4<< 6,
+   OP3_BFE_INT = 5<< 6,
+   OP3_BFI_INT = 6<< 6,
+   OP3_FMA = 7<< 6,
+   OP3_CNDNE_64 = 9<< 6,
+   OP3_FMA_64 = 10<< 6,
+   OP3_LERP_UINT = 11<< 6,
+   OP3_BIT_ALIGN_INT = 12<< 6,
+   OP3_BYTE_ALIGN_INT = 13<< 6,
+   OP3_SAD_ACCUM_UINT = 14<< 6,
+   OP3_SAD_ACCUM_HI_UINT = 15<< 6,
+   OP3_MULADD_UINT24 = 16<< 6,
+   OP3_LDS_IDX_OP = 17<< 6,
+   OP3_MULADD = 20<< 6,
+   OP3_MULADD_M2 = 21<< 6,
+   OP3_MULADD_M4 = 22<< 6,
+   OP3_MULADD_D2 = 23<< 6,
+   OP3_MULADD_IEEE = 24<< 6,
+   OP3_CNDE = 25<< 6,
+   OP3_CNDGT = 26<< 6,
+   OP3_CNDGE = 27<< 6,
+   OP3_CNDE_INT = 28<< 6,
+   OP3_CNDGT_INT = 29<< 6,
+   OP3_CNDGE_INT = 30<< 6,
+   OP3_MUL_LIT = 31<< 6
 };
 
 using AluOpFlags=std::bitset<16>;
@@ -243,8 +243,8 @@ struct AluOp {
    static constexpr int t = 16;
    static constexpr int a = 31;
 
-   AluOp(int ns, int um, const char *n):
-      nsrc(ns), unit_mask(um), name(n)
+   AluOp(int ns, int f, int um, const char *n):
+      nsrc(ns), is_float(f), unit_mask(um), name(n)
    {
    }
 
@@ -253,6 +253,7 @@ struct AluOp {
    }
 
    int nsrc: 4;
+   int is_float:1;
    int unit_mask: 5;
    const char *name;
 };
