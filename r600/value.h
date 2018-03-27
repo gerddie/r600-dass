@@ -56,9 +56,19 @@ class LiteralBuffer {
 
 };
 
+
 class Value {
 public:
    using Pointer=std::shared_ptr<Value>;
+
+   struct PrintFlags {
+      PrintFlags():index_mode(0),
+         literal_is_float(false)
+      {
+      }
+      int index_mode;
+      bool literal_is_float;
+   };
 
    enum Type {
       gpr,
@@ -93,8 +103,9 @@ public:
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
    void set_chan(uint64_t chan);
-   void print(std::ostream& os) const;
+   void print(std::ostream& os, const PrintFlags& flags) const;
 
+   void print(std::ostream& os) const;
 
    virtual void set_literal_info(const uint64_t *literals);
    virtual void allocate_literal(LiteralBuffer& lb) const;
@@ -106,6 +117,7 @@ protected:
 
 private:
    virtual void do_print(std::ostream& os) const = 0;
+   virtual void do_print(std::ostream& os, const PrintFlags& flags) const;
 
    uint64_t encode_for_alu_op2_src0() const;
    uint64_t encode_for_alu_op2_src1() const;
@@ -148,8 +160,10 @@ public:
    GPRValue& operator = (GPRValue&& orig) = default;
 
    uint64_t sel() const override final;
+
 private:
    void do_print(std::ostream& os) const override;
+   void do_print(std::ostream& os, const PrintFlags& flags) const override;
    uint16_t m_sel;
 };
 
@@ -167,6 +181,7 @@ public:
    uint32_t value() const;
 private:
    void do_print(std::ostream& os) const override;
+   void do_print(std::ostream& os, const PrintFlags& flags) const override;
    uint32_t m_value;
 };
 

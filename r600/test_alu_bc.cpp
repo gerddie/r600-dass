@@ -571,3 +571,4 @@ TEST_F(ALUByteCodeDissass, Op3LDS_Write_Rel)
    run(0x09c224248004802c,
        "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
 }
+

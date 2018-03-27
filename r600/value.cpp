@@ -98,6 +98,26 @@ void Value::print(std::ostream& os) const
       os << "|";
 }
 
+void Value::print(std::ostream& os, const PrintFlags& flags) const
+{
+   if (m_neg)
+      os << "-";
+
+   if (m_abs)
+      os << "|";
+
+   do_print(os, flags);
+
+   if (m_abs)
+      os << "|";
+}
+
+void Value::do_print(std::ostream& os, const PrintFlags& flags) const
+{
+   (void)flags;
+   do_print(os);
+}
+
 uint64_t Value::encode_for_alu_op2_src0() const
 {
    uint64_t bc = m_abs ? src0_abs_bit : 0;
@@ -311,6 +331,32 @@ void GPRValue::do_print(std::ostream& os) const
    os << '.' << component_names[chan()];
 }
 
+void GPRValue::do_print(std::ostream& os, const PrintFlags& flags) const
+{
+   if (m_sel < 124) {
+      os << 'R';
+      if (rel())
+         os << '[';
+
+      os << m_sel;
+      if (rel()) {
+         switch (flags.index_mode) {
+         case 0: os << "+AR"; break;
+         case 4: os << "+LoopIDX"; break;
+         case 5: os << "g"; break;
+         case 6: os << "g+AR"; break;
+         default: os << "(ERRIDX)";
+         }
+      }
+   } else {
+      os << 'T' << m_sel - 124;
+      if (rel()) {
+         os << "[E:indirect access to clause-local temporary]";
+      }
+   }
+   os << '.' << component_names[chan()];
+}
+
 LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
    Value(Value::literal, chan, abs, rel, neg),
@@ -333,6 +379,16 @@ void LiteralValue::do_print(std::ostream& os) const
    os << "[0x" << std::setbase(16) << m_value << " "
       << *reinterpret_cast<const float*>(&m_value) << "].";
    os << component_names[chan()];
+}
+
+void LiteralValue::do_print(std::ostream& os, const PrintFlags& flags) const
+{
+   os << "[0x" << std::setbase(16) << m_value << " "
+      << std::setbase(10);
+
+   os << (flags.literal_is_float ?
+             *reinterpret_cast<const float*>(&m_value) : m_value)
+      << "]";
 }
 
 void LiteralValue::set_literal_info(const uint64_t *literals)
