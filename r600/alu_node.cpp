@@ -176,6 +176,7 @@ void AluNode::allocate_spec_literal(LiteralBuffer& lb) const
 
 void AluNode::print(std::ostream& os) const
 {
+   print_flags(os);
    print_pred(os);
 
    os << Value::component_names[m_dst_chan] << ": ";
@@ -189,6 +190,7 @@ void AluNode::print(std::ostream& os) const
       for (int i = 1; i < nopsources(); ++i)
          os << ", " << *m_src[i];
    }
+
 }
 
 void AluNode::print_pred(std::ostream& os) const
@@ -290,9 +292,9 @@ AluNodeWithDst::AluNodeWithDst(uint16_t opcode, const GPRValue& dst, EIndexMode 
 void AluNodeWithDst::print_pred(std::ostream& os) const
 {
    switch (m_pred_select) {
-   case pred_sel_zero: os << "p ";
+   case pred_sel_zero: os << "0 ";
       break;
-   case pred_sel_one: os << "P ";
+   case pred_sel_one: os << "1 ";
       break;
    default:
       os << "  ";

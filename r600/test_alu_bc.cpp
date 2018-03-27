@@ -519,8 +519,20 @@ TEST_F(ALUByteCodeDissass, Op2)
    std::ostringstream result;
    result << *n;
    EXPECT_EQ(result.str(),
-             "  y: SETGE_DX10                      T0.y, T0.y, T1.z");
+             "    y: SETGE_DX10                      T0.y, T0.y, T1.z");
 }
+
+TEST_F(ALUByteCodeDissass, Op2PredSet)
+{
+   uint64_t bc = 0x0560229c801f00feul;
+   auto n = AluNode::decode(bc, nullptr);
+   std::ostringstream result;
+   result << *n;
+   EXPECT_EQ(result.str(),
+             "MP  x: PRED_SETNE_INT                  R43.x, PV.x, 0");
+
+}
+
 
 TEST_F(ALUByteCodeDissass, Op3)
 {
@@ -529,5 +541,6 @@ TEST_F(ALUByteCodeDissass, Op3)
    std::ostringstream result;
    result << *n;
    EXPECT_EQ(result.str(),
-             "  x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
+             "    x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
 }
+
