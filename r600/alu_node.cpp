@@ -78,12 +78,12 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
 
          auto  lds_op = static_cast<ELSDIndexOp>((bc >> 53) & 0x3f);
          int dst_chan = (bc >> 61) & 0x3;
-         int offset = ((bc >> 58) & 1) |
-                      ((bc >> 57) & 4) |
-                      ((bc >> 60) & 8) |
-                      ((bc >> 43) & 2) |
-                      ((bc >> 8) & 16) |
-                      ((bc >> 20) & 32);
+         int offset = ((bc >> 59) & 1) |
+                      (((bc >> 60) & 1) << 2) |
+                      (((bc >> 63) & 1) << 3)|
+                      (((bc >> 44) & 1) << 1 )|
+                      (((bc >> 12) & 1) << 4) |
+                      (((bc >> 25) & 1) << 5);
 
          return new AluNodeLDSIdxOP(opcode, lds_op,
                                     src0, src1, src2, flags,
@@ -239,7 +239,7 @@ void AluNode::print_op(std::ostream& os) const
 
 void AluNode::print_dst(std::ostream& os) const
 {
-   os << "______";
+   os << "____, ";
 }
 
 void AluNode::print_flags(std::ostream& os) const
@@ -436,12 +436,21 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
 
    bc |= static_cast<uint64_t>(m_lds_op) << 53;
    bc |= static_cast<uint64_t>(dst_chan()) << 61;
-   bc |= static_cast<uint64_t>(m_offset & 1) << 58;
+   bc |= static_cast<uint64_t>(m_offset & 1) << 59;
    bc |= static_cast<uint64_t>(m_offset & 2) << 43;
-   bc |= static_cast<uint64_t>(m_offset & 4) << 57;
+   bc |= static_cast<uint64_t>(m_offset & 4) << 58;
    bc |= static_cast<uint64_t>(m_offset & 8) << 60;
    bc |= static_cast<uint64_t>(m_offset & 0x10) << 8;
    bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
+}
+
+int AluNodeLDSIdxOP::nopsources() const
+{
+   auto o = lds_ops.find(m_lds_op);
+   if (o != lds_ops.end()) {
+      return o->second.nsrc;
+   }
+   return 0;
 }
 
 void AluNodeLDSIdxOP::print_op(std::ostream& os) const
@@ -450,7 +459,7 @@ void AluNodeLDSIdxOP::print_op(std::ostream& os) const
    if (o != lds_ops.end()) {
       ostringstream s;
       s << o->second.name;
-      s << "OFS:" << m_offset;
+      s << " OFS:" << m_offset;
       os << setw(32) << std::left  << s.str();
    } else {
       os << setw(32) << std::left  << "E: Unknown LDS opcode " << m_lds_op;

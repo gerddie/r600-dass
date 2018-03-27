@@ -374,9 +374,9 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
 TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
 {
    uint64_t expect[6] = {
-      0x0402200000000000ul,
-      0x0002300000000000ul,
       0x0802200000000000ul,
+      0x0002300000000000ul,
+      0x1002200000000000ul,
       0x8002200000000000ul,
       0x0002200000001000ul,
       0x0002200002000000ul
@@ -547,7 +547,6 @@ TEST_F(ALUByteCodeDissass, Op2_omod)
        "    x: ADD/2                           R13.x, 1.0, -R1.x");
 }
 
-
 TEST_F(ALUByteCodeDissass, Op3)
 {
    run(0x05a200fe8004e429ul,
@@ -560,3 +559,15 @@ TEST_F(ALUByteCodeDissass, Op3WithBankSwizzle)
        "    x: MULADD_UINT24                   R15.x, R12.x, R0.z, R12.z vec_201");
 }
 
+TEST_F(ALUByteCodeDissass, Op3LDS_Read)
+{
+   run(0x064220f8801f0011,
+       "    x: LDS_READ_RET OFS:0              ____, R17.x");
+}
+
+TEST_F(ALUByteCodeDissass, Op3LDS_Write_Rel)
+{
+   /* Mesa dissass prints OFS:1 here, why? */
+   run(0x09c224248004802c,
+       "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
+}

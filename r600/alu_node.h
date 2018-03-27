@@ -100,7 +100,7 @@ protected:
    const Value& src(unsigned idx) const;
    Value& src(unsigned idx);
    void set_src(unsigned idx, PValue v);
-   int nopsources() const;
+   virtual int nopsources() const;
 
 private:
    void print_flags(std::ostream& os) const;
@@ -182,6 +182,8 @@ public:
                    int offset = 0, int dst_chan = 0,
                    EIndexMode index_mode = idx_ar_x,
                    EBankSwizzle bank_swizzle = alu_vec_012);
+protected:
+   int nopsources() const override;
 private:
    void print_op(std::ostream& os) const override final;
    void set_spec_literal_info(uint64_t *literals) override final;
