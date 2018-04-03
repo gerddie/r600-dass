@@ -335,8 +335,9 @@ void cf_alu_node::print_detail(std::ostream& os) const
       }
    }
    print_flags(os);
+   os << "\n";
    for (const auto& g: m_clause_code)
-      os << "\n" << g.as_string();
+      os << "\n" << g.as_string(4);
 }
 
 cf_node_flags::cf_node_flags(uint64_t bc)

@@ -537,12 +537,15 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
    return ofs;
 }
 
-std::string AluGroup::as_string() const
+std::string AluGroup::as_string(int indent) const
 {
    static const char slot_id[6]="xyzwt";
    ostringstream os;
    for (int i = 0; i < 5; ++i) {
+      int ind = indent;
       if (m_ops[i]) {
+         while (ind--)
+            os << ' ';
          os << slot_id[i] << ": ";
          m_ops[i]->print(os);
          os << "\n";

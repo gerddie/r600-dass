@@ -68,9 +68,9 @@ TEST_F(TestDisassember, AluNopEOP)
    };
 
    run(bc, "ALU                    ADDR:2 COUNT:2\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
-           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
-           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
        );
 }
@@ -103,16 +103,16 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
    bc.push_back(0x064220f8801f00feul);
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
-           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "JUMP                   ADDR:4 B\n"
            "ALU                    ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
-           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "ELSE                   ADDR:5 POP:1\n"
            "ALU_POP_AFTER          ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
-           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
        );
 }
