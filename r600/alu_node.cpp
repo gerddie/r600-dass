@@ -179,8 +179,6 @@ void AluNode::print(std::ostream& os) const
    print_flags(os);
    print_pred(os);
 
-   os << Value::component_names[m_dst_chan] << ": ";
-
    bool uses_float = print_op(os);
 
    print_dst(os);
@@ -247,7 +245,7 @@ bool AluNode::print_op(std::ostream& os) const
 
 void AluNode::print_dst(std::ostream& os) const
 {
-   os << "____, ";
+   os << "__." << Value::component_names[m_dst_chan] <<", ";
 }
 
 void AluNode::print_flags(std::ostream& os) const
@@ -339,7 +337,7 @@ void AluNodeWithDst::print_dst(std::ostream& os) const
    if (test_flag(do_write) || test_flag(is_op3))
       os << m_dst << ", ";
    else
-      os << "____, ";
+      os << "__." << Value::component_names[m_dst.chan()] <<", ";
 }
 
 void AluNodeWithDst::encode_dst_and_pred(uint64_t& bc) const
@@ -536,10 +534,13 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
 
 std::string AluGroup::as_string() const
 {
+   static const char slot_id[6]="xyzwt";
    ostringstream os;
-   for (const auto& o: m_ops) {
-      if (o)
-         o->print(os);
+   for (int i = 0; i < 5; ++i) {
+      if (m_ops[i]) {
+         os << slot_id[i] << ": ";
+         m_ops[i]->print(os);
+      }
    }
    return os.str();
 }

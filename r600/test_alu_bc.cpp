@@ -526,7 +526,7 @@ void ALUByteCodeDissass::run (uint64_t bc, const char *expect) const
 TEST_F(ALUByteCodeDissass, Op2)
 {
    run(0x2f800710010fa47cul,
-       "    y: SETGE_DX10                      T0.y, T0.y, T1.z");
+       "    SETGE_DX10                      T0.y, T0.y, T1.z");
 }
 
 TEST_F(ALUByteCodeDissass, Op2IntLiteral)
@@ -549,55 +549,55 @@ TEST_F(ALUByteCodeDissass, Op2IntLiteral)
 
    s << op;
    EXPECT_EQ(s.str(),
-             "    z: ADD_INT                         R10.z, [0xa 10i], R10.w");
+             "    ADD_INT                         R10.z, [0xa 10i], R10.w");
 
    AluNodeOp2 op2(OP2_ADD, dst, src2, src1, flags);
    std::ostringstream s2;
    s2 << op2;
    EXPECT_EQ(s2.str(),
-             "    z: ADD                             R10.z, [0xc0000000 -2f], R10.w");
+             "    ADD                             R10.z, [0xc0000000 -2f], R10.w");
 }
 
 
 TEST_F(ALUByteCodeDissass, Op2PredSet)
 {
    run(0x0560229c801f00feul,
-       "MP  x: PRED_SETNE_INT                  R43.x, PV.x, 0");
+       "MP  PRED_SETNE_INT                  R43.x, PV.x, 0");
 }
 
 TEST_F(ALUByteCodeDissass, Op2_omod)
 {
    run(0x01a00030020020f9,
-       "    x: ADD*2                           R13.x, 1.0, -R1.x");
+       "    ADD*2                           R13.x, 1.0, -R1.x");
    run(0x01a00050020020f9,
-       "    x: ADD*4                           R13.x, 1.0, -R1.x");
+       "    ADD*4                           R13.x, 1.0, -R1.x");
    run(0x01a00070020020f9,
-       "    x: ADD/2                           R13.x, 1.0, -R1.x");
+       "    ADD/2                           R13.x, 1.0, -R1.x");
 }
 
 TEST_F(ALUByteCodeDissass, Op3)
 {
    run(0x05a200fe8004e429ul,
-       "    x: MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
+       "    MULADD_UINT24                   R45.x, R41.y, R39.x, PV.x");
 }
 
 TEST_F(ALUByteCodeDissass, Op3WithBankSwizzle)
 {
    run(0x01f2080c0100000c,
-       "    x: MULADD_UINT24                   R15.x, R12.x, R0.z, R12.z vec_201");
+       "    MULADD_UINT24                   R15.x, R12.x, R0.z, R12.z vec_201");
 }
 
 TEST_F(ALUByteCodeDissass, Op3LDS_Read)
 {
    run(0x064220f8801f0011,
-       "    x: LDS_READ_RET OFS:0              ____, R17.x");
+       "    LDS_READ_RET OFS:0              __.x, R17.x");
 }
 
 TEST_F(ALUByteCodeDissass, Op3LDS_Write_Rel)
 {
    /* Mesa dissass prints OFS:1 here, why? */
    run(0x09c224248004802c,
-       "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
+       "    LDS_WRITE_REL OFS:1             __.x, R44.x, R36.x, R36.y");
 }
 
 class ALUGroupDissass: public testing::Test {
@@ -621,7 +621,7 @@ TEST_F(ALUGroupDissass, Op3LDS_Write_Rel)
    vector<uint64_t> bc{0x09c224248004802c};
 
    run(bc, 1,
-       "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
+       "x:     LDS_WRITE_REL OFS:1             __.x, R44.x, R36.x, R36.y");
 }
 
 
@@ -633,9 +633,24 @@ TEST_F(ALUGroupDissass, Dot4_ieee)
                        0x61e05f8081a42c0cul
                       };
    run(bc, 4,
-       "    x: DOT4_IEEE                       R15.x, R12.x, KC3[1].x"
-       "    y: DOT4_IEEE                       ____, R12.y, KC3[1].y"
-       "    z: DOT4_IEEE                       ____, R12.z, KC3[1].z"
-       "    w: DOT4_IEEE                       ____, R12.w, KC3[1].w");
+       "x:     DOT4_IEEE                       R15.x, R12.x, KC3[1].x"
+       "y:     DOT4_IEEE                       __.y, R12.y, KC3[1].y"
+       "z:     DOT4_IEEE                       __.z, R12.z, KC3[1].z"
+       "w:     DOT4_IEEE                       __.w, R12.w, KC3[1].w");
 }
 
+TEST_F(ALUGroupDissass, Various_5_slot)
+{
+   vector<uint64_t> bc{0x0180011000200001ul,
+                       0x2180011000200401ul,
+                       0x41a00c90000000feul,
+                       0x61a00c90000004feul,
+                       0x4180011080200801ul};
+   run(bc, 5,
+       "x:     MUL_IEEE                        R12.x, R1.x, KC2[0].x"
+       "y:     MUL_IEEE                        R12.y, R1.y, KC2[0].x"
+       "z:     MOV                             R13.z, PV.x"
+       "w:     MOV                             R13.w, PV.y"
+       "t:     MUL_IEEE                        R12.z, R1.z, KC2[0].x");
+
+}
