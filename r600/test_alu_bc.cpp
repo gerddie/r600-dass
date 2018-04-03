@@ -654,3 +654,27 @@ TEST_F(ALUGroupDissass, Various_5_slot)
        "t:     MUL_IEEE                        R12.z, R1.z, KC2[0].x");
 
 }
+
+TEST_F(ALUGroupDissass, Various_AluGroupEarlyFinish_xy)
+{
+   vector<uint64_t> bc{
+      0x01400890000000feul,
+      0x21400890800004feul,
+      0x00804d10800000feul
+   };
+
+   run(bc, 2,
+       "x:     TRUNC                           R10.x, PV.x"
+       "y:     TRUNC                           R10.y, PV.y");
+}
+
+TEST_F(ALUGroupDissass, AluGroupEarlyFinish_x)
+{
+   vector<uint64_t> bc{
+      0x064220f8801f00feul,
+      0x00c00c90800000ddul
+   };
+
+   run(bc, 1,
+       "x:     LDS_READ_RET OFS:0              __.x, PV.x");
+}
