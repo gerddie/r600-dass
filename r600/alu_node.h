@@ -74,7 +74,8 @@ public:
       do_clamp,
       do_write,
       do_update_exec_mask,
-      do_update_pred
+      do_update_pred,
+      is_op3
    };
 
    static AluNode *decode(uint64_t bc, Value::LiteralFlags *literal_index);
@@ -196,9 +197,10 @@ class AluGroup {
 public:
    AluGroup();
 
-   std::vector<uint64_t>::const_iterator
-   decode(std::vector<uint64_t>::const_iterator bc);
+   size_t decode(const std::vector<uint64_t>& bc, size_t ofs);
    bool encode(std::vector<uint64_t>& bc) const;
+   std::string as_string() const;
+
 private:
    std::vector<PAluNode> m_ops;
 };

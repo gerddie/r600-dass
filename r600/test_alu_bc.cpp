@@ -510,7 +510,6 @@ TEST_F(TestValuePrintout, InlineConstUnknown)
        "E: unknown inline constant 256");
 }
 
-
 class ALUByteCodeDissass: public testing::Test {
 protected:
    void run (uint64_t bc, const char *expect) const;
@@ -523,7 +522,6 @@ void ALUByteCodeDissass::run (uint64_t bc, const char *expect) const
    result << *n;
    EXPECT_EQ(result.str(), expect);
 }
-
 
 TEST_F(ALUByteCodeDissass, Op2)
 {
@@ -545,6 +543,7 @@ TEST_F(ALUByteCodeDissass, Op2IntLiteral)
    auto src1 = Value::create(10, 3, false, false, false, nullptr);
    GPRValue dst(10, 2, false, false, false);
    AluOpFlags flags;
+   flags.set(AluNode::do_write);
    AluNodeOp2 op(OP2_ADD_INT, dst, src0, src1, flags);
    std::ostringstream s;
 
@@ -599,5 +598,44 @@ TEST_F(ALUByteCodeDissass, Op3LDS_Write_Rel)
    /* Mesa dissass prints OFS:1 here, why? */
    run(0x09c224248004802c,
        "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
+}
+
+class ALUGroupDissass: public testing::Test {
+protected:
+   void run (const vector<uint64_t>& bc, size_t expect_ofs,
+             const char *expect) const;
+};
+
+void ALUGroupDissass::run (const vector<uint64_t>&  bc, size_t expect_ofs,
+                           const char *expect) const
+{
+   AluGroup g;
+
+   size_t ofs = g.decode(bc, 0);
+   EXPECT_EQ(ofs, expect_ofs);
+   EXPECT_EQ(g.as_string(), expect);
+}
+
+TEST_F(ALUGroupDissass, Op3LDS_Write_Rel)
+{
+   vector<uint64_t> bc{0x09c224248004802c};
+
+   run(bc, 1,
+       "    x: LDS_WRITE_REL OFS:1             ____, R44.x, R36.x, R36.y");
+}
+
+
+TEST_F(ALUGroupDissass, Dot4_ieee)
+{
+   vector<uint64_t> bc{0x01e05f900024200cul,
+                       0x21e05f8000a4240cul,
+                       0x41e05f800124280cul,
+                       0x61e05f8081a42c0cul
+                      };
+   run(bc, 4,
+       "    x: DOT4_IEEE                       R15.x, R12.x, KC3[1].x"
+       "    y: DOT4_IEEE                       ____, R12.y, KC3[1].y"
+       "    z: DOT4_IEEE                       ____, R12.z, KC3[1].z"
+       "    w: DOT4_IEEE                       ____, R12.w, KC3[1].w");
 }
 

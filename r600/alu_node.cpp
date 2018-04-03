@@ -65,7 +65,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
       opcode &= 0x7c0;
 
       if (opcode != OP3_LDS_IDX_OP) {
-
+         flags.set(is_op3);
          auto src0 = Value::create(bc, alu_op3_src0, literal_index);
          auto src1 = Value::create(bc, alu_op3_src1, literal_index);
          auto src2 = Value::create(bc, alu_op3_src2, literal_index);
@@ -336,7 +336,10 @@ void AluNodeWithDst::print_pred(std::ostream& os) const
 
 void AluNodeWithDst::print_dst(std::ostream& os) const
 {
-   os << m_dst << ", ";
+   if (test_flag(do_write) || test_flag(is_op3))
+      os << m_dst << ", ";
+   else
+      os << "____, ";
 }
 
 void AluNodeWithDst::encode_dst_and_pred(uint64_t& bc) const
@@ -485,8 +488,7 @@ AluGroup::AluGroup():
 {
 }
 
-std::vector<uint64_t>::const_iterator
-AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
+size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
 {
    PAluNode node;
    Value::LiteralFlags lflags;
@@ -495,7 +497,7 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
    do {
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
-      node.reset(AluNode::decode(*bc++, &lflags));
+      node.reset(AluNode::decode(bc[ofs++], &lflags));
       int chan = node->dst_chan();
       if (!m_ops[chan]) {
          if (node->slot_supported(chan)) {
@@ -520,8 +522,7 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
 
    for (int lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
-         literals[lp] = *bc;
-         ++bc;
+         literals[lp] = bc[ofs++];
       }
    }
 
@@ -530,7 +531,17 @@ AluGroup::decode(std::vector<uint64_t>::const_iterator bc)
          op->set_literal_info(literals);
    }
 
-   return bc;
+   return ofs;
+}
+
+std::string AluGroup::as_string() const
+{
+   ostringstream os;
+   for (const auto& o: m_ops) {
+      if (o)
+         o->print(os);
+   }
+   return os.str();
 }
 
 bool AluGroup::encode(std::vector<uint64_t>& bc) const
