@@ -197,7 +197,7 @@ class AluGroup {
 public:
    AluGroup();
 
-   size_t decode(const std::vector<uint64_t>& bc, size_t ofs);
+   size_t decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end);
    bool encode(std::vector<uint64_t>& bc) const;
    std::string as_string() const;
 

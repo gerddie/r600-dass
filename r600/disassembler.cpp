@@ -46,12 +46,15 @@ disassembler::disassembler(const vector<uint64_t>& bc)
       auto node_type = get_cf_node_type(*i);
       switch (node_type) {
       case nt_cf_alu:
+         cf_alu_node *alu_node;
          if (require_two_quadwords(*i)) {
-            cf_instr = cf_node::pointer(new cf_alu_node(i[0],i[1]));
+            alu_node = new cf_alu_node(i[0],i[1]);
             ++i;
          } else {
-            cf_instr = cf_node::pointer(new cf_alu_node(*i));
+            alu_node = new cf_alu_node(i[0]);
          }
+         cf_instr = cf_node::pointer(alu_node);
+         alu_node->disassemble_clause(bc);
          break;
       case nt_cf_native:
          cf_instr = cf_node::pointer(new cf_native_node(*i));
@@ -75,6 +78,7 @@ disassembler::disassembler(const vector<uint64_t>& bc)
                       node_type << " encountered\n";
       }
       program.push_back(cf_instr);
+      eop = cf_instr->test_flag(cf_node::eop);
       ++i;
    }
 }

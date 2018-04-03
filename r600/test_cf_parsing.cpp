@@ -21,7 +21,7 @@
 #include <r600/disassembler.h>
 #include <gtest/gtest.h>
 
-using namespace r600; 
+using namespace r600;
 
 using std::vector;
 
@@ -62,11 +62,15 @@ TEST_F(TestDisassember, AluNopEOP)
 {
    vector<uint64_t> bc = {
       2ul | 1ul << 50 | 1ul << 61,
-      end_of_program_bit
+      end_of_program_bit,
+      0x064220f8801f00feul,
+      0x064220f8801f00feul
    };
 
    run(bc, "ALU                    ADDR:2 COUNT:2\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
        );
 }
@@ -92,19 +96,23 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
    vector<uint64_t> bc;
    cf_alu_node(cf_alu_push_before, 0, 6).append_bytecode(bc);
    cf_native_node(cf_jump, 1 << cf_node::barrier, 4).append_bytecode(bc);
-   cf_alu_node(cf_alu, 0, 7).append_bytecode(bc);
+   cf_alu_node(cf_alu, 0, 6).append_bytecode(bc);
    cf_native_node(cf_else, 0, 5, 1).append_bytecode(bc);
-   cf_alu_node(cf_alu_pop_after, 0, 8, 0).append_bytecode(bc);
+   cf_alu_node(cf_alu_pop_after, 0, 6, 0).append_bytecode(bc);
    cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
+   bc.push_back(0x064220f8801f00feul);
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "JUMP                   ADDR:4 B\n"
-           "ALU                    ADDR:7 COUNT:1\n"
+           "ALU                    ADDR:6 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "ELSE                   ADDR:5 POP:1\n"
-           "ALU_POP_AFTER          ADDR:8 COUNT:1\n"
+           "ALU_POP_AFTER          ADDR:6 COUNT:1\n"
            "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n"
+           "x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
        );
 }

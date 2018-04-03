@@ -486,14 +486,15 @@ AluGroup::AluGroup():
 {
 }
 
-size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
+size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
 {
    PAluNode node;
    Value::LiteralFlags lflags;
    bool group_should_finish = false;
+   assert(bc.size() >= end);
 
    do {
-      if (ofs >= bc.size())
+      if (ofs >= end)
          throw runtime_error("Trying to decode ALU-ops past end of byte code");
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
@@ -522,7 +523,7 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
 
    for (int lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
-         if (ofs >= bc.size())
+         if (ofs >= end)
             throw runtime_error("Trying to decode literals past end of byte code");
          literals[lp] = bc[ofs++];
       }
@@ -544,6 +545,7 @@ std::string AluGroup::as_string() const
       if (m_ops[i]) {
          os << slot_id[i] << ": ";
          m_ops[i]->print(os);
+         os << "\n";
       }
    }
    return os.str();

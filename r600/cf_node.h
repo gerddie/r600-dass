@@ -1,6 +1,6 @@
 /* -*- mia-c++  -*-
  *
- * This file is part of R600-disass a tool to disassemble R600 byte code. 
+ * This file is part of R600-disass a tool to disassemble R600 byte code.
  * Copyright (c) Genoa 2018 Gert Wollny
  *
  * R600-disass  is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #ifndef CF_NODE_H
 #define CF_NODE_H
 
-#include <r600/node.h>
+#include <r600/alu_node.h>
 #include <r600/defines.h>
 
 #include <memory>
@@ -57,6 +57,8 @@ public:
    static const uint16_t mark = 7;
    static const uint16_t sign = 8;
 
+   bool test_flag(int f) const;
+
 protected:
 
    static const char *m_index_mode_string;
@@ -68,6 +70,7 @@ private:
    void print(std::ostream& os) const override;
    uint64_t create_bytecode_byte(int i) const override;
 
+   virtual bool do_test_flag(int f) const;
 
    virtual std::string op_from_opcode(uint32_t m_opcode) const;
    virtual void print_detail(std::ostream& os) const = 0;
@@ -80,12 +83,15 @@ private:
 };
 
 class cf_node_flags {
+public:
+   bool has_flag(int f) const;
 protected:
    cf_node_flags(uint64_t bc);
    cf_node_flags(const cf_flags& flags);
    void set_flag(int flag);
    void encode_flags(uint64_t& bc) const;
    void print_flags(std::ostream& os) const;
+
 private:
    std::bitset<16> m_flags;
 };
@@ -159,6 +165,9 @@ public:
                const std::tuple<int,int,int>& kcache1,
                const std::tuple<int,int,int>& kcache2,
                const std::tuple<int,int,int>& kcache3);
+
+   void disassemble_clause(const std::vector<uint64_t>& bc);
+
 private:
    cf_alu_node(uint64_t bc, bool alu_ext);
    static uint32_t get_alu_opcode(uint64_t bc);
@@ -174,6 +183,8 @@ private:
    uint16_t m_kcache_mode[4];
    uint16_t m_kcache_addr[4];
    uint16_t m_count;
+   std::vector<AluGroup> m_clause_code;
+
    static constexpr uint64_t alt_const_bit = 1ul << 57;
 };
 
@@ -189,6 +200,8 @@ public:
                   uint16_t cf_const = 0,
                   uint16_t cond = 0);
 private:
+   bool do_test_flag(int f) const override;
+
    void print_detail(std::ostream& os) const override;
    void encode_parts(int i, uint64_t &bc) const override;
 

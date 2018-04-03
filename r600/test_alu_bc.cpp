@@ -603,15 +603,15 @@ TEST_F(ALUByteCodeDissass, Op3LDS_Write_Rel)
 class ALUGroupDissass: public testing::Test {
 protected:
    void run (const vector<uint64_t>& bc, size_t expect_ofs,
-             const char *expect) const;
+             size_t clause_length, const char *expect) const;
 };
 
 void ALUGroupDissass::run (const vector<uint64_t>&  bc, size_t expect_ofs,
-                           const char *expect) const
+                           size_t clause_length, const char *expect) const
 {
    AluGroup g;
 
-   size_t ofs = g.decode(bc, 0);
+   size_t ofs = g.decode(bc, 0, clause_length);
    EXPECT_EQ(ofs, expect_ofs);
    EXPECT_EQ(g.as_string(), expect);
 }
@@ -620,8 +620,8 @@ TEST_F(ALUGroupDissass, Op3LDS_Write_Rel)
 {
    vector<uint64_t> bc{0x09c224248004802c};
 
-   run(bc, 1,
-       "x:     LDS_WRITE_REL OFS:1             __.x, R44.x, R36.x, R36.y");
+   run(bc, 1, 1,
+       "x:     LDS_WRITE_REL OFS:1             __.x, R44.x, R36.x, R36.y\n");
 }
 
 
@@ -632,11 +632,11 @@ TEST_F(ALUGroupDissass, Dot4_ieee)
                        0x41e05f800124280cul,
                        0x61e05f8081a42c0cul
                       };
-   run(bc, 4,
-       "x:     DOT4_IEEE                       R15.x, R12.x, KC3[1].x"
-       "y:     DOT4_IEEE                       __.y, R12.y, KC3[1].y"
-       "z:     DOT4_IEEE                       __.z, R12.z, KC3[1].z"
-       "w:     DOT4_IEEE                       __.w, R12.w, KC3[1].w");
+   run(bc, 4, 4,
+       "x:     DOT4_IEEE                       R15.x, R12.x, KC3[1].x\n"
+       "y:     DOT4_IEEE                       __.y, R12.y, KC3[1].y\n"
+       "z:     DOT4_IEEE                       __.z, R12.z, KC3[1].z\n"
+       "w:     DOT4_IEEE                       __.w, R12.w, KC3[1].w\n");
 }
 
 TEST_F(ALUGroupDissass, Various_5_slot)
@@ -646,12 +646,12 @@ TEST_F(ALUGroupDissass, Various_5_slot)
                        0x41a00c90000000feul,
                        0x61a00c90000004feul,
                        0x4180011080200801ul};
-   run(bc, 5,
-       "x:     MUL_IEEE                        R12.x, R1.x, KC2[0].x"
-       "y:     MUL_IEEE                        R12.y, R1.y, KC2[0].x"
-       "z:     MOV                             R13.z, PV.x"
-       "w:     MOV                             R13.w, PV.y"
-       "t:     MUL_IEEE                        R12.z, R1.z, KC2[0].x");
+   run(bc, 5, 5,
+       "x:     MUL_IEEE                        R12.x, R1.x, KC2[0].x\n"
+       "y:     MUL_IEEE                        R12.y, R1.y, KC2[0].x\n"
+       "z:     MOV                             R13.z, PV.x\n"
+       "w:     MOV                             R13.w, PV.y\n"
+       "t:     MUL_IEEE                        R12.z, R1.z, KC2[0].x\n");
 
 }
 
@@ -663,9 +663,9 @@ TEST_F(ALUGroupDissass, Various_AluGroupEarlyFinish_xy)
       0x00804d10800000feul
    };
 
-   run(bc, 2,
-       "x:     TRUNC                           R10.x, PV.x"
-       "y:     TRUNC                           R10.y, PV.y");
+   run(bc, 2, 3,
+       "x:     TRUNC                           R10.x, PV.x\n"
+       "y:     TRUNC                           R10.y, PV.y\n");
 }
 
 TEST_F(ALUGroupDissass, AluGroupEarlyFinish_x)
@@ -675,6 +675,6 @@ TEST_F(ALUGroupDissass, AluGroupEarlyFinish_x)
       0x00c00c90800000ddul
    };
 
-   run(bc, 1,
-       "x:     LDS_READ_RET OFS:0              __.x, PV.x");
+   run(bc, 1, 2,
+       "x:     LDS_READ_RET OFS:0              __.x, PV.x\n");
 }

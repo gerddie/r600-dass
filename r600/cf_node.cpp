@@ -45,6 +45,17 @@ uint32_t cf_node::opcode() const
    return m_opcode;
 }
 
+bool cf_node::test_flag(int f) const
+{
+  return do_test_flag(f);
+}
+
+bool cf_node::do_test_flag(int f) const
+{
+   (void)f;
+   return false;
+}
+
 uint64_t cf_node::create_bytecode_byte(int i) const
 {
    uint64_t result = static_cast<uint64_t>(m_opcode) << 54;
@@ -285,6 +296,18 @@ std::string cf_alu_node::op_from_opcode(uint32_t opcode) const
    }
 }
 
+void cf_alu_node::disassemble_clause(const std::vector<uint64_t>& bc)
+{
+   size_t ofs = address();
+   size_t end = address() + m_count + 1;
+
+   while (ofs < end) {
+      AluGroup g;
+      ofs = g.decode(bc, ofs, end);
+      m_clause_code.push_back(g);
+   }
+}
+
 void cf_alu_node::print_detail(std::ostream& os) const
 {
    print_address(os);
@@ -312,6 +335,8 @@ void cf_alu_node::print_detail(std::ostream& os) const
       }
    }
    print_flags(os);
+   for (const auto& g: m_clause_code)
+      os << "\n" << g.as_string();
 }
 
 cf_node_flags::cf_node_flags(uint64_t bc)
@@ -321,6 +346,11 @@ cf_node_flags::cf_node_flags(uint64_t bc)
 
    if (bc & whole_quad_mode_bit)
       m_flags.set(cf_node::wqm);
+}
+
+bool cf_node_flags::has_flag(int f) const
+{
+   return m_flags.test(f);
 }
 
 cf_node_flags::cf_node_flags(const cf_flags& flags):
@@ -463,6 +493,11 @@ cf_native_node::cf_native_node(uint16_t opcode,
 uint32_t cf_node::get_opcode(uint64_t bc)
 {
    return (bc >> 54) & 0xFF;
+}
+
+bool cf_native_node::do_test_flag(int f) const
+{
+   return m_word1.has_flag(f);
 }
 
 uint32_t cf_node::get_address(uint64_t bc)
