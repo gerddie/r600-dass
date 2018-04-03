@@ -493,6 +493,8 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
    bool group_should_finish = false;
 
    do {
+      if (ofs >= bc.size())
+         throw runtime_error("Trying to decode ALU-ops past end of byte code");
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
       node.reset(AluNode::decode(bc[ofs++], &lflags));
@@ -520,6 +522,8 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs)
 
    for (int lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
+         if (ofs >= bc.size())
+            throw runtime_error("Trying to decode literals past end of byte code");
          literals[lp] = bc[ofs++];
       }
    }
