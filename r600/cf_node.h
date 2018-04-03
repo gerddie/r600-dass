@@ -59,13 +59,14 @@ public:
 
    bool test_flag(int f) const;
 
+   uint32_t opcode() const;
+
 protected:
 
    static const char *m_index_mode_string;
    static uint32_t get_opcode(uint64_t bc);
    static uint32_t get_address(uint64_t bc);
 
-   uint32_t opcode() const;
 private:
    void print(std::ostream& os) const override;
    uint64_t create_bytecode_byte(int i) const override;

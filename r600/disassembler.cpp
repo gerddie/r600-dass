@@ -26,6 +26,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cassert>
+#include <stack>
 
 namespace r600 {
 
@@ -38,10 +39,20 @@ disassembler::disassembler(const vector<uint64_t>& bc)
 {
    bool eop = false;
    auto i = bc.begin();
+   uint32_t addr = 0;
 
    cf_node::pointer cf_instr;
+   cf_node::pointer cur_scope;
+   std::stack<cf_node::pointer> prog;
+   std::stack<uint32_t> ifelse_scope_end;
 
    while (i != bc.end() && !eop) {
+
+      if (!ifelse_scope_end.empty() && addr ==  ifelse_scope_end.top()) {
+         ifelse_scope_end.pop();
+         cur_scope = prog.top();
+         prog.pop();
+      }
 
       auto node_type = get_cf_node_type(*i);
       switch (node_type) {
@@ -56,9 +67,23 @@ disassembler::disassembler(const vector<uint64_t>& bc)
          cf_instr = cf_node::pointer(alu_node);
          alu_node->disassemble_clause(bc);
          break;
-      case nt_cf_native:
-         cf_instr = cf_node::pointer(new cf_native_node(*i));
+      case nt_cf_native: {
+         cf_native_node* n = new cf_native_node(*i);
+         cf_instr = cf_node::pointer(n);
+         switch (n->opcode()) {
+         case cf_jump:
+            ifelse_scope_end.push(n->address());
+            prog.push(cur_scope);
+            cur_scope = cf_instr;
+            break;
+         case cf_else:
+            ifelse_scope_end.push(n->address());
+            prog.push(cur_scope);
+            cur_scope = cf_instr;
+            break;
+         }
          break;
+      }
       case nt_cf_mem_scratch:
       case nt_cf_mem_stream:
       case nt_cf_mem_ring:
@@ -79,7 +104,8 @@ disassembler::disassembler(const vector<uint64_t>& bc)
       }
       program.push_back(cf_instr);
       eop = cf_instr->test_flag(cf_node::eop);
-      ++i;
+
+      ++i; ++addr;
    }
 }
 
