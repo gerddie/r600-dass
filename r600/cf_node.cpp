@@ -62,6 +62,11 @@ void CFNode::set_nesting_depth(int nd)
    m_nesting_depth = nd;
 }
 
+int CFNode::get_nesting_depth() const
+{
+   return m_nesting_depth;
+}
+
 uint64_t CFNode::create_bytecode_byte(int i) const
 {
    uint64_t result = static_cast<uint64_t>(m_opcode) << 54;
@@ -71,7 +76,10 @@ uint64_t CFNode::create_bytecode_byte(int i) const
 
 void CFNode::print(std::ostream& os) const
 {
-   os << std::setw(22) << std::left << op_from_opcode(m_opcode);
+   if (m_nesting_depth > 0)
+      os << std::setw(4  * m_nesting_depth) << " ";
+   os  << std::setw(22)
+       << std::left << op_from_opcode(m_opcode);
    print_detail(os);
 }
 
@@ -321,7 +329,7 @@ void CFAluNode::print_detail(std::ostream& os) const
    os << " COUNT:" << m_count;
    for (int i = 0; i < m_nkcache; ++i) {
       if (! (i & 1))
-         os << "\n";
+         os << "\n" << std::setw(4 * get_nesting_depth()) << " ";
       os << "    KC" << i << ": " << m_kcache_bank[i]
             << "@0x" << std::setbase(16) << m_kcache_addr[i]
                << std::setbase(10);
@@ -344,7 +352,7 @@ void CFAluNode::print_detail(std::ostream& os) const
    print_flags(os);
    os << "\n";
    for (const auto& g: m_clause_code)
-      os << "\n" << g.as_string(4);
+      os << "\n" << g.as_string(4 * get_nesting_depth() +4);
 }
 
 CFNodeFlags::CFNodeFlags(uint64_t bc)
@@ -545,7 +553,7 @@ void CFNativeNode::print_detail(std::ostream& os) const
    case cf_push:
    case cf_tc:
    case cf_vc:
-      os << " ADDR:" << std::setbase(16) << address();
+      os << " ADDR:" << address();
       break;
    case cf_wait_ack:
       os << " WCNT:" << address();

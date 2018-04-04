@@ -43,7 +43,7 @@ TEST_F(ProgramDisassTest, Various_5_slot)
 
    const char *expect =
        "ALU                    ADDR:2 COUNT:3\n"
-       "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+       "     KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
        "    x:     MUL_IEEE                        R12.x, R1.x, KC2[0].x\n"
        "    y:     MUL_IEEE                        R12.y, R1.y, KC2[0].x\n"
        "    z:     MUL_IEEE                        R12.z, R1.z, KC2[0].x\n\n"

@@ -68,7 +68,7 @@ TEST_F(TestDisassember, AluNopEOP)
    };
 
    run(bc, "ALU                    ADDR:2 COUNT:2\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "     KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
            "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
@@ -95,7 +95,7 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
 {
    vector<uint64_t> bc;
    CFAluNode(cf_alu_push_before, 0, 6, 1).append_bytecode(bc);
-   CFNativeNode(cf_jump, 1 << CFNode::barrier, 4).append_bytecode(bc);
+   CFNativeNode(cf_jump, 1 << CFNode::barrier, 3).append_bytecode(bc);
    CFAluNode(cf_alu, 0, 6, 1).append_bytecode(bc);
    CFNativeNode(cf_else, 0, 5, 1).append_bytecode(bc);
    CFAluNode(cf_alu_pop_after, 0, 6, 1).append_bytecode(bc);
@@ -103,16 +103,16 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
    bc.push_back(0x064220f8801f00feul);
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "     KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
            "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
-           "JUMP                   ADDR:4 B\n"
-           "ALU                    ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
-           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "JUMP                   ADDR:3 B\n"
+           "    ALU                    ADDR:6 COUNT:1\n"
+           "        KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "        x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "ELSE                   ADDR:5 POP:1\n"
-           "ALU_POP_AFTER          ADDR:6 COUNT:1\n"
-           "    KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
-           "    x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
+           "    ALU_POP_AFTER          ADDR:6 COUNT:1\n"
+           "        KC0: 0@0x0 nop    KC1: 0@0x0 nop\n\n"
+           "        x:     LDS_READ_RET OFS:0              __.x, PV.x\n\n"
            "NOP                    EOP\n"
        );
 }
@@ -126,7 +126,7 @@ TEST_F(TestDisassember, LoopBreakEOP)
    CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
-           "LOOP_BREAK             ADDR:2\n"
+           "    LOOP_BREAK             ADDR:2\n"
            "LOOP_END               ADDR:0\n"
            "NOP                    EOP\n"
        );
@@ -141,7 +141,7 @@ TEST_F(TestDisassember, LoopContinueEOP)
    CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
-           "LOOP_CONTINUE          ADDR:2\n"
+           "    LOOP_CONTINUE          ADDR:2\n"
            "LOOP_END               ADDR:0\n"
            "NOP                    EOP\n"
        );
@@ -177,9 +177,11 @@ TEST_F(TestDisassember, AllCFOpsEOP)
       static_cast<uint64_t>(cf_loop_start_no_al) << 54,
       static_cast<uint64_t>(cf_loop_continue ) << 54,
       static_cast<uint64_t>(cf_loop_break ) << 54,
-      static_cast<uint64_t>(cf_jump ) << 54,
+      static_cast<uint64_t>(cf_loop_end) << 54,
+      static_cast<uint64_t>(cf_loop_end) << 54,
+      CFNativeNode(cf_jump, 0, 14).get_bytecode_byte(0),
       static_cast<uint64_t>(cf_push ) << 54,
-      static_cast<uint64_t>(cf_else ) << 54,
+      CFNativeNode(cf_else, 0, 16).get_bytecode_byte(0),
       static_cast<uint64_t>(cf_pop ) << 54,
       static_cast<uint64_t>(cf_call ) << 54,
       static_cast<uint64_t>(cf_call_fs ) << 54,
@@ -232,13 +234,15 @@ TEST_F(TestDisassember, AllCFOpsEOP)
        "LOOP_START             ADDR:0\n"
        "LOOP_END               ADDR:0\n"
        "LOOP_START_DX10        ADDR:0\n"
-       "LOOP_START_NO_AL       ADDR:0\n"
-       "LOOP_CONTINUE          ADDR:0\n"
-       "LOOP_BREAK             ADDR:0\n"
-       "JUMP                   ADDR:0\n"
-       "PUSH                   ADDR:0\n"
-       "ELSE                   ADDR:0\n"
-       "POP                   \n"
+       "    LOOP_START_NO_AL       ADDR:0\n"
+       "        LOOP_CONTINUE          ADDR:0\n"
+       "        LOOP_BREAK             ADDR:0\n"
+       "    LOOP_END               ADDR:0\n"
+       "LOOP_END               ADDR:0\n"
+       "JUMP                   ADDR:14\n"
+       "    PUSH                   ADDR:0\n"
+       "ELSE                   ADDR:16\n"
+       "    POP                   \n"
           /* 15 - 17 reserved */
        "CALL                   ADDR:0\n"
        "CALL_FS                ADDR:0\n"
