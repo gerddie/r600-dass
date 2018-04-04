@@ -71,30 +71,7 @@ disassembler::disassembler(const vector<uint64_t>& bc)
          alu_node->disassemble_clause(bc);
          break;
       case nt_cf_native: {
-         CFNativeNode* n = new CFNativeNode(*i);
-         cf_instr = CFNode::pointer(n);
-         switch (n->opcode()) {
-         case cf_jump:
-         case cf_else:
-            ifelse_scope_end.push(n->address());
-            prog.push(cur_scope);
-            cur_scope = cf_instr;
-            ++nesting_depth;
-            break;
-         case cf_loop_start:
-         case cf_loop_start_dx10:
-         case cf_loop_start_no_al:
-            loop_parent_scope.push(cur_scope);
-            cur_scope = cf_instr;
-            ++nesting_depth;
-            break;
-         case cf_loop_end:
-            assert(!loop_parent_scope.empty());
-            cur_scope = loop_parent_scope.top();
-            loop_parent_scope.pop();
-            --nesting_depth;
-            break;
-         }
+         cf_instr = CFNode::pointer(new CFNativeNode(*i));
          break;
       }
       case nt_cf_mem_scratch:
@@ -116,6 +93,35 @@ disassembler::disassembler(const vector<uint64_t>& bc)
                       node_type << " encountered\n";
       }
       program.push_back(cf_instr);
+      cf_instr->set_nesting_depth(nesting_depth);
+
+      if (node_type == nt_cf_native) {
+         const CFNativeNode& n = static_cast<const CFNativeNode&>(*cf_instr);
+         switch (cf_instr->opcode()) {
+         case cf_jump:
+         case cf_else:
+            ifelse_scope_end.push(n.address());
+            prog.push(cur_scope);
+            cur_scope = cf_instr;
+            ++nesting_depth;
+            break;
+         case cf_loop_start:
+         case cf_loop_start_dx10:
+         case cf_loop_start_no_al:
+            loop_parent_scope.push(cur_scope);
+            cur_scope = cf_instr;
+            ++nesting_depth;
+            break;
+         case cf_loop_end:
+            assert(!loop_parent_scope.empty());
+            cur_scope = loop_parent_scope.top();
+            loop_parent_scope.pop();
+            --nesting_depth;
+            cf_instr->set_nesting_depth(nesting_depth);
+            break;
+         }
+      }
+
       eop = cf_instr->test_flag(CFNode::eop);
 
       ++i; ++addr;

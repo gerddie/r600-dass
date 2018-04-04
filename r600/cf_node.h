@@ -61,6 +61,8 @@ public:
 
    uint32_t opcode() const;
 
+   void set_nesting_depth(int nd);
+
 protected:
 
    static const char *m_index_mode_string;

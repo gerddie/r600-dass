@@ -57,6 +57,11 @@ bool CFNode::do_test_flag(int f) const
    return false;
 }
 
+void CFNode::set_nesting_depth(int nd)
+{
+   m_nesting_depth = nd;
+}
+
 uint64_t CFNode::create_bytecode_byte(int i) const
 {
    uint64_t result = static_cast<uint64_t>(m_opcode) << 54;
