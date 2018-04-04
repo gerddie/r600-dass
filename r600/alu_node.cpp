@@ -494,8 +494,6 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
    assert(bc.size() >= end);
 
    do {
-      if (ofs >= end)
-         throw runtime_error("Trying to decode ALU-ops past end of byte code");
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
       node.reset(AluNode::decode(bc[ofs++], &lflags));
@@ -517,7 +515,7 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
                              "trans that is not allowed there");
       }
       group_should_finish = true;
-   } while (!node->last_instr());
+   } while (!node->last_instr() && ofs < end);
 
    uint64_t literals[2];
 

@@ -50,7 +50,7 @@ disassembler::disassembler(const vector<uint64_t>& bc)
 
    while (i != bc.end() && !eop) {
 
-      if (!ifelse_scope_end.empty() && addr ==  ifelse_scope_end.top()) {
+      while (!ifelse_scope_end.empty() && addr ==  ifelse_scope_end.top()) {
          ifelse_scope_end.pop();
          cur_scope = prog.top();
          prog.pop();
