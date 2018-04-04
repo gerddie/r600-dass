@@ -40,10 +40,12 @@ disassembler::disassembler(const vector<uint64_t>& bc)
    bool eop = false;
    auto i = bc.begin();
    uint32_t addr = 0;
+   int nesting_depth = 0;
 
-   cf_node::pointer cf_instr;
-   cf_node::pointer cur_scope;
-   std::stack<cf_node::pointer> prog;
+   CFNode::pointer cf_instr;
+   CFNode::pointer cur_scope;
+   std::stack<CFNode::pointer> loop_parent_scope;
+   std::stack<CFNode::pointer> prog;
    std::stack<uint32_t> ifelse_scope_end;
 
    while (i != bc.end() && !eop) {
@@ -52,34 +54,45 @@ disassembler::disassembler(const vector<uint64_t>& bc)
          ifelse_scope_end.pop();
          cur_scope = prog.top();
          prog.pop();
+         --nesting_depth;
       }
 
       auto node_type = get_cf_node_type(*i);
       switch (node_type) {
       case nt_cf_alu:
-         cf_alu_node *alu_node;
+         CFAluNode *alu_node;
          if (require_two_quadwords(*i)) {
-            alu_node = new cf_alu_node(i[0],i[1]);
+            alu_node = new CFAluNode(i[0],i[1]);
             ++i;
          } else {
-            alu_node = new cf_alu_node(i[0]);
+            alu_node = new CFAluNode(i[0]);
          }
-         cf_instr = cf_node::pointer(alu_node);
+         cf_instr = CFNode::pointer(alu_node);
          alu_node->disassemble_clause(bc);
          break;
       case nt_cf_native: {
-         cf_native_node* n = new cf_native_node(*i);
-         cf_instr = cf_node::pointer(n);
+         CFNativeNode* n = new CFNativeNode(*i);
+         cf_instr = CFNode::pointer(n);
          switch (n->opcode()) {
          case cf_jump:
-            ifelse_scope_end.push(n->address());
-            prog.push(cur_scope);
-            cur_scope = cf_instr;
-            break;
          case cf_else:
             ifelse_scope_end.push(n->address());
             prog.push(cur_scope);
             cur_scope = cf_instr;
+            ++nesting_depth;
+            break;
+         case cf_loop_start:
+         case cf_loop_start_dx10:
+         case cf_loop_start_no_al:
+            loop_parent_scope.push(cur_scope);
+            cur_scope = cf_instr;
+            ++nesting_depth;
+            break;
+         case cf_loop_end:
+            assert(!loop_parent_scope.empty());
+            cur_scope = loop_parent_scope.top();
+            loop_parent_scope.pop();
+            --nesting_depth;
             break;
          }
          break;
@@ -87,23 +100,23 @@ disassembler::disassembler(const vector<uint64_t>& bc)
       case nt_cf_mem_scratch:
       case nt_cf_mem_stream:
       case nt_cf_mem_ring:
-         cf_instr = cf_node::pointer(new cf_mem_ring_node(*i));
+         cf_instr = CFNode::pointer(new CFMemRingNode(*i));
          break;
       case nt_cf_mem_rat:
-         cf_instr = cf_node::pointer(new cf_rat_node(*i));
+         cf_instr = CFNode::pointer(new CFRatNode(*i));
          break;
       case nt_cf_mem_export:
-         cf_instr = cf_node::pointer(new cf_mem_export_node(*i));
+         cf_instr = CFNode::pointer(new CFMemExportNode(*i));
          break;
       case nt_cf_export:
-         cf_instr = cf_node::pointer(new cf_export_node(*i));
+         cf_instr = CFNode::pointer(new CFExportNode(*i));
          break;
       default:
          std::cerr << std::setbase(16) << *i << ": unknown node type " <<
                       node_type << " encountered\n";
       }
       program.push_back(cf_instr);
-      eop = cf_instr->test_flag(cf_node::eop);
+      eop = cf_instr->test_flag(CFNode::eop);
 
       ++i; ++addr;
    }

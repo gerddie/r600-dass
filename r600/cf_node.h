@@ -41,11 +41,11 @@ extern const uint64_t rw_rel_bit;
 
 using cf_flags = const std::bitset<16>;
 
-class cf_node : public node {
+class CFNode : public node {
 public:
-   using pointer = std::shared_ptr<cf_node>;
+   using pointer = std::shared_ptr<CFNode>;
 
-   cf_node(int bytecode_size, uint32_t opcode);
+   CFNode(int bytecode_size, uint32_t opcode);
 
    static const uint16_t vpm = 0;
    static const uint16_t eop = 1;
@@ -78,17 +78,17 @@ private:
    virtual void encode_parts(int i, uint64_t& bc) const = 0;
 
    uint32_t m_opcode;
-
-   pointer parent;
-   std::vector<pointer> children;
+   pointer m_parent;
+   std::vector<pointer> m_children;
+   int m_nesting_depth;
 };
 
-class cf_node_flags {
+class CFNodeFlags {
 public:
    bool has_flag(int f) const;
 protected:
-   cf_node_flags(uint64_t bc);
-   cf_node_flags(const cf_flags& flags);
+   CFNodeFlags(uint64_t bc);
+   CFNodeFlags(const cf_flags& flags);
    void set_flag(int flag);
    void encode_flags(uint64_t& bc) const;
    void print_flags(std::ostream& os) const;
@@ -97,14 +97,14 @@ private:
    std::bitset<16> m_flags;
 };
 
-class cf_node_cf_word1: public cf_node_flags {
+class CFNodeCFWord1: public CFNodeFlags {
 public:
-   cf_node_cf_word1(uint64_t word1);
-   cf_node_cf_word1(uint16_t pop_count,
-                    uint16_t cf_const,
-                    uint16_t cond,
-                    uint16_t count,
-                    const cf_flags& flags);
+   CFNodeCFWord1(uint64_t word1);
+   CFNodeCFWord1(uint16_t pop_count,
+                 uint16_t cf_const,
+                 uint16_t cond,
+                 uint16_t count,
+                 const cf_flags& flags);
 
    void print(std::ostream& os) const;
    uint64_t encode() const;
@@ -117,13 +117,13 @@ private:
    uint16_t m_count;
 };
 
-class cf_node_alloc_export_word1: public cf_node_flags {
+class CFNodeAllocExportWord1: public CFNodeFlags {
 public:
 
-   cf_node_alloc_export_word1(unsigned array_size,
-                              unsigned comp_mask,
-                              unsigned burst_count,
-                              const cf_flags& flags);
+   CFNodeAllocExportWord1(unsigned array_size,
+                          unsigned comp_mask,
+                          unsigned burst_count,
+                          const cf_flags& flags);
    void print(std::ostream& os) const;
    uint64_t encode() const;
 private:
@@ -132,10 +132,10 @@ private:
    unsigned m_burst_count;
 };
 
-class cf_node_with_address : public cf_node {
+class CFNodeWithAddress : public CFNode {
 public:
-   cf_node_with_address(unsigned bytecode_size, uint32_t opcode,
-                        uint32_t addresss);
+   CFNodeWithAddress(unsigned bytecode_size,
+                     uint32_t opcode, uint32_t addresss);
    void print_address(std::ostream& os) const;
    uint32_t address() const;
 
@@ -143,34 +143,34 @@ private:
    uint32_t m_addr;
 };
 
-class cf_alu_node: public cf_node_with_address,
-      protected cf_node_flags {
+class CFAluNode: public CFNodeWithAddress,
+      protected CFNodeFlags {
 public:
-   cf_alu_node(uint64_t bc);
-   cf_alu_node(uint64_t bc, uint64_t bc_ext);
-   cf_alu_node(uint16_t opcode,
-               const cf_flags& flags,
-               uint32_t addr,
-               uint16_t count = 0,
-               const std::tuple<int, int,int>& kcache0 =
-                     std::make_tuple(0,0,0),
-               const std::tuple<int, int,int>& kcache1 =
-                     std::make_tuple(0,0,0));
+   CFAluNode(uint64_t bc);
+   CFAluNode(uint64_t bc, uint64_t bc_ext);
+   CFAluNode(uint16_t opcode,
+             const cf_flags& flags,
+             uint32_t addr,
+             uint16_t count = 0,
+             const std::tuple<int, int,int>& kcache0 =
+         std::make_tuple(0,0,0),
+             const std::tuple<int, int,int>& kcache1 =
+         std::make_tuple(0,0,0));
 
-   cf_alu_node(uint16_t opcode,
-               const cf_flags& flags,
-               uint32_t addr,
-               uint16_t count,
-               const std::vector<uint16_t>& mode,
-               const std::tuple<int,int,int>& kcache0,
-               const std::tuple<int,int,int>& kcache1,
-               const std::tuple<int,int,int>& kcache2,
-               const std::tuple<int,int,int>& kcache3);
+   CFAluNode(uint16_t opcode,
+             const cf_flags& flags,
+             uint32_t addr,
+             uint16_t count,
+             const std::vector<uint16_t>& mode,
+             const std::tuple<int,int,int>& kcache0,
+             const std::tuple<int,int,int>& kcache1,
+             const std::tuple<int,int,int>& kcache2,
+             const std::tuple<int,int,int>& kcache3);
 
    void disassemble_clause(const std::vector<uint64_t>& bc);
 
 private:
-   cf_alu_node(uint64_t bc, bool alu_ext);
+   CFAluNode(uint64_t bc, bool alu_ext);
    static uint32_t get_alu_opcode(uint64_t bc);
    static uint32_t get_alu_address(uint64_t bc);
 
@@ -189,17 +189,17 @@ private:
    static constexpr uint64_t alt_const_bit = 1ul << 57;
 };
 
-class cf_native_node : public cf_node_with_address {
+class CFNativeNode : public CFNodeWithAddress {
 public:
-   cf_native_node(uint64_t bc);
-   cf_native_node(uint16_t opcode,
-                  const cf_flags &flags,
-                  uint32_t address = 0,
-                  uint16_t pop_count = 0,
-                  uint16_t count = 0,
-                  uint16_t jts = 0,
-                  uint16_t cf_const = 0,
-                  uint16_t cond = 0);
+   CFNativeNode(uint64_t bc);
+   CFNativeNode(uint16_t opcode,
+                const cf_flags &flags,
+                uint32_t address = 0,
+                uint16_t pop_count = 0,
+                uint16_t count = 0,
+                uint16_t jts = 0,
+                uint16_t cf_const = 0,
+                uint16_t cond = 0);
 private:
    bool do_test_flag(int f) const override;
 
@@ -207,25 +207,25 @@ private:
    void encode_parts(int i, uint64_t &bc) const override;
 
    uint16_t m_jumptable_se;
-   cf_node_cf_word1 m_word1;
+   CFNodeCFWord1 m_word1;
 
    static const char m_jts_names[6][3];
 };
 
-class cf_gws_node : public cf_node {
+class CFGwsNode : public CFNode {
 public:
-   cf_gws_node(uint64_t bc);
-   cf_gws_node(uint32_t opcode,
-               short gws_opcode,
-               const cf_flags &flags,
-               uint16_t pop_count,
-               uint16_t cf_const,
-               uint16_t cond,
-               uint16_t count,
-               short value,
-               short resources,
-               short val_index_mode,
-               short res_index_mode);
+   CFGwsNode(uint64_t bc);
+   CFGwsNode(uint32_t opcode,
+             short gws_opcode,
+             const cf_flags &flags,
+             uint16_t pop_count,
+             uint16_t cf_const,
+             uint16_t cond,
+             uint16_t count,
+             short value,
+             short resources,
+             short val_index_mode,
+             short res_index_mode);
 
 private:
    void print_detail(std::ostream& os) const override;
@@ -236,21 +236,21 @@ private:
    uint16_t m_val_index_mode;
    uint16_t m_rsrc_index_mode;
    uint16_t m_gws_opcode;
-   cf_node_cf_word1 m_word1;
+   CFNodeCFWord1 m_word1;
 };
 
-class cf_mem_node : public cf_node, protected cf_node_flags {
+class CFMemNode : public CFNode, protected CFNodeFlags {
 
 public:
-   cf_mem_node(uint64_t bc);
+   CFMemNode(uint64_t bc);
 
-   cf_mem_node(uint16_t opcode,
-               uint16_t type,
-               uint16_t rw_gpr,
-               uint16_t index_gpr,
-               uint16_t elem_size,
-               uint16_t burst_count,
-               const cf_flags &flags);
+   CFMemNode(uint16_t opcode,
+             uint16_t type,
+             uint16_t rw_gpr,
+             uint16_t index_gpr,
+             uint16_t elem_size,
+             uint16_t burst_count,
+             const cf_flags &flags);
 
 protected:
    enum types {
@@ -278,19 +278,19 @@ private:
    uint16_t m_burst_count;
 };
 
-class cf_mem_comp_node : public cf_mem_node {
+class CFMemCompNode : public CFMemNode {
 public:
-   cf_mem_comp_node(uint64_t bc);
+   CFMemCompNode(uint64_t bc);
 
-   cf_mem_comp_node(uint16_t opcode,
-                    uint16_t type,
-                    uint16_t rw_gpr,
-                    uint16_t index_gpr,
-                    uint16_t elem_size,
-                    uint32_t array_size,
-                    uint16_t comp_mask,
-                    uint16_t burst_count,
-                    const cf_flags &flags);
+   CFMemCompNode(uint16_t opcode,
+                 uint16_t type,
+                 uint16_t rw_gpr,
+                 uint16_t index_gpr,
+                 uint16_t elem_size,
+                 uint32_t array_size,
+                 uint16_t comp_mask,
+                 uint16_t burst_count,
+                 const cf_flags &flags);
 private:
    void print_mem_detail(std::ostream& os) const override final;
    void encode_mem_parts(uint64_t& bc) const override final;
@@ -300,21 +300,21 @@ private:
    uint16_t m_comp_mask;
 };
 
-class cf_rat_node : public cf_mem_comp_node {
+class CFRatNode : public CFMemCompNode {
 public:
-   cf_rat_node(uint64_t bc);
-   cf_rat_node(uint16_t opcode,
-               uint16_t rat_inst,
-               uint16_t rat_id,
-               uint16_t rat_index_mode,
-               uint16_t type,
-               uint16_t rw_gpr,
-               uint16_t index_gpr,
-               uint16_t elem_size,
-               uint32_t array_size,
-               uint16_t comp_mask,
-               uint16_t burst_count,
-               const cf_flags &flags);
+   CFRatNode(uint64_t bc);
+   CFRatNode(uint16_t opcode,
+             uint16_t rat_inst,
+             uint16_t rat_id,
+             uint16_t rat_index_mode,
+             uint16_t type,
+             uint16_t rw_gpr,
+             uint16_t index_gpr,
+             uint16_t elem_size,
+             uint32_t array_size,
+             uint16_t comp_mask,
+             uint16_t burst_count,
+             const cf_flags &flags);
 
 
 private:
@@ -329,38 +329,38 @@ private:
 };
 
 /* Scratch, stream, and ring buffers */
-class cf_mem_ring_node: public cf_mem_comp_node {
+class CFMemRingNode: public CFMemCompNode {
 public:
-   cf_mem_ring_node(uint64_t bc);
+   CFMemRingNode(uint64_t bc);
 
-   cf_mem_ring_node(uint16_t opcode,
-                    uint16_t type,
-                    uint16_t rw_gpr,
-                    uint16_t index_gpr,
-                    uint16_t elem_size,
-                    uint16_t array_size,
-                    uint16_t array_base,
-                    uint16_t comp_mask,
-                    uint16_t burst_count,
-                    const cf_flags &flags);
+   CFMemRingNode(uint16_t opcode,
+                 uint16_t type,
+                 uint16_t rw_gpr,
+                 uint16_t index_gpr,
+                 uint16_t elem_size,
+                 uint16_t array_size,
+                 uint16_t array_base,
+                 uint16_t comp_mask,
+                 uint16_t burst_count,
+                 const cf_flags &flags);
 private:
    void print_export_detail(std::ostream& os) const override final;
    void encode_export_parts(uint64_t& bc) const override final;
    uint16_t m_array_base;
 };
 
-class cf_mem_export_node: public cf_mem_node {
+class CFMemExportNode: public CFMemNode {
 public:
-   cf_mem_export_node(uint64_t bc);
-   cf_mem_export_node(uint16_t opcode,
-                      uint16_t type,
-                      uint16_t rw_gpr,
-                      uint16_t index_gpr,
-                      uint16_t elem_size,
-                      uint16_t array_base,
-                      uint16_t burst_count,
-                      const std::vector<unsigned>& sel,
-                      const cf_flags &flags);
+   CFMemExportNode(uint64_t bc);
+   CFMemExportNode(uint16_t opcode,
+                   uint16_t type,
+                   uint16_t rw_gpr,
+                   uint16_t index_gpr,
+                   uint16_t elem_size,
+                   uint16_t array_base,
+                   uint16_t burst_count,
+                   const std::vector<unsigned>& sel,
+                   const cf_flags &flags);
 
 private:
    void print_mem_detail(std::ostream& os) const override;
@@ -369,17 +369,17 @@ private:
    std::vector<unsigned> m_sel;
 };
 
-class cf_export_node: public cf_mem_node {
+class CFExportNode: public CFMemNode {
 public:
-   cf_export_node(uint64_t bc);
-   cf_export_node(uint16_t opcode,
-                  uint16_t type,
-                  uint16_t rw_gpr,
-                  uint16_t index_gpr,
-                  uint16_t array_base,
-                  uint16_t burst_count,
-                  const std::vector<unsigned>& sel,
-                  const cf_flags &flags);
+   CFExportNode(uint64_t bc);
+   CFExportNode(uint16_t opcode,
+                uint16_t type,
+                uint16_t rw_gpr,
+                uint16_t index_gpr,
+                uint16_t array_base,
+                uint16_t burst_count,
+                const std::vector<unsigned>& sel,
+                const cf_flags &flags);
 private:
    static const char *m_type_string[4];
    void print_mem_detail(std::ostream& os) const override;

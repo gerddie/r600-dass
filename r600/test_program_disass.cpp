@@ -33,8 +33,8 @@ using ProgramDisassTest = testing::Test;
 TEST_F(ProgramDisassTest, Various_5_slot)
 {
    vector<uint64_t> bc;
-   cf_alu_node(cf_alu, 0, 2, 2).append_bytecode(bc);
-   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
+   CFAluNode(cf_alu, 0, 2, 3).append_bytecode(bc);
+   CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
    bc.push_back(0x0180011000200001ul);
    bc.push_back(0x2180011000200401ul);
    bc.push_back(0x4180011080200801ul);

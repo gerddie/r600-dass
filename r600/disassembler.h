@@ -53,7 +53,7 @@ private:
    ECFNodeType get_cf_node_type(uint64_t bc);
 
 
-   std::vector<cf_node::pointer> program;
+   std::vector<CFNode::pointer> program;
 };
 
 }

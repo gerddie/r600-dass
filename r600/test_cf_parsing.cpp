@@ -77,8 +77,8 @@ TEST_F(TestDisassember, AluNopEOP)
 
 TEST_F(TestDisassember, LoopEOP)
 {
-   cf_native_node loop_begin(cf_loop_start_dx10, 0, 1);
-   cf_native_node loop_end(cf_loop_end, 0, 0);
+   CFNativeNode loop_begin(cf_loop_start_dx10, 0, 1);
+   CFNativeNode loop_end(cf_loop_end, 0, 0);
 
    vector<uint64_t> bc;
    loop_begin.append_bytecode(bc);
@@ -94,12 +94,12 @@ TEST_F(TestDisassember, LoopEOP)
 TEST_F(TestDisassember, JUMPElseNopEOP)
 {
    vector<uint64_t> bc;
-   cf_alu_node(cf_alu_push_before, 0, 6).append_bytecode(bc);
-   cf_native_node(cf_jump, 1 << cf_node::barrier, 4).append_bytecode(bc);
-   cf_alu_node(cf_alu, 0, 6).append_bytecode(bc);
-   cf_native_node(cf_else, 0, 5, 1).append_bytecode(bc);
-   cf_alu_node(cf_alu_pop_after, 0, 6, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
+   CFAluNode(cf_alu_push_before, 0, 6, 1).append_bytecode(bc);
+   CFNativeNode(cf_jump, 1 << CFNode::barrier, 4).append_bytecode(bc);
+   CFAluNode(cf_alu, 0, 6, 1).append_bytecode(bc);
+   CFNativeNode(cf_else, 0, 5, 1).append_bytecode(bc);
+   CFAluNode(cf_alu_pop_after, 0, 6, 1).append_bytecode(bc);
+   CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
    bc.push_back(0x064220f8801f00feul);
 
    run(bc, "ALU_PUSH_BEFORE        ADDR:6 COUNT:1\n"
@@ -120,10 +120,10 @@ TEST_F(TestDisassember, JUMPElseNopEOP)
 TEST_F(TestDisassember, LoopBreakEOP)
 {
    vector<uint64_t> bc;
-   cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
-   cf_native_node(cf_loop_break, 0, 2).append_bytecode(bc);
-   cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
+   CFNativeNode(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
+   CFNativeNode(cf_loop_break, 0, 2).append_bytecode(bc);
+   CFNativeNode(cf_loop_end, 0, 0).append_bytecode(bc);
+   CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
            "LOOP_BREAK             ADDR:2\n"
@@ -135,10 +135,10 @@ TEST_F(TestDisassember, LoopBreakEOP)
 TEST_F(TestDisassember, LoopContinueEOP)
 {
    vector<uint64_t> bc;
-   cf_native_node(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
-   cf_native_node(cf_loop_continue, 0, 2).append_bytecode(bc);
-   cf_native_node(cf_loop_end, 0, 0).append_bytecode(bc);
-   cf_native_node(cf_nop, 1 << cf_node::eop).append_bytecode(bc);
+   CFNativeNode(cf_loop_start_dx10, 0, 2).append_bytecode(bc);
+   CFNativeNode(cf_loop_continue, 0, 2).append_bytecode(bc);
+   CFNativeNode(cf_loop_end, 0, 0).append_bytecode(bc);
+   CFNativeNode(cf_nop, 1 << CFNode::eop).append_bytecode(bc);
 
    run(bc, "LOOP_START_DX10        ADDR:2\n"
            "LOOP_CONTINUE          ADDR:2\n"
@@ -151,7 +151,7 @@ TEST_F(TestDisassember, WriteScratchEop)
 {
    vector<uint64_t> bc;
 
-   cf_mem_ring_node(cf_mem_write_scratch,
+   CFMemRingNode(cf_mem_write_scratch,
                     0,
                     5,
                     0,
@@ -160,7 +160,7 @@ TEST_F(TestDisassember, WriteScratchEop)
                     4,
                     0xf,
                     2,
-                    1 << cf_node::eop).append_bytecode(bc);
+                    1 << CFNode::eop).append_bytecode(bc);
    run(bc, "MEM_WRITE_SCRATCH      R5.xyzw ARR_SIZE:3 ARR_BASE:4 ES:4 BC:2 EOP\n");
 }
 
