@@ -335,6 +335,13 @@ void TexFetchNode::print(std::ostream& os) const
    for (int i = coord_type_x; i < tex_flag_last; ++i)
       os << (m_flags.test(i) ? 'n' : 'u');
 
+   if (m_tex_opcode == tex_sample_c_g_lb ||
+       m_tex_opcode == tex_sample_c_lb ||
+       m_tex_opcode == tex_sample_g_lb ||
+       m_tex_opcode == tex_sample_lb) {
+      os << " LB:" << std::setbase(16)  << m_load_bias << std::setbase(10);
+   }
+
    if (m_flags.test(fetch_whole_quad))
       os << " WQM";
    if (m_flags.test(alt_const))
