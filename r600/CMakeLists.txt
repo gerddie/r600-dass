@@ -2,7 +2,7 @@ SET(SRC
    alu_defines.cpp
    alu_node.cpp
    cf_node.cpp
-   cffetchnode.cpp
+   fetch_node.cpp
    disassembler.cpp
    node.cpp
    value.cpp)
@@ -11,7 +11,7 @@ SET(HEADERS
    alu_node.h
    alu_defines.h
    cf_node.h
-   cffetchnode.h
+   fetch_node.h
    defines.h
    disassembler.h
    node.h

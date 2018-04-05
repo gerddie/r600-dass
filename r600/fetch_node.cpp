@@ -1,4 +1,4 @@
-#include "cffetchnode.h"
+#include <r600/fetch_node.h>
 #include <iostream>
 #include <cassert>
 

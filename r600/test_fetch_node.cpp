@@ -19,7 +19,7 @@
  */
 
 #include <r600/bc_test.h>
-#include <r600/cffetchnode.h>
+#include <r600/fetch_node.h>
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -81,10 +81,4 @@ TEST_F(FetchNodeDisass, test_gpr_dst_limits)
    run(0x08cd107bffFb0000ul, 0x000a0000ul,
        "Fetch VTX R123.xyzw, R[123+LoopIDX].w BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63 Flags: ______");
 }
-
-
-
-
-
-
 
