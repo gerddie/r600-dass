@@ -262,12 +262,62 @@ TexFetchNode::TexFetchNode(uint64_t bc0, uint64_t bc1):
    m_sampler_id((bc1 >> 15) & 0x1f),
    m_load_bias((bc0 >> 21) & 0x3f),
    m_resource_index_mode(static_cast<EBufferIndexMode>((bc0 >> 25) & 0x3)),
-   m_sampler_index_mode(static_cast<EBufferIndexMode>((bc0 >> 27) & 0x3))
+   m_sampler_index_mode(static_cast<EBufferIndexMode>((bc0 >> 27) & 0x3)),
+   m_offset(3),
+   m_src_swizzle(4)
 {
    for (int i = 0; i < tex_flag_last; ++i) {
       if (bc0 & sm_tex_flag_bit[i])
          m_flags.set(i);
    }
+
+   for (int i = 0; i < 3; ++i)
+      m_offset[i] = (bc1 >> 5*i) & 0x1f;
+
+   for (int i = 0; i < 4; ++i)
+      m_src_swizzle[i] = ((bc1 >> 3*i) + 20) & 0x7;
+
+}
+
+void TexFetchNode::print(std::ostream& os) const
+{
+
+}
+
+
+uint64_t TexFetchNode::create_bytecode_byte(int i) const
+{
+   assert(i < 2);
+   uint64_t result = 0;
+
+   if (i == 0) {
+      result |= m_tex_opcode;
+      result |= m_inst_mode << 5;
+      result |= m_resource_id << 8;
+      result |= m_resource_index_mode << 25;
+      result |= m_sampler_index_mode << 27;
+      result |= static_cast<uint64_t>(m_load_bias) << 53;
+
+      encode_src(result);
+      encode_dst_sel(result);
+      encode_dst(result);
+
+      for (int i = 0; i < tex_flag_last; ++i){
+         if (m_flags.test(i))
+            result |= sm_tex_flag_bit[i];
+      }
+
+   } else {
+      result |= static_cast<uint64_t>(m_sampler_id) << 15;
+
+      for (int i = 0; i < 3; ++i)
+         result |= m_offset[i] << (5*i);
+
+      for (int i = 0; i < 4; ++i)
+         result |= static_cast<uint64_t>(m_src_swizzle[i])
+                   << ((3*i) + 20);
+   }
+   return result;
 }
 
 const vector<uint64_t> TexFetchNode::sm_tex_flag_bit = {
@@ -276,7 +326,7 @@ const vector<uint64_t> TexFetchNode::sm_tex_flag_bit = {
    1 << 28,
    1 << 29,
    1 << 30,
-   1ul << 31
+   1ul  << 31
 };
 
 }

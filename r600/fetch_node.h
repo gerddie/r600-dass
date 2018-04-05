@@ -219,6 +219,8 @@ public:
    TexFetchNode(uint64_t bc0, uint64_t bc1);
 
 private:
+   uint64_t create_bytecode_byte(int i) const override;
+   void print(std::ostream& os) const override;
 
    static const std::vector<uint64_t> sm_tex_flag_bit;
 
