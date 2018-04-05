@@ -98,7 +98,7 @@ void VertexFetchNode::print(std::ostream& os) const
 {
    static const string num_format_char[] = {"norm", "int", "scaled"};
    static const string endian_swap_code[] = {
-      "none", "8in16", "8in32"
+      "noswap", "8in16", "8in32"
    };
    static const char buffer_index_mode_char[] = "_01E";
    static const char flag_char[] = "QCSZMBA";
@@ -120,22 +120,28 @@ void VertexFetchNode::print(std::ostream& os) const
       return;
    }
 
-   os << " R";
+   os << ", ";
    print_src(os);
 
+   if (m_offset)
+      os << "+" << m_offset;
+
    os << " BUFID:" << m_buffer_id
-      << " FMT:" << m_data_format
-      << " F:" << num_format_char[m_num_format]
-      << " ES:" << endian_swap_code[m_endian_swap]
-      << " IndexMode:" << buffer_index_mode_char[m_buffer_index_mode];
+      << " FMT:(" << m_data_format
+      << " " << num_format_char[m_num_format]
+      << " " << endian_swap_code[m_endian_swap]
+      << ")";
+   if (m_buffer_index_mode > 0)
+      os << " IndexMode:" << buffer_index_mode_char[m_buffer_index_mode];
 
 
    if (m_flags.test(vtx_mega_fetch))
-      os << " MEGA:" << m_mega_fetch_count;
+      os << " MFC:" << m_mega_fetch_count;
 
    os << " Flags: ";
    for( int i = 0; i < vtx_unknwon; ++i) {
-      os << (m_flags.test(i) ? flag_char[i] : '_');
+      if (i != vtx_mega_fetch)
+         os << (m_flags.test(i) ? flag_char[i] : '_');
    }
 }
 

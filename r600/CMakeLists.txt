@@ -33,5 +33,6 @@ ENDMACRO(NEW_TEST)
 
 NEW_TEST(cf_parsing)
 NEW_TEST(bc_create)
+NEW_TEST(fetch_node)
 NEW_TEST(alu_bc)
 NEW_TEST(program_disass)
