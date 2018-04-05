@@ -74,9 +74,15 @@ const char *fmt_descr[64] = {
    "RESERVED_63"
 };
 
-FetchNode::FetchNode(const GPRValue& src, const GPRValue& dst):
-   m_src(src), m_dst(dst)
+FetchNode::FetchNode(uint64_t bc0):
+   m_src((bc0 >> 16) & 0x7f, (bc0 >> 24) & 0x3,
+         false, bc0 & (1 << 23), false),
+   m_dst((bc0 >> 32) & 0x7f, 0,
+         false, bc0 & (1ul << 39), false),
+   m_dst_swizzle(4)
 {
+   for (int i = 0; i < 4; ++i)
+      m_dst_swizzle[i] = (bc0 >> (41 + 3*i)) & 7;
 }
 
 void FetchNode::encode_src(uint64_t& result) const
@@ -125,8 +131,7 @@ void FetchNode::set_dst_sel(const std::vector<int>& dsel)
 }
 
 VertexFetchNode::VertexFetchNode(uint64_t bc0, uint64_t bc1):
-   FetchNode(GPRValue((bc0 >> 16) & 0x7f, (bc0 >> 24) & 0x3, false, bc0 & (1 << 23), false),
-             GPRValue((bc0 >> 32) & 0x7f, 0, false, bc0 & (1ul << 39), false)),
+   FetchNode(bc0),
    m_vc_opcode(static_cast<EFetchInstr>(bc0 & 0x1f)),
    m_offset(bc1 & 0xffff),
    m_data_format(static_cast<EVTXDataFormat>((bc0 >> 54) & 0x3f)),
@@ -137,29 +142,27 @@ VertexFetchNode::VertexFetchNode(uint64_t bc0, uint64_t bc1):
    m_endian_swap(static_cast<EEndianSwap>((bc1 >> 16) & 3)),
    m_buffer_index_mode(static_cast<EBufferIndexMode>((bc1 >> 21) & 3))
 {
-   vector<int> dst_sel(4);
-   for (int i = 0; i < 4; ++i)
-      dst_sel[i] = (bc0 >> (41 + 3*i)) & 7;
-   set_dst_sel(dst_sel);
-
    if (m_vc_opcode == vc_semantic) {
       m_semantic_id = (bc0 >> 32) & 0xff;
    }
 
-#define COPY_BIT(BYTECODE, FLAG) \
-   if (BYTECODE & FLAG ## _bit) \
-      m_flags.set(FLAG)
-
-   COPY_BIT(bc0, vtx_fetch_whole_quad);
-   COPY_BIT(bc0, vtx_use_const_field);
-   COPY_BIT(bc0, vtx_format_comp_signed);
-   COPY_BIT(bc0, vtx_srf_mode);
-   COPY_BIT(bc1, vtx_mega_fetch);
-   COPY_BIT(bc1, vtx_buf_no_stride);
-   COPY_BIT(bc1, vtx_alt_const);
-#undef COPY_BIT
-
+   const uint64_t bc[2] = {bc0, bc1};
+   for (int i = 0; i < vtx_unknwon; ++i){
+      if (bc[ms_flag_bits[i].first] & ms_flag_bits[i].second)
+         m_flags.set(i);
+   }
 }
+
+const std::vector<std::pair<int, uint64_t>>
+VertexFetchNode::ms_flag_bits = {
+   {0, 1ul << 7},
+   {0, 1ul << 53},
+   {0, 1ul << 62},
+   {0, 1ul << 63},
+   {1, 1ul << 18},
+   {1, 1ul << 19},
+   {1, 1ul << 20},
+};
 
 void VertexFetchNode::print(std::ostream& os) const
 {
@@ -252,5 +255,30 @@ uint64_t VertexFetchNode::create_bytecode_byte(int i) const
 #undef COPY_BIT
    return result;
 }
+
+TexFetchNode::TexFetchNode(uint64_t bc0, uint64_t bc1):
+   FetchNode(bc0),
+   m_tex_opcode(static_cast<ETexInst>(bc0 & 0x1f)),
+   m_inst_mode(static_cast<EInstMod>((bc0 >> 5) & 3)),
+   m_resource_id((bc0 >> 8) & 0xff),
+   m_sampler_id((bc1 >> 15) & 0x1f),
+   m_load_bias((bc0 >> 21) & 0x3f),
+   m_resource_index_mode(static_cast<EBufferIndexMode>((bc0 >> 25) & 0x3)),
+   m_sampler_index_mode(static_cast<EBufferIndexMode>((bc0 >> 27) & 0x3))
+{
+   for (int i = 0; i < tex_flag_last; ++i) {
+      if (bc0 & sm_tex_flag_bit[i])
+         m_flags.set(i);
+   }
+}
+
+const vector<uint64_t> TexFetchNode::sm_tex_flag_bit = {
+   1 << 7,
+   1 << 24,
+   1 << 28,
+   1 << 29,
+   1 << 30,
+   1ul << 31
+};
 
 }

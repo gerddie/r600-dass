@@ -9,7 +9,14 @@ namespace r600 {
 class FetchNode : public node
 {
 public:
-   FetchNode(const GPRValue& src, const GPRValue& dst);
+   enum EBufferIndexMode {
+      bim_none,
+      bim_zero,
+      bim_one,
+      bim_invalid
+   };
+
+   FetchNode(uint64_t bc0);
 protected:
    void set_dst_sel(const std::vector<int>& dsel);
    void encode_src(uint64_t& result) const;
@@ -124,11 +131,13 @@ public:
       vtx_use_const_field,
       vtx_format_comp_signed,
       vtx_srf_mode,
-      vtx_mega_fetch,
       vtx_buf_no_stride,
+      vtx_mega_fetch,
       vtx_alt_const,
       vtx_unknwon
    };
+
+   static const std::vector<std::pair<int, uint64_t>> ms_flag_bits;
 
    static const uint64_t vtx_fetch_whole_quad_bit = 1ul << 7;
    static const uint64_t vtx_use_const_field_bit = 1ul << 53;
@@ -138,12 +147,6 @@ public:
    static const uint64_t vtx_mega_fetch_bit = 1ul << 19;
    static const uint64_t vtx_alt_const_bit = 1ul << 20;
 
-   enum EBufferIndexMode {
-      bim_none,
-      bim_zero,
-      bim_one,
-      vtx_invalid
-   };
 
 private:
    void print(std::ostream& os) const override;
@@ -160,6 +163,76 @@ private:
    EBufferIndexMode m_buffer_index_mode;
    std::bitset<16> m_flags;
    uint32_t m_semantic_id;
+};
+
+class TexFetchNode: public FetchNode{
+public:
+   enum ETexInst {
+      tex_ld = 3,
+      tex_get_res_info = 4,
+      tex_get_num_samples = 5,
+      tex_get_comp_lod = 6,
+      tex_get_grad_h = 7,
+      tex_get_grad_v = 8,
+      tex_set_offs = 9,
+      tex_keep_grad = 10,
+      tex_set_grad_h = 11,
+      tex_set_grad_v = 12,
+      tex_sample = 16,
+      tex_sample_l = 17,
+      tex_sample_lb = 18,
+      tex_sample_lz = 19,
+      tex_sample_g = 20,
+      tex_gather4 = 21,
+      tex_sample_g_lb = 22,
+      tex_gather4_o = 23,
+      tex_sample_c = 24,
+      tex_sample_c_l = 25,
+      tex_sample_c_lb = 26,
+      tex_sample_c_lz = 27,
+      tex_sample_c_g = 28,
+      tex_gather4_c = 29,
+      tex_sample_c_g_lb = 30,
+      tex_sample_c_o = 31
+   };
+   enum EInstMod  {
+      im_ld_normal = 0,
+      im_ldptr = 1,
+      im_grad_coarse = 0,
+      im_grad_fine = 1,
+      im_gather4_x = 0,
+      im_gather4_y = 1,
+      im_gather4_z = 2,
+      im_gather4_w = 3
+   };
+
+   enum ETexFlags {
+      fetch_whole_quad,
+      alt_const,
+      coord_type_x,
+      coord_type_y,
+      coord_type_z,
+      coord_type_w,
+      tex_flag_last
+   };
+
+   TexFetchNode(uint64_t bc0, uint64_t bc1);
+
+private:
+
+   static const std::vector<uint64_t> sm_tex_flag_bit;
+
+   ETexInst m_tex_opcode;
+   EInstMod m_inst_mode;
+   uint32_t m_resource_id;
+   uint32_t m_sampler_id;
+   uint32_t m_load_bias;
+   EBufferIndexMode m_resource_index_mode;
+   EBufferIndexMode m_sampler_index_mode;
+   std::vector<int> m_offset;
+   std::vector<int> m_src_swizzle;
+   std::bitset<8> m_flags;
+
 };
 
 }
