@@ -341,11 +341,11 @@ void GPRValue::do_print(std::ostream& os, const PrintFlags& flags) const
       os << m_sel;
       if (rel()) {
          switch (flags.index_mode) {
-         case 0: os << "+AR"; break;
-         case 4: os << "+LoopIDX"; break;
-         case 5: os << "g"; break;
-         case 6: os << "g+AR"; break;
-         default: os << "(ERRIDX)";
+         case 0: os << "+AR]"; break;
+         case 4: os << "+LoopIDX]"; break;
+         case 5: os << "g]"; break;
+         case 6: os << "g+AR]"; break;
+         default: os << "(ERRIDX)]";
          }
       }
    } else {

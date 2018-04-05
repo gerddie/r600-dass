@@ -7,6 +7,73 @@ namespace r600 {
 using std::vector;
 using std::string;
 
+const char *fmt_descr[64] = {
+   "INVALID",
+   "8",
+   "4_4",
+   "3_3_2",
+   "RESERVED_4",
+   "16",
+   "16F",
+   "8_8",
+   "5_6_5",
+   "6_5_5",
+   "1_5_5_5",
+   "4_4_4_4",
+   "5_5_5_1",
+   "32",
+   "32F",
+   "16_16",
+   "16_16F",
+   "8_24",
+   "8_24F",
+   "24_8",
+   "24_8F",
+   "10_11_11",
+   "10_11_11F",
+   "11_11_10",
+   "11_11_10F",
+   "2_10_10_10",
+   "8_8_8_8",
+   "10_10_10_2",
+   "X24_8_32F",
+   "32_32",
+   "32_32F",
+   "16_16_16_16",
+   "16_16_16_16F",
+   "RESERVED_33",
+   "32_32_32_32",
+   "32_32_32_32F",
+   "RESERVED_36",
+   "1",
+   "1_REVERSED",
+   "GB_GR",
+   "BG_RG",
+   "32_AS_8",
+   "32_AS_8_8",
+   "5_9_9_9_SHAREDEXP",
+   "8_8_8",
+   "16_16_16",
+   "16_16_16F",
+   "32_32_32",
+   "32_32_32F",
+   "BC1",
+   "BC2",
+   "BC3",
+   "BC4",
+   "BC5",
+   "APC0",
+   "APC1",
+   "APC2",
+   "APC3",
+   "APC4",
+   "APC5",
+   "APC6",
+   "APC7",
+   "CTX1",
+   "RESERVED_63"
+};
+
 FetchNode::FetchNode(const GPRValue& src, const GPRValue& dst):
    m_src(src), m_dst(dst)
 {
@@ -58,8 +125,8 @@ void FetchNode::set_dst_sel(const std::vector<int>& dsel)
 }
 
 VertexFetchNode::VertexFetchNode(uint64_t bc0, uint64_t bc1):
-   FetchNode(GPRValue((bc0 >> 17) & 0x3f, (bc0 >> 24) & 0x3, false, bc0 & (1 << 23), false),
-             GPRValue((bc0 >> 32) & 0x3f, 0, false, bc0 & (1ul << 39), false)),
+   FetchNode(GPRValue((bc0 >> 16) & 0x7f, (bc0 >> 24) & 0x3, false, bc0 & (1 << 23), false),
+             GPRValue((bc0 >> 32) & 0x7f, 0, false, bc0 & (1ul << 39), false)),
    m_vc_opcode(static_cast<EFetchInstr>(bc0 & 0x1f)),
    m_offset(bc1 & 0xffff),
    m_data_format(static_cast<EVTXDataFormat>((bc0 >> 54) & 0x3f)),
@@ -127,7 +194,7 @@ void VertexFetchNode::print(std::ostream& os) const
       os << "+" << m_offset;
 
    os << " BUFID:" << m_buffer_id
-      << " FMT:(" << m_data_format
+      << " FMT:(" << fmt_descr[m_data_format]
       << " " << num_format_char[m_num_format]
       << " " << endian_swap_code[m_endian_swap]
       << ")";
