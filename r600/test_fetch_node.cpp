@@ -92,5 +92,5 @@ using TexFetchNodeDisass=FetchNodeDisass<TexFetchNode>;
 TEST_F(TexFetchNodeDisass, test_LD_fetch)
 {
    run( 0xf00d100300041203ul, 0x68800000,
-        "LD             R3.xyzw, R4.xyzw, RID:18, SID:0");
+        "LD             R3.xyzw, R4.xyzw, RID:18, SID:0 CT:uuuu");
 }

@@ -7,6 +7,7 @@ namespace r600 {
 
 using std::vector;
 using std::string;
+using std::ostringstream;
 
 const char *fmt_descr[64] = {
    "INVALID",
@@ -293,7 +294,28 @@ TexFetchNode::TexFetchNode(uint64_t bc0, uint64_t bc1):
 
 void TexFetchNode::print(std::ostream& os) const
 {
-   os << std::setw(15) << std::left << opname_from_opcode();
+   const char flag_char[] = "QA";
+
+   ostringstream os_help;
+   os_help << opname_from_opcode();
+   switch (m_tex_opcode) {
+   case tex_ld:
+      if (m_inst_mode == im_ldptr)
+         os_help << " (ptr)";
+   break;
+   case tex_gather4:
+      os_help << " (" << Value::component_names[m_inst_mode] << ")";
+   break;
+   case tex_get_grad_h:
+   case tex_get_grad_v:
+      if (m_inst_mode == im_grad_fine)
+         os_help << "(fine)";
+      else
+         os_help << "(coarse)";
+   break;
+   }
+
+   os << std::setw(15) << std::left << os_help.str();
    os << "R";
    print_dst(os);
    os << ", ";
@@ -309,6 +331,14 @@ void TexFetchNode::print(std::ostream& os) const
    os << ", RID:" << m_resource_id;
    os << ", SID:" << m_sampler_id;
 
+   os << " CT:";
+   for (int i = coord_type_x; i < tex_flag_last; ++i)
+      os << (m_flags.test(i) ? 'n' : 'u');
+
+   if (m_flags.test(fetch_whole_quad))
+      os << " WQM";
+   if (m_flags.test(alt_const))
+      os << " AC";
 }
 
 const char *TexFetchNode::opname_from_opcode() const
