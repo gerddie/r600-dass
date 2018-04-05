@@ -24,6 +24,7 @@ protected:
    void encode_dst_sel(uint64_t& result) const;
    void print_dst(std::ostream& os) const;
    void print_src(std::ostream& os) const;
+   void print_src_sel(std::ostream& os) const;
 private:
    GPRValue m_src;
    GPRValue m_dst;
@@ -221,6 +222,7 @@ public:
 private:
    uint64_t create_bytecode_byte(int i) const override;
    void print(std::ostream& os) const override;
+   const char *opname_from_opcode() const;
 
    static const std::vector<uint64_t> sm_tex_flag_bit;
 

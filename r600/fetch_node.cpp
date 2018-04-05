@@ -1,5 +1,6 @@
 #include <r600/fetch_node.h>
 #include <iostream>
+#include <iomanip>
 #include <cassert>
 
 namespace r600 {
@@ -116,6 +117,17 @@ void FetchNode::print_dst(std::ostream& os) const
    for (auto& s: m_dst_swizzle) {
       os << Value::component_names[s];
    }
+}
+
+void FetchNode::print_src_sel(std::ostream& os) const
+{
+   os << 'R';
+   if (m_src.rel())
+      os << '[';
+   os << m_src.sel();
+   if (m_src.rel())
+      os << "+LoopIdx]";
+   os << ".";
 }
 
 void FetchNode::print_src(std::ostream& os) const
@@ -275,14 +287,63 @@ TexFetchNode::TexFetchNode(uint64_t bc0, uint64_t bc1):
       m_offset[i] = (bc1 >> 5*i) & 0x1f;
 
    for (int i = 0; i < 4; ++i)
-      m_src_swizzle[i] = ((bc1 >> 3*i) + 20) & 0x7;
+      m_src_swizzle[i] = (bc1 >> (3*i + 20)) & 0x7;
 
 }
 
 void TexFetchNode::print(std::ostream& os) const
 {
+   os << std::setw(15) << std::left << opname_from_opcode();
+   os << "R";
+   print_dst(os);
+   os << ", ";
+   print_src_sel(os);
+   for (int i = 0; i < 4; ++i)
+      os << Value::component_names[m_src_swizzle[i]];
+
+   if (m_offset[0] != 0 || m_offset[1] != 0 || m_offset[2] != 0)  {
+      os << "+[" << m_offset[0] << ", " << m_offset[1]
+         << ", " << m_offset[2] << "]";
+   }
+
+   os << ", RID:" << m_resource_id;
+   os << ", SID:" << m_sampler_id;
 
 }
+
+const char *TexFetchNode::opname_from_opcode() const
+{
+   switch (m_tex_opcode) {
+   case tex_ld: return "LD";
+   case tex_get_res_info: return  "GET_RES_INFO";
+   case tex_get_num_samples: return  "GET_NUM_SAMPLES";
+   case tex_get_comp_lod: return "GET_COMP_LOD";
+   case tex_get_grad_h: return "GET_GRAD_H";
+   case tex_get_grad_v: return "GET_GRAD_V";
+   case tex_set_offs: return "SET_OFFSET";
+   case tex_keep_grad: return "KEEP_GRAD";
+   case tex_set_grad_h: return "SET_GRAD_H";
+   case tex_set_grad_v: return "SET_GRAD_V";
+   case tex_sample: return "SAMPLE";
+   case tex_sample_l: return "SAMPLE_L";
+   case tex_sample_lb: return "SAMPLE_LB";
+   case tex_sample_lz: return "SAMPLE_LZ";
+   case tex_sample_g: return "SAMPLE_G";
+   case tex_gather4: return "GATHER4";
+   case tex_sample_g_lb: return "SAMPLE_G_LB";
+   case tex_gather4_o: return "GATHER4_O";
+   case tex_sample_c: return "SAMPLE_C";
+   case tex_sample_c_l: return "SAMPLE_C_L";
+   case tex_sample_c_lb: return "SAMPLE_C_LB";
+   case tex_sample_c_lz: return "SAMPLE_C_LZ";
+   case tex_sample_c_g: return "SAMPLE_C_G";
+   case tex_gather4_c: return "GATHER4_C";
+   case tex_sample_c_g_lb: return "SAMPLE_C_G_LB";
+   case tex_sample_c_o: return "SAMPLE_C_O";
+   default: return "UNKNOWN";
+   };
+}
+
 
 
 uint64_t TexFetchNode::create_bytecode_byte(int i) const

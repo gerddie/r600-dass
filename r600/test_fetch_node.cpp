@@ -27,32 +27,36 @@ using namespace r600;
 using std::vector;
 using std::ostringstream;
 
+template <typename Node>
 class FetchNodeDisass: public testing::Test {
 public:
    void run(uint64_t bc0, uint64_t bc1, const char *expect) const;
 };
 
-void FetchNodeDisass::run(uint64_t bc0, uint64_t bc1, const char *expect) const
+template <typename Node>
+void FetchNodeDisass<Node>::run(uint64_t bc0, uint64_t bc1, const char *expect) const
 {
-   VertexFetchNode n(bc0, bc1);
+   Node n(bc0, bc1);
    ostringstream os;
    os << n;
    EXPECT_EQ(os.str(), expect);
 }
 
-TEST_F(FetchNodeDisass, test_gpr_fetch)
+using VertexFetchNodeDisass=FetchNodeDisass<VertexFetchNode>;
+
+TEST_F(VertexFetchNodeDisass, test_gpr_fetch)
 {
    run(0x188d10017c000000ul, 0x00080000ul,
        "Fetch VTX R1.xyzw, R0.x BUFID:0 FMT:(32_32_32_32 int noswap) MFC:31 Flags: ______");
 }
 
-TEST_F(FetchNodeDisass, test_gpr_fetch_with_offset)
+TEST_F(VertexFetchNodeDisass, test_gpr_fetch_with_offset)
 {
    run(0x08cd10027c000000ul, 0x00080010ul,
        "Fetch VTX R2.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
 }
 
-TEST_F(FetchNodeDisass, test_gpr_dst_limits)
+TEST_F(VertexFetchNodeDisass, test_gpr_dst_limits)
 {
    run(0x08cd107b7c000000ul, 0x00080010ul,
        "Fetch VTX R123.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
@@ -82,3 +86,11 @@ TEST_F(FetchNodeDisass, test_gpr_dst_limits)
        "Fetch VTX R123.xyzw, R[123+LoopIDX].w BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63 Flags: ______");
 }
 
+
+using TexFetchNodeDisass=FetchNodeDisass<TexFetchNode>;
+
+TEST_F(TexFetchNodeDisass, test_LD_fetch)
+{
+   run( 0xf00d100300041203ul, 0x68800000,
+        "LD             R3.xyzw, R4.xyzw, RID:18, SID:0");
+}
