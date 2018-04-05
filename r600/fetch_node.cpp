@@ -220,10 +220,6 @@ uint64_t VertexFetchNode::create_bytecode_byte(int i) const
    assert(i < 2);
    uint64_t result = 0;
 
-#define COPY_BIT(BYTECODE, FLAG) \
-   if (m_flags.test(FLAG)) \
-      BYTECODE |= FLAG ## _bit
-
    if (i == 0) {
       result |= static_cast<uint64_t>(m_vc_opcode);
       result |= static_cast<uint64_t>(m_fetch_type) << 5;
@@ -238,21 +234,23 @@ uint64_t VertexFetchNode::create_bytecode_byte(int i) const
       else
          result |= static_cast<uint64_t>(m_semantic_id) << 32;
 
-      COPY_BIT(result, vtx_fetch_whole_quad);
-      COPY_BIT(result, vtx_use_const_field);
-      COPY_BIT(result, vtx_format_comp_signed);
-      COPY_BIT(result, vtx_srf_mode);
+      for (int i = 0; i < vtx_buf_no_stride; ++i){
+         assert(ms_flag_bits[i].first == 0);
+         if (m_flags.test(i))
+            result |= ms_flag_bits[i].second;
+      }
    } else {
 
       result |= m_offset;
       result |= static_cast<uint64_t>(m_endian_swap) << 16;
       result |= static_cast<uint64_t>(m_buffer_index_mode) << 21;
 
-      COPY_BIT(result, vtx_mega_fetch);
-      COPY_BIT(result, vtx_buf_no_stride);
-      COPY_BIT(result, vtx_alt_const);
+      for (int i = vtx_buf_no_stride; i < vtx_unknwon; ++i){
+         assert(ms_flag_bits[i].first == 1);
+         if (m_flags.test(i))
+            result |= ms_flag_bits[i].second;
+      }
    }
-#undef COPY_BIT
    return result;
 }
 
