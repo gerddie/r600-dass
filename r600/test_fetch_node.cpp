@@ -27,38 +27,33 @@ using namespace r600;
 using std::vector;
 using std::ostringstream;
 
-using FetchNodeDisass=testing::Test;
+class FetchNodeDisass: public testing::Test {
+public:
+   void run(uint64_t bc0, uint64_t bc1, const char *expect) const;
+};
+
+void FetchNodeDisass::run(uint64_t bc0, uint64_t bc1, const char *expect) const
+{
+   VertexFetchNode n(bc0, bc1);
+   ostringstream os;
+   os << n;
+   EXPECT_EQ(os.str(), expect);
+}
+
 
 TEST_F(FetchNodeDisass, test_gpr_fetch)
 {
-   const uint64_t bc0 = 0x188d10017c000000ul;
-   const uint64_t bc1 = 0x00080000ul;
-
-   VertexFetchNode n(bc0, bc1);
-
-   ostringstream os;
-   os << n;
-
-   EXPECT_EQ(os.str(),
-             "Fetch VTX R1.xyzw, R0.x BUFID:0 FMT:(34 int noswap) MFC:31 Flags: ______") ;
-
-     //00080000 VFETCH              R1.xyzw, R0.x,   RID:0  VERTEX MFC:31 UCF:0 FMT(DTA:34 NUM:1 COMP:0 MODE:0)
+   run(0x188d10017c000000ul, 0x00080000ul,
+       "Fetch VTX R1.xyzw, R0.x BUFID:0 FMT:(34 int noswap) MFC:31 Flags: ______");
 }
 
 TEST_F(FetchNodeDisass, test_gpr_fetch_with_offset)
 {
-   const uint64_t bc0 = 0x08cd10027c000000ul;
-   const uint64_t bc1 = 0x00080010ul;
-
-   VertexFetchNode n(bc0, bc1);
-
-   ostringstream os;
-   os << n;
-
-   EXPECT_EQ(os.str(),
-             "Fetch VTX R2.xyzw, R0.x+16 BUFID:0 FMT:(35 norm noswap) MFC:31 Flags: ______") ;
-
+   run(0x08cd10027c000000ul, 0x00080010ul,
+       "Fetch VTX R2.xyzw, R0.x+16 BUFID:0 FMT:(35 norm noswap) MFC:31 Flags: ______");
 }
+
+
 
 
 
