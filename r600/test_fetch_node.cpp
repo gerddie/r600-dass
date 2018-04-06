@@ -36,9 +36,9 @@ public:
 template <typename Node>
 void FetchNodeDisass<Node>::run(uint64_t bc0, uint64_t bc1, const char *expect) const
 {
-   Node n(bc0, bc1);
+   auto n = FetchNode::decode(bc0, bc1);
    ostringstream os;
-   os << n;
+   os << *n;
    EXPECT_EQ(os.str(), expect);
 }
 
@@ -47,43 +47,43 @@ using VertexFetchNodeDisass=FetchNodeDisass<VertexFetchNode>;
 TEST_F(VertexFetchNodeDisass, test_gpr_fetch)
 {
    run(0x188d10017c000000ul, 0x00080000ul,
-       "Fetch VTX R1.xyzw, R0.x BUFID:0 FMT:(32_32_32_32 int noswap) MFC:31 Flags: ______");
+       "Fetch VTX R1.xyzw, R0.x BUFID:0 FMT:(32_32_32_32 int noswap) MFC:31");
 }
 
 TEST_F(VertexFetchNodeDisass, test_gpr_fetch_with_offset)
 {
    run(0x08cd10027c000000ul, 0x00080010ul,
-       "Fetch VTX R2.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R2.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 }
 
 TEST_F(VertexFetchNodeDisass, test_gpr_dst_limits)
 {
    run(0x08cd107b7c000000ul, 0x00080010ul,
-       "Fetch VTX R123.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 
    run(0x08c0a67b7c000000ul, 0x00080010ul,
-       "Fetch VTX R123.wzyx, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R123.wzyx, R0.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 
    run(0x08cd107b7c7b0000ul, 0x00080010ul,
-       "Fetch VTX R123.xyzw, R123.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.x+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 
    run(0x08cd107b7f7b0000ul, 0x00080010ul,
-       "Fetch VTX R123.xyzw, R123.w+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.w+16 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 
    run(0x08cd107b7f7b0000ul, 0x0008fffful,
-       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm noswap) MFC:31");
 
    run(0x08cd107b7f7b0000ul, 0x0009fffful,
-       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in16) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in16) MFC:31");
 
    run(0x08cd107b7f7b0000ul, 0x000afffful,
-       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:31 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:31");
 
    run(0x08cd107bff7b0000ul, 0x000afffful,
-       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63 Flags: ______");
+       "Fetch VTX R123.xyzw, R123.w+65535 BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63");
 
    run(0x08cd107bffFb0000ul, 0x000a0000ul,
-       "Fetch VTX R123.xyzw, R[123+LoopIDX].w BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63 Flags: ______");
+       "Fetch VTX R123.xyzw, R[123+LoopIDX].w BUFID:0 FMT:(32_32_32_32F norm 8in32) MFC:63");
 }
 
 
@@ -93,4 +93,10 @@ TEST_F(TexFetchNodeDisass, test_LD_fetch)
 {
    run( 0xf00d100300041203ul, 0x68800000,
         "LD             R3.xyzw, R4.xyzw, RID:18, SID:0 CT:uuuu");
+}
+
+TEST_F(TexFetchNodeDisass, test_vfetch_fetch)
+{
+   run( 0x68cd100040000140ul, 0x00080000,
+        "Fetch VTX R0.xyzw, R0.x BUFID:1 FMT:(32_32_32_32F scaled noswap) MFC:16 Flags: signed");
 }

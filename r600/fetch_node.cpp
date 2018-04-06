@@ -87,6 +87,19 @@ FetchNode::FetchNode(uint64_t bc0):
       m_dst_swizzle[i] = (bc0 >> (41 + 3*i)) & 7;
 }
 
+FetchNode::Pointer FetchNode::decode(uint64_t bc0, uint64_t bc1)
+{
+   int opcode = bc0 & 0x1f;
+   switch (opcode) {
+   case 0:
+   case 1:
+   case 14:
+      return Pointer(new VertexFetchNode(bc0, bc1));
+   default:
+      return Pointer(new TexFetchNode(bc0, bc1));
+   }
+}
+
 void FetchNode::encode_src(uint64_t& result) const
 {
    result |= m_src.sel();
@@ -149,6 +162,7 @@ VertexFetchNode::VertexFetchNode(uint64_t bc0, uint64_t bc1):
    m_offset(bc1 & 0xffff),
    m_data_format(static_cast<EVTXDataFormat>((bc0 >> 54) & 0x3f)),
    m_num_format(static_cast<ENumFormat>((bc0 >> 60) & 3)),
+   m_is_mega_fetch(bc1 & vtx_mega_fetch_bit),
    m_mega_fetch_count((bc0 >> 26) & 0x3f),
    m_buffer_id((bc0 >> 8) & 0xff),
    m_fetch_type(static_cast<EFetchType>((bc0 >> 5) & 3)),
@@ -173,7 +187,6 @@ VertexFetchNode::ms_flag_bits = {
    {0, 1ul << 62},
    {0, 1ul << 63},
    {1, 1ul << 18},
-   {1, 1ul << 19},
    {1, 1ul << 20},
 };
 
@@ -184,7 +197,8 @@ void VertexFetchNode::print(std::ostream& os) const
       "noswap", "8in16", "8in32"
    };
    static const char buffer_index_mode_char[] = "_01E";
-   static const char flag_char[] = "QCSZMBA";
+   static const char *flag_string[] = {"WQM",  "CF", "signed", "no_zero",
+                                       "nostride", "AC"};
 
    switch (m_vc_opcode) {
    case vc_fetch:
@@ -218,13 +232,17 @@ void VertexFetchNode::print(std::ostream& os) const
       os << " IndexMode:" << buffer_index_mode_char[m_buffer_index_mode];
 
 
-   if (m_flags.test(vtx_mega_fetch))
+   if (m_is_mega_fetch)
       os << " MFC:" << m_mega_fetch_count;
+   else
+      os << " mfc*:" << m_mega_fetch_count;
 
-   os << " Flags: ";
-   for( int i = 0; i < vtx_unknwon; ++i) {
-      if (i != vtx_mega_fetch)
-         os << (m_flags.test(i) ? flag_char[i] : '_');
+   if (m_flags.any()) {
+      os << " Flags:";
+      for( int i = 0; i < vtx_unknwon; ++i) {
+         if (m_flags.test(i))
+            os << ' ' << flag_string[i];
+      }
    }
 }
 
@@ -257,6 +275,9 @@ uint64_t VertexFetchNode::create_bytecode_byte(int i) const
       result |= m_offset;
       result |= static_cast<uint64_t>(m_endian_swap) << 16;
       result |= static_cast<uint64_t>(m_buffer_index_mode) << 21;
+
+      if (m_is_mega_fetch)
+         result |= vtx_mega_fetch_bit;
 
       for (int i = vtx_buf_no_stride; i < vtx_unknwon; ++i){
          assert(ms_flag_bits[i].first == 1);

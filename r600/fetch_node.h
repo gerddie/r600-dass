@@ -9,6 +9,8 @@ namespace r600 {
 class FetchNode : public node
 {
 public:
+   using Pointer=std::shared_ptr<FetchNode>;
+
    enum EBufferIndexMode {
       bim_none,
       bim_zero,
@@ -17,6 +19,8 @@ public:
    };
 
    FetchNode(uint64_t bc0);
+
+   static Pointer decode(uint64_t bc0, uint64_t bc1);
 protected:
    void set_dst_sel(const std::vector<int>& dsel);
    void encode_src(uint64_t& result) const;
@@ -30,6 +34,8 @@ private:
    GPRValue m_dst;
    std::vector<int> m_dst_swizzle;
 };
+
+using PFetchNode=FetchNode::Pointer;
 
 class VertexFetchNode: public FetchNode{
 public:
@@ -133,21 +139,13 @@ public:
       vtx_format_comp_signed,
       vtx_srf_mode,
       vtx_buf_no_stride,
-      vtx_mega_fetch,
       vtx_alt_const,
       vtx_unknwon
    };
 
    static const std::vector<std::pair<int, uint64_t>> ms_flag_bits;
 
-   static const uint64_t vtx_fetch_whole_quad_bit = 1ul << 7;
-   static const uint64_t vtx_use_const_field_bit = 1ul << 53;
-   static const uint64_t vtx_format_comp_signed_bit = 1ul << 62;
-   static const uint64_t vtx_srf_mode_bit = 1ul << 63;
-   static const uint64_t vtx_buf_no_stride_bit = 1ul << 18;
    static const uint64_t vtx_mega_fetch_bit = 1ul << 19;
-   static const uint64_t vtx_alt_const_bit = 1ul << 20;
-
 
 private:
    void print(std::ostream& os) const override;
@@ -157,6 +155,7 @@ private:
    uint32_t m_offset;
    EVTXDataFormat m_data_format;
    ENumFormat m_num_format;
+   bool m_is_mega_fetch;
    uint32_t m_mega_fetch_count;
    uint32_t m_buffer_id;
    EFetchType m_fetch_type;
