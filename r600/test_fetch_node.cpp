@@ -100,3 +100,21 @@ TEST_F(TexFetchNodeDisass, test_vfetch_fetch)
    run( 0x68cd100040000140ul, 0x00080000,
         "Fetch VTX R0.xyzw, R0.x BUFID:1 FMT:(32_32_32_32F scaled noswap) MFC:16 Flags: signed");
 }
+
+TEST_F(TexFetchNodeDisass, test_tex_sample)
+{
+   run( 0xf01ff00400041210ul, 0xfc800000,
+        "SAMPLE         R4.x___, R4.xy__, RID:18, SID:0 CT:uuuu");
+   run( 0xf01d100700071211ul, 0x68800000,
+        "SAMPLE_L       R7.xyz_, R7.xyzw, RID:18, SID:0 CT:uuuu");
+}
+
+TEST_F(TexFetchNodeDisass, test_tex_gather4)
+{
+   run( 0xf00c221400141715ul, 0xfc8282d6,
+        "GATHER4 (x)    R20.yzxw, R20.xy__+[22, 22, 0], RID:23, SID:5 CT:uuuu");
+   run( 0xf00c221400141715ul, 0xfc8282da,
+        "GATHER4 (x)    R20.yzxw, R20.xy__+[26, 22, 0], RID:23, SID:5 CT:uuuu");
+   run( 0xf00c22220022161dul, 0x488202da,
+        "GATHER4_C      R34.yzxw, R34.xyzz+[26, 22, 0], RID:22, SID:4 CT:uuuu");
+}
