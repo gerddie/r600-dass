@@ -76,7 +76,7 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
          auto src1 = Value::create(bc, alu_lds_src1, literal_index);
          auto src2 = Value::create(bc, alu_lds_src2, literal_index);
 
-         auto  lds_op = static_cast<ELSDIndexOp>((bc >> 53) & 0x3f);
+         auto  lds_op = static_cast<ESDOp>((bc >> 53) & 0x3f);
          int dst_chan = (bc >> 61) & 0x3;
          int offset = ((bc >> 59) & 1) |
                       ((bc >> 58) & 4) |
@@ -420,7 +420,7 @@ void AluNodeOp3::set_spec_literal_info(uint64_t *literals)
    src(2).set_literal_info(literals);
 }
 
-AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
+AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ESDOp lds_op,
                                  PValue src0, PValue src1,
                                  PValue src2, AluOpFlags flags,
                                  int offset, int dst_chan,
@@ -467,7 +467,7 @@ bool AluNodeLDSIdxOP::print_op(std::ostream& os) const
    auto o = lds_ops.find(m_lds_op);
    if (o != lds_ops.end()) {
       ostringstream s;
-      s << o->second.name;
+      s << 'L' << o->second.name;
       s << " OFS:" << m_offset;
       os << setw(32) << std::left  << s.str();
    } else {

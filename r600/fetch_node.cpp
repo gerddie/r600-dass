@@ -95,6 +95,13 @@ FetchNode::Pointer FetchNode::decode(uint64_t bc0, uint64_t bc1)
    case 1:
    case 14:
       return Pointer(new VertexFetchNode(bc0, bc1));
+   case 2: {
+      int mem_op = (bc0 >> 8) & 7;
+      if (mem_op == 4 || mem_op == 5)
+         return Pointer(new GDSOpNode(bc0, bc1));
+      else
+         return Pointer(new MemoryReadNode(bc0, bc1));
+   }
    default:
       return Pointer(new TexFetchNode(bc0, bc1));
    }
@@ -445,5 +452,38 @@ const vector<uint64_t> TexFetchNode::sm_tex_flag_bit = {
    1 << 30,
    1ul  << 31
 };
+
+MemoryReadNode::MemoryReadNode(uint64_t bc0, uint64_t bc1):
+   FetchNode(bc0)
+{
+
+}
+
+uint64_t MemoryReadNode::create_bytecode_byte(int i) const
+{
+
+}
+
+void MemoryReadNode::print(std::ostream& os) const
+{
+
+}
+
+
+GDSOpNode::GDSOpNode(uint64_t bc0, uint64_t bc1):
+   FetchNode(bc0)
+{
+
+}
+
+uint64_t GDSOpNode::create_bytecode_byte(int i) const
+{
+
+}
+
+void GDSOpNode::print(std::ostream& os) const
+{
+
+}
 
 }

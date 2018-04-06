@@ -353,14 +353,14 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
 
 TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
 {
-   vector<std::pair<ELSDIndexOp, uint64_t>> test_pairs = {
-      {LDS_OP_ADD,      0x0002200000000000ul},
-      {LDS_OP_SUB,      0x0022200000000000ul},
-      {LDS_OP_RSUB,     0x0042200000000000ul},
-      {LDS_OP_DEC,      0x0082200000000000ul},
-      {LDS_OP_MAX_UINT, 0x0102200000000000ul},
-      {LDS_OP_CMP_STORE,0x0202200000000000ul},
-      {LDS_OP_ADD_RET,  0x0402200000000000ul}
+   vector<std::pair<ESDOp, uint64_t>> test_pairs = {
+      {DS_OP_ADD,      0x0002200000000000ul},
+      {DS_OP_SUB,      0x0022200000000000ul},
+      {DS_OP_RSUB,     0x0042200000000000ul},
+      {DS_OP_DEC,      0x0082200000000000ul},
+      {DS_OP_MAX_UINT, 0x0102200000000000ul},
+      {DS_OP_CMP_STORE,0x0202200000000000ul},
+      {DS_OP_ADD_RET,  0x0402200000000000ul}
    };
 
    for (auto p : test_pairs) {
@@ -383,7 +383,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
    };
 
    for (int ofs = 0; ofs < 6; ++ofs) {
-      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, LDS_OP_ADD,
+      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, DS_OP_ADD,
                         src, src, src, empty_flags, 1 << ofs);
       TEST_EQ(n.bytecode(), expect[ofs]);
    }

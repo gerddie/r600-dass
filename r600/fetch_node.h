@@ -1,6 +1,7 @@
 #ifndef CFFETCHNODE_H
 #define CFFETCHNODE_H
 
+#include <r600/alu_defines.h>
 #include <r600/node.h>
 #include <r600/value.h>
 
@@ -165,7 +166,7 @@ private:
    uint32_t m_semantic_id;
 };
 
-class TexFetchNode: public FetchNode{
+class TexFetchNode: public FetchNode {
 public:
    enum ETexInst {
       tex_ld = 3,
@@ -237,6 +238,54 @@ private:
    std::bitset<8> m_flags;
 
 };
+
+class MemoryReadNode: public FetchNode {
+public:
+   enum EMemOp {
+      rd_scratch = 0,
+      rd_scatter = 2
+   };
+
+   enum EFlags {
+      rd_whole_quad_mode,
+      rd_uncached,
+      rd_indexed,
+      rd_signed,
+      rd_srf_mode
+   };
+
+   MemoryReadNode(uint64_t bc0, uint64_t bc1);
+
+private:
+   uint64_t create_bytecode_byte(int i) const override;
+   void print(std::ostream& os) const override;
+   EMemOp m_mem_op;
+   int m_elm_size;
+   int m_mem_req_size;
+   int m_burst_cnt;
+   int m_data_format;
+   int m_num_format_all;
+   int m_address;
+   int m_endian_swap;
+   int m_array_size;
+
+};
+
+class GDSOpNode: public FetchNode {
+public:
+
+   GDSOpNode(uint64_t bc0, uint64_t bc1);
+
+private:
+   uint64_t create_bytecode_byte(int i) const override;
+   void print(std::ostream& os) const override;
+
+   int m_src_rel_mode;
+   int m_dst_rel_mode;
+   std::vector<int> m_src_sel;
+   ESDOp m_gds_op;
+};
+
 
 }
 

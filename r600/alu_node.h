@@ -177,7 +177,7 @@ private:
 
 class AluNodeLDSIdxOP: public AluNode {
 public:
-   AluNodeLDSIdxOP(uint16_t opcode, ELSDIndexOp lds_op,
+   AluNodeLDSIdxOP(uint16_t opcode, ESDOp lds_op,
                    PValue src0, PValue src1,
                    PValue src2, AluOpFlags flags,
                    int offset = 0, int dst_chan = 0,
@@ -189,7 +189,7 @@ private:
    bool print_op(std::ostream& os) const override final;
    void set_spec_literal_info(uint64_t *literals) override final;
    void encode(uint64_t& bc) const override;
-   ELSDIndexOp m_lds_op;
+   ESDOp m_lds_op;
    int m_offset;
 };
 
