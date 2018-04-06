@@ -294,8 +294,6 @@ TexFetchNode::TexFetchNode(uint64_t bc0, uint64_t bc1):
 
 void TexFetchNode::print(std::ostream& os) const
 {
-   const char flag_char[] = "QA";
-
    ostringstream os_help;
    os_help << opname_from_opcode();
    switch (m_tex_opcode) {
@@ -312,7 +310,9 @@ void TexFetchNode::print(std::ostream& os) const
          os_help << "(fine)";
       else
          os_help << "(coarse)";
-   break;
+      break;
+   default:
+      break;
    }
 
    os << std::setw(15) << std::left << os_help.str();
@@ -380,8 +380,6 @@ const char *TexFetchNode::opname_from_opcode() const
    default: return "UNKNOWN";
    };
 }
-
-
 
 uint64_t TexFetchNode::create_bytecode_byte(int i) const
 {
