@@ -297,7 +297,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsLastInstrBits)
 {
    AluOpFlags flags;
    flags.set(AluNode::is_last_instr);
-   AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
+   AluNodeOp3 n(op3_bfe_uint, dst, src, src, src, flags, AluNode::idx_ar_x, AluNode::alu_vec_012,
                 AluNode::pred_sel_off);
 
    TEST_EQ(n.bytecode(), (1ul << 31) | (1ul << 47));
@@ -307,7 +307,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3FlagsClampBits)
 {
    AluOpFlags flags;
    flags.set(AluNode::do_clamp);
-   AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, flags, AluNode::idx_ar_x,
+   AluNodeOp3 n(op3_bfe_uint, dst, src, src, src, flags, AluNode::idx_ar_x,
                 AluNode::alu_vec_012, AluNode::pred_sel_off);
 
    TEST_EQ(n.bytecode(), (1ul << 63) | (1ul << 47));
@@ -321,7 +321,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3PredSelBits)
    };
 
    for(auto i: ps) {
-      AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x,
+      AluNodeOp3 n(op3_bfe_uint, dst, src, src, src, empty_flags, AluNode::idx_ar_x,
                    AluNode::alu_vec_012, i);
       TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 29) | (1ul << 47));
    }
@@ -344,7 +344,7 @@ TEST_F(BytecodeAluOp3ATest, TestOp3BankSwizzleBits)
    };
 
    for(auto i: bs) {
-      AluNodeOp3 n(OP3_BFE_UINT, dst, src, src, src, empty_flags, AluNode::idx_ar_x, i,
+      AluNodeOp3 n(op3_bfe_uint, dst, src, src, src, empty_flags, AluNode::idx_ar_x, i,
                    AluNode::pred_sel_off);
       TEST_EQ(n.bytecode(), (static_cast<uint64_t>(i) << 50)
               | (1ul << 47));
@@ -364,7 +364,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOpcodes)
    };
 
    for (auto p : test_pairs) {
-      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, p.first,
+      AluNodeLDSIdxOP n(op3_lds_idx_op, p.first,
                         src, src, src, empty_flags, 0, 0,
                         AluNode::idx_ar_x, AluNode::alu_vec_012);
       TEST_EQ(n.bytecode(), p.second);
@@ -383,7 +383,7 @@ TEST_F(BytecodeAluLDSIdxOpTest, TestOffset)
    };
 
    for (int ofs = 0; ofs < 6; ++ofs) {
-      AluNodeLDSIdxOP n(OP3_LDS_IDX_OP, DS_OP_ADD,
+      AluNodeLDSIdxOP n(op3_lds_idx_op, DS_OP_ADD,
                         src, src, src, empty_flags, 1 << ofs);
       TEST_EQ(n.bytecode(), expect[ofs]);
    }
@@ -544,14 +544,14 @@ TEST_F(ALUByteCodeDissass, Op2IntLiteral)
    GPRValue dst(10, 2, false, false, false);
    AluOpFlags flags;
    flags.set(AluNode::do_write);
-   AluNodeOp2 op(OP2_ADD_INT, dst, src0, src1, flags);
+   AluNodeOp2 op(op2_add_int, dst, src0, src1, flags);
    std::ostringstream s;
 
    s << op;
    EXPECT_EQ(s.str(),
              "    ADD_INT                         R10.z, [0xa 10i], R10.w");
 
-   AluNodeOp2 op2(OP2_ADD, dst, src2, src1, flags);
+   AluNodeOp2 op2(op2_add, dst, src2, src1, flags);
    std::ostringstream s2;
    s2 << op2;
    EXPECT_EQ(s2.str(),
