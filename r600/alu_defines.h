@@ -23,6 +23,7 @@
 
 #include <map>
 #include <bitset>
+#include <iostream>
 
 #define DASS_UNUSED(X) (void)X
 
@@ -237,26 +238,27 @@ enum EAluOp {
 using AluOpFlags=std::bitset<16>;
 
 struct AluOp {
-   static constexpr int x = 1;
-   static constexpr int y = 2;
-   static constexpr int z = 4;
-   static constexpr int w = 8;
-   static constexpr int v = 15;
-   static constexpr int t = 16;
-   static constexpr int a = 31;
+   static constexpr unsigned x = 1;
+   static constexpr unsigned y = 2;
+   static constexpr unsigned z = 4;
+   static constexpr unsigned w = 8;
+   static constexpr unsigned v = 15;
+   static constexpr unsigned t = 16;
+   static constexpr unsigned a = 31;
 
-   AluOp(int ns, int f, int um, const char *n):
+   AluOp(unsigned ns, unsigned f, unsigned um, const char *n):
       nsrc(ns), is_float(f), unit_mask(um), name(n)
    {
    }
 
-   bool can_channel(int flags) const {
+   bool can_channel(unsigned flags) const {
+      std::cerr << "Can channel f:"<< flags << " mask:" << unit_mask << std::endl;
       return flags & unit_mask;
    }
 
-   int nsrc: 4;
-   int is_float:1;
-   int unit_mask: 5;
+   unsigned nsrc: 4;
+   unsigned is_float:1;
+   unsigned unit_mask: 5;
    const char *name;
 };
 

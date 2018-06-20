@@ -111,17 +111,17 @@ AluNode *AluNode::decode(uint64_t bc, Value::LiteralFlags *literal_index)
 }
 
 AluNode::AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
-                 AluOpFlags flags, int dst_chan):
-   m_opcode(static_cast<EAluOp>(opcode)),
+                 AluOpFlags flags, unsigned dst_chan):
    m_index_mode(index_mode),
    m_bank_swizzle(bank_swizzle),
    m_flags(flags),
-   m_dst_chan(dst_chan)
+   m_dst_chan(dst_chan),
+   m_opcode(static_cast<EAluOp>(opcode))
 {
    m_src.resize(3);
 }
 
-int AluNode::dst_chan() const
+unsigned AluNode::dst_chan() const
 {
    return m_dst_chan;
 }
@@ -136,11 +136,12 @@ bool AluNode::test_flag(FlagsShifts f) const
    return m_flags.test(f);
 }
 
-bool AluNode::slot_supported(int flag) const
+bool AluNode::slot_supported(unsigned flag) const
 {
+   std::cerr << "flag:" << flag << "\n";
    auto op = alu_ops.find(m_opcode);
    if (op != alu_ops.end())
-      return op->second.can_channel(1 << flag);
+      return op->second.can_channel(flag);
    throw runtime_error("Unknown op");
 }
 
@@ -190,7 +191,7 @@ void AluNode::print(std::ostream& os) const
    if (nopsources() > 0) {
       m_src[0]->print(os, flags);
 
-      for (int i = 1; i < nopsources(); ++i) {
+      for (unsigned i = 1; i < nopsources(); ++i) {
          os << ", ";
          m_src[i]->print(os, flags);
       }
@@ -293,13 +294,15 @@ void AluNode::set_src(unsigned idx, PValue v)
    m_src[idx]= v;
 }
 
-int AluNode::nopsources() const
+unsigned AluNode::nopsources() const
 {
    auto k = alu_ops.find(m_opcode);
    if (k != alu_ops.end()) {
       return k->second.nsrc;
    } else {
-      return -1;
+      ostringstream err;
+      err  << "Unknown opcode :" << m_opcode;
+      throw runtime_error(err.str());
    }
 }
 
@@ -425,7 +428,7 @@ void AluNodeOp3::set_spec_literal_info(uint64_t *literals)
 AluNodeLDSIdxOP::AluNodeLDSIdxOP(uint16_t opcode, ESDOp lds_op,
                                  PValue src0, PValue src1,
                                  PValue src2, AluOpFlags flags,
-                                 int offset, int dst_chan,
+                                 int offset, unsigned dst_chan,
                                  EIndexMode index_mode,
                                  EBankSwizzle bank_swizzle):
    AluNode(opcode, index_mode, bank_swizzle, flags,
@@ -455,12 +458,13 @@ void AluNodeLDSIdxOP::encode(uint64_t& bc) const
    bc |= static_cast<uint64_t>(m_offset & 0x20) << 20;
 }
 
-int AluNodeLDSIdxOP::nopsources() const
+unsigned AluNodeLDSIdxOP::nopsources() const
 {
    auto o = lds_ops.find(m_lds_op);
    if (o != lds_ops.end()) {
       return o->second.nsrc;
    }
+   assert(0 && "Opcode lds_op not found");
    return 0;
 }
 
@@ -499,9 +503,9 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
       if (group_should_finish)
          throw runtime_error("Alu group should have ended");
       node.reset(AluNode::decode(bc[ofs++], &lflags));
-      int chan = node->dst_chan();
+      unsigned chan = node->dst_chan();
       if (!m_ops[chan]) {
-         if (node->slot_supported(chan)) {
+         if (node->slot_supported(1 << chan)) {
             m_ops[chan] = node;
             continue;
          }
@@ -521,7 +525,7 @@ size_t AluGroup::decode(const std::vector<uint64_t>& bc, size_t ofs, size_t end)
 
    uint64_t literals[2];
 
-   for (int lp = 0; lp < 2; ++lp) {
+   for (unsigned lp = 0; lp < 2; ++lp) {
       if (lflags.test(2*lp) || lflags.test(2*lp + 1)) {
          if (ofs >= end)
             throw runtime_error("Trying to decode literals past end of byte code");
@@ -541,7 +545,7 @@ std::string AluGroup::as_string(int indent) const
 {
    static const char slot_id[6]="xyzwt";
    ostringstream os;
-   for (int i = 0; i < 5; ++i) {
+   for (unsigned i = 0; i < 5; ++i) {
       int ind = indent;
       if (m_ops[i]) {
          while (ind--)
@@ -564,7 +568,7 @@ bool AluGroup::encode(std::vector<uint64_t>& bc) const
 
    bool has_lds_direct_address = false;
    uint64_t literals[2];
-   int offset = 0;
+   uint16_t offset = 0;
 
    for (auto v :values) {
       if (v->type() == Value::lds_direct) {

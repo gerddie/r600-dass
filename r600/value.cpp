@@ -64,7 +64,7 @@ void Value::set_neg(bool flag)
    m_neg = flag;
 }
 
-void Value::set_chan(uint64_t chan)
+void Value::set_chan(uint16_t chan)
 {
    m_chan = chan;
 }
@@ -359,9 +359,9 @@ void GPRValue::do_print(std::ostream& os, const PrintFlags& flags) const
 
 LiteralValue::LiteralValue(uint16_t chan,
                            bool abs, bool rel, bool neg):
-   Value(Value::literal, chan, abs, rel, neg),
-   m_value(0)
+   Value(Value::literal, chan, abs, rel, neg)
 {
+   m_value.i=0;
 }
 
 uint64_t LiteralValue::sel() const
@@ -371,32 +371,32 @@ uint64_t LiteralValue::sel() const
 
 uint32_t LiteralValue::value() const
 {
-   return m_value;
+   return m_value.i;
 }
 
 void LiteralValue::do_print(std::ostream& os) const
 {
-   os << "[0x" << std::setbase(16) << m_value << " "
-      << *reinterpret_cast<const float*>(&m_value) << "].";
+   os << "[0x" << std::setbase(16) << m_value.i << " "
+      << m_value.f << "].";
    os << component_names[chan()];
 }
 
 void LiteralValue::do_print(std::ostream& os, const PrintFlags& flags) const
 {
-   os << "[0x" << std::setbase(16) << m_value << " "
+   os << "[0x" << std::setbase(16) << m_value.i << " "
       << std::setbase(10);
 
    if (flags.literal_is_float)
-      os << *reinterpret_cast<const float*>(&m_value) << "f";
+      os << m_value.f << "f";
    else
-      os << m_value << "i";
+      os << m_value.i << "i";
 
    os<< "]";
 }
 
 void LiteralValue::set_literal_info(const uint64_t *literals)
 {
-   m_value = (literals[chan()>>1] >> (32 * chan())) & 0xffffffff;
+   m_value.i = (literals[chan()>>1] >> (32 * chan())) & 0xffffffff;
 }
 
 SpecialValue::SpecialValue(Type type, int value, int chan, bool abs, bool neg):

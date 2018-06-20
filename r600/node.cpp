@@ -28,6 +28,10 @@ node::node(unsigned bytecode_size):
 {
 }
 
+node::~node()
+{
+}
+
 node::node():node(0)
 {
 }
@@ -39,7 +43,7 @@ int node::bytecode_size() const
 
 void node::append_bytecode(std::vector<uint64_t>& program) const
 {
-   for (int i = 0; i < m_bytecode_size; ++i)
+   for (unsigned i = 0; i < m_bytecode_size; ++i)
       program.push_back(create_bytecode_byte(i));
 }
 

@@ -81,7 +81,8 @@ TEST_F(BytecodeAluOp2ATest, BitCreateDecodeBytecodeRountrip)
       uint64_t bc = 1ul << i;
       if (i == 48)
          bc |= 1ul << 47;
-
+      if (i == 46)
+         bc |= 1ul << 39;
       auto alu_node = AluNode::decode(bc, &literal_flags);
       TEST_EQ(alu_node->bytecode(), bc);
    }

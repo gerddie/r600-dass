@@ -81,14 +81,14 @@ public:
    static AluNode *decode(uint64_t bc, Value::LiteralFlags *literal_index);
 
    AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
-           AluOpFlags flags, int dst_chan);
+           AluOpFlags flags, unsigned dst_chan);
 
    virtual ~AluNode(){}
 
-   int dst_chan() const;
+   unsigned dst_chan() const;
    bool last_instr() const;
 
-   bool slot_supported(int flag) const;
+   bool slot_supported(unsigned flag) const;
    uint64_t bytecode() const;
 
    void set_literal_info(uint64_t *literals);
@@ -103,7 +103,7 @@ protected:
    const Value& src(unsigned idx) const;
    Value& src(unsigned idx);
    void set_src(unsigned idx, PValue v);
-   virtual int nopsources() const;
+   virtual unsigned nopsources() const;
 
 private:
    void print_flags(std::ostream& os) const;
@@ -118,12 +118,12 @@ private:
    virtual void encode(uint64_t& bc) const = 0;
    uint64_t shared_flags() const;
 
-   EAluOp m_opcode;
    std::vector<PValue> m_src;
    EIndexMode m_index_mode;
    EBankSwizzle m_bank_swizzle;
    AluOpFlags m_flags;
-   int m_dst_chan;
+   unsigned m_dst_chan;
+   EAluOp m_opcode;
 };
 
 inline std::ostream& operator << (std::ostream& os, const AluNode& n)
@@ -182,11 +182,11 @@ public:
    AluNodeLDSIdxOP(uint16_t opcode, ESDOp lds_op,
                    PValue src0, PValue src1,
                    PValue src2, AluOpFlags flags,
-                   int offset = 0, int dst_chan = 0,
+                   int offset = 0, unsigned dst_chan = 0,
                    EIndexMode index_mode = idx_ar_x,
                    EBankSwizzle bank_swizzle = alu_vec_012);
 protected:
-   int nopsources() const override;
+   unsigned nopsources() const override;
 private:
    bool print_op(std::ostream& os) const override final;
    void set_spec_literal_info(uint64_t *literals) override final;

@@ -89,6 +89,8 @@ public:
 
    Value();
 
+   virtual ~Value(){}
+
    static Pointer create(uint16_t sel, uint16_t chan,
                          bool abs, bool rel, bool neg,
                          LiteralFlags *literal_index);
@@ -106,7 +108,7 @@ public:
    void set_neg(bool flag);
 
    uint64_t encode_for(ValueOpEncoding encoding) const;
-   void set_chan(uint64_t chan);
+   void set_chan(uint16_t chan);
    void print(std::ostream& os, const PrintFlags& flags) const;
 
    void print(std::ostream& os) const;
@@ -186,7 +188,10 @@ public:
 private:
    void do_print(std::ostream& os) const override;
    void do_print(std::ostream& os, const PrintFlags& flags) const override;
-   uint32_t m_value;
+   union {
+      uint32_t i;
+      float f;
+   } m_value;
 };
 
 class SpecialValue: public Value {
