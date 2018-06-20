@@ -24,6 +24,8 @@
 #include <map>
 #include <bitset>
 
+#define DASS_UNUSED(X) (void)X
+
 namespace r600 {
 
 /* ALU op2 instructions 17:7 top three bits alwayss zero. */

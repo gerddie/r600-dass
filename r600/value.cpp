@@ -226,7 +226,7 @@ void Value::set_literal_info(const uint64_t *literals)
 
 void Value::allocate_literal(LiteralBuffer& lb) const
 {
-
+   DASS_UNUSED(lb);
 }
 
 PValue Value::decode_from_alu_op2_src0(uint64_t bc, LiteralFlags *li)

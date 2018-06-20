@@ -456,34 +456,36 @@ const vector<uint64_t> TexFetchNode::sm_tex_flag_bit = {
 MemoryReadNode::MemoryReadNode(uint64_t bc0, uint64_t bc1):
    FetchNode(bc0)
 {
-
+   DASS_UNUSED(bc1);
 }
 
 uint64_t MemoryReadNode::create_bytecode_byte(int i) const
 {
-
+   DASS_UNUSED(i);
+   return 0;
 }
 
 void MemoryReadNode::print(std::ostream& os) const
 {
-
+   DASS_UNUSED(os);
 }
 
 
 GDSOpNode::GDSOpNode(uint64_t bc0, uint64_t bc1):
    FetchNode(bc0)
 {
-
+   DASS_UNUSED(bc1);
 }
 
 uint64_t GDSOpNode::create_bytecode_byte(int i) const
 {
-
+   DASS_UNUSED(i);
+   return 0;
 }
 
 void GDSOpNode::print(std::ostream& os) const
 {
-
+   DASS_UNUSED(os);
 }
 
 }

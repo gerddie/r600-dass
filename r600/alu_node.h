@@ -83,6 +83,8 @@ public:
    AluNode(uint16_t opcode, EIndexMode index_mode, EBankSwizzle bank_swizzle,
            AluOpFlags flags, int dst_chan);
 
+   virtual ~AluNode(){}
+
    int dst_chan() const;
    bool last_instr() const;
 

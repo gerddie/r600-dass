@@ -538,6 +538,7 @@ void CFNativeNode::print_detail(std::ostream& os) const
    switch (opcode()) {
    case cf_jump_table:
       os << " JTS:" << m_jts_names[m_jumptable_se];
+      /* fall through */
    case cf_call:
    case cf_call_fs:
    case cf_loop_start:

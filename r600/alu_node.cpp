@@ -157,6 +157,7 @@ void AluNode::set_literal_info(uint64_t *literals)
 
 void AluNode::set_spec_literal_info(uint64_t *literals)
 {
+   DASS_UNUSED(literals);
 }
 
 void AluNode::allocate_literal(LiteralBuffer& lb) const
@@ -172,6 +173,7 @@ void AluNode::allocate_literal(LiteralBuffer& lb) const
 
 void AluNode::allocate_spec_literal(LiteralBuffer& lb) const
 {
+   DASS_UNUSED(lb);
 }
 
 void AluNode::print(std::ostream& os) const
